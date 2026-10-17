@@ -6,6 +6,8 @@ import { exportMidi, importMidi } from "../midi/midiio";
 import { DEMOS } from "../demos/catalog";
 import { EXERCISES, ROADMAP } from "../exercises/catalog";
 import { openExercise, progress } from "../exercises/state";
+import { DRILLS } from "../drills/catalog";
+import { activeDrill } from "../drills/state";
 import { emptyProject } from "../model/demo";
 import { store, useProject } from "../model/store";
 import type { Project, ScaleId } from "../model/types";
@@ -25,6 +27,7 @@ const safeName = (s: string) => s.trim().replace(/[\\/:*?"<>|]+/g, "-") || "unti
 
 function load(p: Project) {
   stop();
+  activeDrill.set(null);
   store.replace(p);
   ui.set({ selectedTrackId: p.tracks[0]?.id ?? null, selectedNoteIds: new Set(), cursorTick: 0, scrollTick: 0 });
 }
@@ -290,6 +293,30 @@ function ExercisesMenu() {
       </button>
       {open && (
         <div className="menu demos-menu" role="menu">
+          <div className="menu-heading">Foundations: timed drills</div>
+          {DRILLS.map((d) => {
+            const p = prog[d.id];
+            return (
+              <button
+                key={d.id}
+                role="menuitem"
+                className="menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  stop();
+                  activeDrill.set(d.id);
+                }}
+              >
+                <span className="menu-num">{d.number}</span>
+                <span style={{ flex: 1 }}>
+                  <span className="menu-label">{d.title}</span>
+                  <span className="menu-hint">{d.summary}</span>
+                </span>
+                {p && <span className={`menu-status${p.passed ? " is-pass" : ""}`}>{p.passed ? "Passed" : `${p.best}%`}</span>}
+              </button>
+            );
+          })}
+          <div className="menu-sep" />
           <div className="menu-heading">{EXERCISES[0].unit}</div>
           {EXERCISES.map((ex) => {
             const p = prog[ex.id];

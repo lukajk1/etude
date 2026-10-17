@@ -43,6 +43,8 @@ export class Engine {
   private tempoKey = "";
   private tempoEvents: number[] = [];
   private loopStart = 0;
+  /** Voices for playing notes outside the project (ear training). */
+  private previews = new Map<TimbreId, { voice: Voice; source: string }>();
 
   /** @param sourceId the sound source to play with (see audio/sources). */
   constructor(private sourceId: string) {
@@ -133,6 +135,29 @@ export class Engine {
     }, events);
     part.start(0);
     return part;
+  }
+
+  /**
+   * Play notes outside the project, such as ear-training questions. `events` times are
+   * seconds from now.
+   */
+  preview(timbre: TimbreId, events: { pitches: number[]; at: number; dur: number; vel?: number }[]) {
+    const source = sourceFor(this.sourceId, timbre);
+    let p = this.previews.get(timbre);
+    if (!p || p.source !== source.id) {
+      p?.voice.dispose();
+      const voice = source.createVoice(timbre);
+      voice.output.connect(this.bus);
+      p = { voice, source: source.id };
+      this.previews.set(timbre, p);
+    }
+    p.voice.releaseAll();
+    const t0 = this.ctx.currentTime + 0.05;
+    for (const e of events) for (const pitch of e.pitches) p.voice.play(pitch, t0 + e.at, e.dur, e.vel ?? 0.7);
+  }
+
+  stopPreview() {
+    for (const p of this.previews.values()) p.voice.releaseAll();
   }
 
   /** Switch sound source. Takes effect on the next `sync`. */

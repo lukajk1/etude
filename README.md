@@ -77,8 +77,32 @@ The Synth source builds every sound in the browser (Web Audio via Tone.js).
 
 ## Exercises
 
-**Exercises** in the toolbar opens graded composition exercises. Unit 1 covers counterpoint
-essentials in the strict style of Fux's *Gradus ad Parnassum* (1725):
+**Exercises** in the toolbar opens two kinds of practice.
+
+**Unit 0, Foundations** is timed drills for the fundamentals that counterpoint and harmony
+rely on. Each round is 20 questions; wrong answers show the reasoning (letter names counted,
+half steps compared), and the round is graded against accuracy and speed targets:
+
+| | Drill | To pass |
+|---|---|---|
+| 0.1 | Read notes (treble and bass clef, ledger lines) | 95%, median 2 s |
+| 0.2 | Key signatures, all 30 keys, both directions | 95%, median 3 s |
+| 0.3 | Scale degrees in major and the three minor forms | 90%, median 4 s |
+| 0.4 | Name intervals on the staff | 90%, median 3 s |
+| 0.5 | Build intervals (spell the note above) | 90%, median 4 s |
+| 0.6 | Name triads in any inversion | 90%, median 5 s |
+| 0.7 | Build triads (spell the 3rd and 5th) | 90%, median 6 s |
+| 0.8 | Hear intervals: P4, P5, octave, 3rds | 90% |
+| 0.9 | Hear intervals: all within an octave | 80% |
+| 0.10 | Hear chord quality | 90% |
+| 0.11 | Hear scale degrees after a cadence | 85% |
+
+Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
+to continue, R to replay audio. Questions and answers are generated in `src/drills/`,
+with spelling handled properly (A♯ and B♭ are different answers).
+
+**Unit 1** covers counterpoint essentials in the strict style of Fux's *Gradus ad
+Parnassum* (1725):
 
 | | Exercise |
 |---|---|

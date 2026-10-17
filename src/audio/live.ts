@@ -63,6 +63,18 @@ export async function ensureAudio() {
 window.addEventListener("pointerdown", () => void ensureAudio(), { capture: true });
 window.addEventListener("keydown", () => void ensureAudio(), { capture: true });
 
+/** Play notes outside the project (ear training), on piano. */
+export async function playNotes(events: { pitches: number[]; at: number; dur: number }[]) {
+  await ensureAudio();
+  if (ui.state.playing) stop();
+  engine.preview("piano", events);
+}
+
+/** Make sure the piano is loaded for the current sound source (for ear training). */
+export function preparePiano() {
+  void getSource(ui.state.soundSource).load(["piano"]);
+}
+
 export function playheadTick(): number {
   return ui.state.playing ? engine.ticks : ui.state.cursorTick;
 }

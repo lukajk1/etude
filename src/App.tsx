@@ -10,9 +10,11 @@ import { Toolbar } from "./components/Toolbar";
 import { snapSize } from "./lib/geom";
 import { copySelected, deleteSelected, duplicateSelected, nudgeSelected, paste, selectedTrack } from "./model/edits";
 import { store, useProject } from "./model/store";
-import { ui, useUi } from "./model/ui";
+import { ui, useSignal, useUi } from "./model/ui";
+import { activeDrill } from "./drills/state";
 
 const Score = lazy(() => import("./components/Score"));
+const DrillView = lazy(() => import("./components/DrillView"));
 
 function isTyping(e: KeyboardEvent) {
   const el = e.target as HTMLElement | null;
@@ -28,6 +30,8 @@ function isTyping(e: KeyboardEvent) {
 
 function onKey(e: KeyboardEvent) {
   if (isTyping(e)) return;
+  // A drill handles its own keys.
+  if (activeDrill.value) return;
   const mod = e.ctrlKey || e.metaKey;
   const k = e.key.toLowerCase();
   const snap = snapSize(store.project);
@@ -103,6 +107,21 @@ export function App() {
   const { top, handle } = useSplit(Math.max(150, Math.round(window.innerHeight * 0.3)));
   const { view } = useUi();
   const exercise = currentExercise(useProject());
+  const drill = useSignal(activeDrill);
+
+  if (drill) {
+    return (
+      <div className="app" style={{ gridTemplateRows: "auto 1fr auto" }}>
+        <Toolbar />
+        <div className="main">
+          <Suspense fallback={<div className="drill">Loading…</div>}>
+            <DrillView />
+          </Suspense>
+        </div>
+        <StatusBar />
+      </div>
+    );
+  }
 
   return (
     <div className="app" style={{ gridTemplateRows: "auto auto 1fr auto" }}>

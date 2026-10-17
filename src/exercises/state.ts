@@ -3,6 +3,7 @@ import { store } from "../model/store";
 import type { Note, Project, Track } from "../model/types";
 import { Signal, ui } from "../model/ui";
 import { exerciseProject, getExercise, type Exercise } from "./catalog";
+import { activeDrill } from "../drills/state";
 import type { Issue, Result, Severity } from "./grade";
 
 export interface Checked {
@@ -40,10 +41,15 @@ function loadProgress(): Record<string, Progress> {
 export const progress = new Signal<Record<string, Progress>>(loadProgress());
 
 function record(id: string, r: Result) {
+  recordProgress(id, r.score, r.passed);
+}
+
+/** Save a score (0–100) for an exercise or drill, keeping the best. */
+export function recordProgress(id: string, score: number, passed: boolean) {
   const prev = progress.value[id] ?? { best: 0, passed: false, attempts: 0 };
   const next = {
     ...progress.value,
-    [id]: { best: Math.max(prev.best, r.score), passed: prev.passed || r.passed, attempts: prev.attempts + 1 },
+    [id]: { best: Math.max(prev.best, score), passed: prev.passed || passed, attempts: prev.attempts + 1 },
   };
   progress.set(next);
   try {
@@ -77,6 +83,7 @@ function clearResults() {
 
 export function openExercise(ex: Exercise) {
   stop();
+  activeDrill.set(null);
   const p = exerciseProject(ex);
   store.replace(p);
   clearResults();
