@@ -4,6 +4,8 @@ import { SOURCES } from "../audio/sources";
 import { renderWav } from "../audio/render";
 import { exportMidi, importMidi } from "../midi/midiio";
 import { DEMOS } from "../demos/catalog";
+import { EXERCISES, ROADMAP } from "../exercises/catalog";
+import { openExercise, progress } from "../exercises/state";
 import { emptyProject } from "../model/demo";
 import { store, useProject } from "../model/store";
 import type { Project, ScaleId } from "../model/types";
@@ -267,6 +269,65 @@ function DemosMenu({ onMessage }: { onMessage: (m: string) => void }) {
   );
 }
 
+function ExercisesMenu() {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const prog = useSignal(progress);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: PointerEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [open]);
+
+  return (
+    <div className="file-menu" ref={wrap}>
+      <button className="btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        Exercises
+      </button>
+      {open && (
+        <div className="menu demos-menu" role="menu">
+          <div className="menu-heading">{EXERCISES[0].unit}</div>
+          {EXERCISES.map((ex) => {
+            const p = prog[ex.id];
+            return (
+              <button
+                key={ex.id}
+                role="menuitem"
+                className="menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  openExercise(ex);
+                }}
+              >
+                <span className="menu-num">{ex.number}</span>
+                <span style={{ flex: 1 }}>
+                  <span className="menu-label">{ex.title}</span>
+                  <span className="menu-hint">{ex.summary}</span>
+                </span>
+                {p && <span className={`menu-status${p.passed ? " is-pass" : ""}`}>{p.passed ? "Passed" : p.best}</span>}
+              </button>
+            );
+          })}
+          <div className="menu-sep" />
+          <div className="menu-heading">Coming next</div>
+          {ROADMAP.map((r) => (
+            <div key={r.unit} className="menu-item is-disabled" aria-disabled>
+              <span>
+                <span className="menu-label">{r.unit}</span>
+                <span className="menu-hint">{r.topics}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Toolbar() {
   const p = useProject();
   const s = useUi();
@@ -302,6 +363,7 @@ export function Toolbar() {
       />
       <FileMenu onMessage={setMessage} />
       <DemosMenu onMessage={setMessage} />
+      <ExercisesMenu />
 
       <div className="group transport">
         <button className="icon-btn" title="Back to start (Home)" aria-label="Back to start" onClick={() => ui.set({ cursorTick: 0, scrollTick: 0 })}>

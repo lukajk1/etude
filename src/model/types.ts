@@ -25,6 +25,8 @@ export interface Track {
   pan: number;
   mute: boolean;
   solo: boolean;
+  /** Given material in an exercise: visible and playable, but not editable. */
+  locked?: boolean;
   notes: Note[];
 }
 
@@ -61,6 +63,8 @@ export interface Project {
   scale: ScaleId;
   loop: { on: boolean; start: number; end: number };
   tracks: Track[];
+  /** Set when the project is an exercise (see src/exercises). */
+  exercise?: { id: string };
 }
 
 let idCounter = 0;

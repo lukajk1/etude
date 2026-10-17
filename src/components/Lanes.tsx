@@ -68,6 +68,14 @@ function LaneHeader({ track, selected }: { track: Track; selected: boolean }) {
           >
             S
           </button>
+          {track.locked ? (
+            <span className="lane-lock" title="Given material for this exercise. You can listen to it, but not edit it.">
+              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden>
+                <rect x="3.5" y="7" width="9" height="6.5" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </span>
+          ) : (
           <button
             className="icon-btn lane-delete"
             title="Delete lane"
@@ -84,6 +92,7 @@ function LaneHeader({ track, selected }: { track: Track; selected: boolean }) {
               <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </button>
+          )}
         </div>
         <input
           className="lane-volume"

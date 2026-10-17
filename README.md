@@ -75,6 +75,27 @@ The Synth source builds every sound in the browser (Web Audio via Tone.js).
   at most two voices, and the clef is picked from the lane's range. Engraving uses
   [VexFlow](https://github.com/0xfe/vexflow) (MIT).
 
+## Exercises
+
+**Exercises** in the toolbar opens graded composition exercises. Unit 1 covers counterpoint
+essentials in the strict style of Fux's *Gradus ad Parnassum* (1725):
+
+| | Exercise |
+|---|---|
+| 1.1–1.2 | Write a cantus firmus (C major, D Dorian) |
+| 1.3–1.5 | First species, note against note, above and below a given melody (including Fux's own cantus) |
+| 1.6–1.7 | Second species, two notes against one, with passing tones |
+
+The given melody sits in a locked lane; you write in your own lane. **Check my work** grades
+it: errors (dissonances, parallel fifths and octaves, bad cadences, crossed voices, forbidden
+leaps) and style warnings (too few contrary motions, a repeated climax, unrecovered leaps)
+are listed by bar, outlined in red or amber on the piano roll, and scored out of 100. Passing
+needs no errors and a score of 80 or more. Best scores are saved in the browser.
+
+The rules live in `src/exercises/grade.ts` as plain functions over notes, and exercises are
+data in `src/exercises/catalog.ts`. Later units (suspensions, four-part harmony, Romantic
+harmony, piano textures, forms, orchestration) are listed in the menu as a roadmap.
+
 ## Learning aids
 
 - The key and scale picker shades in-scale rows and numbers the scale degrees on the keyboard.

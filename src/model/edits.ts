@@ -21,7 +21,7 @@ export function selectedNotes(track: Track | null): Note[] {
 export function deleteSelected() {
   const track = selectedTrack();
   const sel = ui.state.selectedNoteIds;
-  if (!track || sel.size === 0) return;
+  if (!track || track.locked || sel.size === 0) return;
   store.edit((d) => {
     const t = draftTrack(d, track.id);
     if (t) t.notes = t.notes.filter((n) => !sel.has(n.id));
@@ -33,7 +33,7 @@ export function deleteSelected() {
 export function nudgeSelected(dPitch: number, dTick: number) {
   const track = selectedTrack();
   const sel = ui.state.selectedNoteIds;
-  if (!track || sel.size === 0) return;
+  if (!track || track.locked || sel.size === 0) return;
   const notes = selectedNotes(track);
   const minPitch = Math.min(...notes.map((n) => n.pitch));
   const maxPitch = Math.max(...notes.map((n) => n.pitch));
@@ -64,7 +64,7 @@ export function copySelected(): boolean {
 /** Paste the clipboard into the selected lane at `atTick`. */
 export function paste(atTick: number) {
   const track = selectedTrack();
-  if (!track || clipboard.length === 0) return;
+  if (!track || track.locked || clipboard.length === 0) return;
   const pasted = clipboard.map((n) => ({ ...n, id: newId(), start: n.start + atTick }));
   store.edit((d) => {
     draftTrack(d, track.id)?.notes.push(...pasted);

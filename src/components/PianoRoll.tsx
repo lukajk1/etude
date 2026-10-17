@@ -7,6 +7,7 @@ import { store, useProject } from "../model/store";
 import { TIMBRES } from "../model/timbres";
 import { newId, ticksPerBar, ticksPerBeat, type Note, type Track } from "../model/types";
 import { hover, ui, useUi } from "../model/ui";
+import { focused, marks } from "../exercises/state";
 import { DRUM_NAMES, isBlackKey, noteName, scaleDegree, usesFlats } from "../theory/theory";
 import { Inspector } from "./Inspector";
 import { Ruler } from "./Ruler";
@@ -17,6 +18,8 @@ type Drag =
   | { kind: "marquee"; x0: number; y0: number; x1: number; y1: number; base: Set<string> }
   | { kind: "erase" }
   | { kind: "velocity" };
+
+const MARK_COLOR = { error: "#ef6b5a", warning: "#e8b04a" } as const;
 
 function noteRect(n: Note, top: number) {
   const x0 = tickToX(n.start);
@@ -97,17 +100,25 @@ export function PianoRoll() {
       g.fillRect(x0, 0, tickToX(p.loop.end) - x0, h);
     }
 
+    const focusedIds = new Set(focused.value?.noteIds ?? []);
     // Other lanes, faintly, so you can write against them.
     if (st.showGhosts && !isDrum) {
       for (const other of p.tracks) {
         if (other.id === t?.id || other.timbre === "percussion") continue;
-        g.fillStyle = withAlpha(TIMBRES[other.timbre].color, 0.2);
+        // Given material in an exercise shows more strongly than ordinary context.
+        g.fillStyle = withAlpha(TIMBRES[other.timbre].color, other.locked ? 0.45 : 0.2);
         for (const n of other.notes) {
           if (n.pitch < lo || n.pitch > hi) continue;
           const r = noteRect(n, top);
           if (r.x1 < 0 || r.x0 > w) continue;
           roundRect(g, r.x0, r.y + 2, Math.max(2, r.x1 - r.x0 - 1), ROW_H - 4, 2);
           g.fill();
+          const mark = marks.value.get(n.id);
+          if (mark) {
+            g.strokeStyle = MARK_COLOR[mark];
+            g.lineWidth = focusedIds.has(n.id) ? 3 : 2;
+            g.stroke();
+          }
         }
       }
     }
@@ -126,8 +137,9 @@ export function PianoRoll() {
         roundRect(g, r.x0, r.y + 0.5, nw, ROW_H - 1, 2.5);
         g.fillStyle = withAlpha(color, selected ? 1 : 0.5 + 0.45 * n.vel);
         g.fill();
-        g.strokeStyle = selected ? cssVar("--text") : "rgba(0, 0, 0, 0.35)";
-        g.lineWidth = selected ? 1.5 : 1;
+        const mark = marks.value.get(n.id);
+        g.strokeStyle = mark ? MARK_COLOR[mark] : selected ? cssVar("--text") : "rgba(0, 0, 0, 0.35)";
+        g.lineWidth = mark ? (focusedIds.has(n.id) ? 3 : 2) : selected ? 1.5 : 1;
         g.stroke();
         if (nw > 26) {
           g.fillStyle = cssVar("--note-text");
@@ -233,6 +245,12 @@ export function PianoRoll() {
     }
   });
 
+  useEffect(() => {
+    const unsubs = [marks.subscribe(() => grid.invalidate()), focused.subscribe(() => grid.invalidate())];
+    return () => unsubs.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const redrawAll = () => {
     grid.invalidate();
     keys.invalidate();
@@ -293,6 +311,13 @@ export function PianoRoll() {
 
   const onGridDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!track) return;
+    if (track.locked) {
+      // Given material: listen, don't edit.
+      const { x, y } = localPoint(e, e.currentTarget);
+      const hit = hitNote(track, x, y);
+      if (hit && e.button === 0) audition(hit.pitch, hit.vel);
+      return;
+    }
     const el = e.currentTarget;
     el.setPointerCapture(e.pointerId);
     const { x, y } = localPoint(e, el);
@@ -453,7 +478,7 @@ export function PianoRoll() {
 
   // ---- Velocity pointer handling -----------------------------------------
   const paintVelocity = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!track) return;
+    if (!track || track.locked) return;
     const { x, y } = localPoint(e, e.currentTarget);
     const h = e.currentTarget.clientHeight;
     const v = Math.max(0.02, Math.min(1, (h - y) / (h - 8)));

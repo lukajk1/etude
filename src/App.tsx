@@ -2,12 +2,14 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { togglePlay } from "./audio/live";
 import { Lanes } from "./components/Lanes";
 import { Overview } from "./components/Overview";
+import { ExercisePanel } from "./components/ExercisePanel";
+import { currentExercise } from "./exercises/state";
 import { PianoRoll } from "./components/PianoRoll";
 import { StatusBar } from "./components/StatusBar";
 import { Toolbar } from "./components/Toolbar";
 import { snapSize } from "./lib/geom";
 import { copySelected, deleteSelected, duplicateSelected, nudgeSelected, paste, selectedTrack } from "./model/edits";
-import { store } from "./model/store";
+import { store, useProject } from "./model/store";
 import { ui, useUi } from "./model/ui";
 
 const Score = lazy(() => import("./components/Score"));
@@ -100,27 +102,26 @@ export function App() {
   }, []);
   const { top, handle } = useSplit(Math.max(150, Math.round(window.innerHeight * 0.3)));
   const { view } = useUi();
-
-  if (view === "score") {
-    return (
-      <div className="app" style={{ gridTemplateRows: "auto auto 1fr auto" }}>
-        <Toolbar />
-        <Overview />
-        <Suspense fallback={<div className="score score-loading">Loading the score…</div>}>
-          <Score />
-        </Suspense>
-        <StatusBar />
-      </div>
-    );
-  }
+  const exercise = currentExercise(useProject());
 
   return (
-    <div className="app" style={{ gridTemplateRows: `auto auto ${top}px 6px 1fr auto` }}>
+    <div className="app" style={{ gridTemplateRows: "auto auto 1fr auto" }}>
       <Toolbar />
       <Overview />
-      <Lanes />
-      <div className="splitter" role="separator" aria-orientation="horizontal" {...handle} />
-      <PianoRoll />
+      <div className="main">
+        {view === "score" ? (
+          <Suspense fallback={<div className="score score-loading">Loading the score…</div>}>
+            <Score />
+          </Suspense>
+        ) : (
+          <div className="workspace" style={{ gridTemplateRows: `${top}px 6px 1fr` }}>
+            <Lanes />
+            <div className="splitter" role="separator" aria-orientation="horizontal" {...handle} />
+            <PianoRoll />
+          </div>
+        )}
+        {exercise && <ExercisePanel ex={exercise} />}
+      </div>
       <StatusBar />
     </div>
   );

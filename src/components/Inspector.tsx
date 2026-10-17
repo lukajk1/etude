@@ -101,6 +101,7 @@ export function Inspector({ track }: { track: Track | null }) {
               <div className="insp-name">{track.name}</div>
               <div className="insp-role">{info.role}</div>
               <SoundLine timbre={track.timbre} />
+              {track.locked && <div className="insp-locked">Given material: listen to it, but it can't be edited.</div>}
             </div>
           </div>
 
