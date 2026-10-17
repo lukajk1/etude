@@ -286,7 +286,7 @@ export function Toolbar() {
   return (
     <header className="toolbar">
       <div className="brand">
-        <img src="/icon.svg" alt="" width="22" height="22" />
+        <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="22" height="22" />
         <span>Etude</span>
       </div>
       <input

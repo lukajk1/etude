@@ -1,7 +1,10 @@
 # Etude
 
 A sketchpad for the building blocks of Western music. Place notes in a piano roll,
-spread them across lanes with synthesized orchestral timbres, and hear what you wrote.
+spread them across lanes of orchestral instruments, and hear what you wrote.
+
+**Try it: [lukajk1.github.io/etude](https://lukajk1.github.io/etude/)** (runs entirely in
+the browser; click anywhere once to allow audio).
 
 ```
 npm install
