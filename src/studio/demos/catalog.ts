@@ -1,6 +1,6 @@
-import { importMidi } from "../midi/midiio";
-import { demoProject, emptyProject } from "../model/demo";
-import type { Project, ScaleId, TimbreId } from "../model/types";
+import { importMidi } from "../../midi/midiio";
+import { demoProject, emptyProject } from "../../model/demo";
+import type { Project, ScaleId, TimbreId } from "../../model/types";
 import { odeToJoy } from "./ode";
 
 export interface Demo {

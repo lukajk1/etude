@@ -1,4 +1,4 @@
-import { sourceFor } from "../audio/sources";
+import { getSource, sourceFor } from "../audio/sources";
 import { KEYS_W, LEFT_W, zoomAt } from "../lib/geom";
 import { store } from "../model/store";
 import { TIMBRES } from "../model/timbres";
@@ -79,11 +79,19 @@ function SoundLine({ timbre }: { timbre: Track["timbre"] }) {
   const { soundSource } = useUi();
   useSignal(soundLoading); // re-check once sounds finish loading
   const playing = sourceFor(soundSource, timbre);
+  const chosen = getSource(soundSource);
   const fallback = playing.id !== soundSource;
   const credit = playing.credit?.(timbre);
+  const loading = fallback && chosen.supports(timbre);
   return (
     <div className="insp-sound">
-      {fallback ? "Synth (no recording for this timbre)" : playing.id === "synth" ? "Synth" : credit}
+      {loading
+        ? `Loading the ${chosen.name.toLowerCase()} sound; the synth plays until it's ready.`
+        : fallback
+          ? "Synth (no recording for this timbre)"
+          : playing.id === "synth"
+            ? "Synth"
+            : credit}
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import { EXERCISES, type Exercise } from "../exercises/catalog";
-import { PASS_SCORE, type Issue } from "../exercises/grade";
-import { checkWork, focused, focusIssue, lastCheck, openExercise, progress, resetWork, studentTrack } from "../exercises/state";
+import { EXERCISES, type Exercise } from "./exercises/catalog";
+import { PASS_SCORE, type Issue } from "./exercises/grade";
+import { checkWork, focused, focusIssue, lastCheck, progress, resetWork, studentTrack } from "./exercises/state";
+import { go } from "./route";
 import { useProject } from "../model/store";
 import { ticksPerBar } from "../model/types";
 import { useSignal } from "../model/ui";
@@ -91,7 +92,7 @@ export function ExercisePanel({ ex }: { ex: Exercise }) {
             </ul>
           )}
           {result.passed && next && (
-            <button className="btn ex-next" onClick={() => openExercise(next)}>
+            <button className="btn ex-next" onClick={() => go({ kind: "exercise", id: next.id })}>
               Next: {next.number} {next.title}
             </button>
           )}

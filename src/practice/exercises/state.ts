@@ -1,9 +1,9 @@
-import { stop } from "../audio/live";
-import { store } from "../model/store";
-import type { Note, Project, Track } from "../model/types";
-import { Signal, ui } from "../model/ui";
+import { stop } from "../../audio/live";
+import { store } from "../../model/store";
+import type { Note, Project, Track } from "../../model/types";
+import { Signal, ui } from "../../model/ui";
+import { focusedNotes, marks } from "../../model/marks";
 import { exerciseProject, getExercise, type Exercise } from "./catalog";
-import { activeDrill } from "../drills/state";
 import type { Issue, Result, Severity } from "./grade";
 
 export interface Checked {
@@ -15,8 +15,6 @@ export interface Checked {
 
 /** The latest check, if any. */
 export const lastCheck = new Signal<Checked | null>(null);
-/** Notes to outline in the piano roll, by id. */
-export const marks = new Signal<Map<string, Severity>>(new Map());
 /** The issue the user clicked, drawn more strongly. */
 export const focused = new Signal<Issue | null>(null);
 
@@ -77,17 +75,19 @@ function clearResults() {
   lastCheck.set(null);
   marks.set(new Map());
   focused.set(null);
+  focusedNotes.set([]);
 }
 
 // ---- Actions -----------------------------------------------------------------
 
+/** Open an exercise, or pick up where you left off if it's the one already in progress. */
 export function openExercise(ex: Exercise) {
   stop();
-  activeDrill.set(null);
-  const p = exerciseProject(ex);
-  store.replace(p);
-  clearResults();
-  const student = studentTrack(p);
+  if (store.project.exercise?.id !== ex.id) {
+    store.replace(exerciseProject(ex));
+    clearResults();
+  }
+  const student = studentTrack(store.project);
   ui.set({
     selectedTrackId: student?.id ?? null,
     selectedNoteIds: new Set(),
@@ -112,6 +112,7 @@ export function checkWork(): Result | null {
   }
   marks.set(m);
   focused.set(null);
+  focusedNotes.set([]);
   if (!result.blocking) record(ex.id, result);
   return result;
 }
@@ -133,6 +134,7 @@ export function focusIssue(issue: Issue) {
   const p = store.project;
   const student = studentTrack(p);
   focused.set(issue);
+  focusedNotes.set(issue.noteIds);
   const mine = new Set(student ? student.notes.filter((n) => issue.noteIds.includes(n.id)).map((n) => n.id) : []);
   ui.set({ cursorTick: issue.tick, selectedTrackId: student?.id ?? ui.state.selectedTrackId, selectedNoteIds: mine });
 }

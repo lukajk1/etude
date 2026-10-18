@@ -1,5 +1,5 @@
-import { ticksPerBar, type Note, type Project, type ScaleId, type Track } from "../model/types";
-import { intervalName, noteName, pcName, SCALES, usesFlats } from "../theory/theory";
+import { ticksPerBar, type Note, type Project, type ScaleId, type Track } from "../../model/types";
+import { intervalName, noteName, pcName, SCALES, usesFlats } from "../../theory/theory";
 
 /**
  * Rule checks for counterpoint exercises, following the strict two-voice style taught

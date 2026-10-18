@@ -1,15 +1,33 @@
 # Etude
 
-A sketchpad for the building blocks of Western music. Place notes in a piano roll,
-spread them across lanes of orchestral instruments, and hear what you wrote.
+A sketchpad and practice room for the building blocks of Western music. Two apps share one
+codebase:
 
-**Try it: [lukajk1.github.io/etude](https://lukajk1.github.io/etude/)** (runs entirely in
-the browser; click anywhere once to allow audio).
+- **Etude Studio:** place notes in a piano roll, spread them across lanes of orchestral
+  instruments, read them back as a score, and hear what you wrote.
+  **[lukajk1.github.io/etude](https://lukajk1.github.io/etude/)**
+- **Etude Practice Room:** timed drills, ear training, transcription and graded counterpoint
+  exercises for the foundations of tonal music.
+  **[lukajk1.github.io/etude/practice](https://lukajk1.github.io/etude/practice/)**
+
+Both run entirely in the browser (click anywhere once to allow audio).
 
 ```
 npm install
-npm run dev        # http://localhost:4820
+npm run dev        # Studio at http://localhost:4820, Practice Room at /practice/
 ```
+
+### Code layout
+
+| Folder | What's in it |
+|---|---|
+| `src/studio/` | Studio only: its toolbar, file menu, demos |
+| `src/practice/` | Practice Room only: home page, drills, transcription, counterpoint exercises, graders |
+| `src/components/` | Shared editor: piano roll, lanes, score, overview, transport and sound controls |
+| `src/audio/`, `src/model/`, `src/theory/`, `src/notation/`, `src/midi/`, `src/lib/` | Shared engine: sound sources, project model, theory and spelling, engraving, MIDI |
+
+Each app keeps its own autosaved project (they share the sound and volume settings), so an
+exercise in progress never overwrites what you're composing in Studio.
 
 ## Sound sources
 
@@ -75,9 +93,10 @@ The Synth source builds every sound in the browser (Web Audio via Tone.js).
   at most two voices, and the clef is picked from the lane's range. Engraving uses
   [VexFlow](https://github.com/0xfe/vexflow) (MIT).
 
-## Exercises
+## Practice Room
 
-**Exercises** in the toolbar opens two kinds of practice.
+The Practice Room's home page lists every unit with your progress, and suggests what to do
+next. Best scores are saved in the browser.
 
 **Unit 0, Foundations** is timed drills for the fundamentals that counterpoint and harmony
 rely on. Each round is 20 questions; wrong answers show the reasoning (letter names counted,
@@ -100,6 +119,14 @@ half steps compared), and the round is graded against accuracy and speed targets
 Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,
 with spelling handled properly (A♯ and B♭ are different answers).
+
+**Transcription** (melodic dictation): a melody plays, and you write it down by ear in a
+piano roll, in C major with the first note given. The seven melodies (Hot Cross Buns, Mary Had
+a Little Lamb, Ode to Joy, Twinkle, Jingle Bells, Frère Jacques, Amazing Grace) are ordered so
+each adds only an interval or two. Checking lines your notes up with the melody even if you
+skip or add one, accepts a version written in another key (it grades the intervals), and
+explains each wrong note in interval terms. It also tracks which intervals you miss most and
+shows them on the home page. You can reveal the answer in a locked lane to compare.
 
 **Unit 1** covers counterpoint essentials in the strict style of Fux's *Gradus ad
 Parnassum* (1725):

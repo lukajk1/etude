@@ -1,9 +1,11 @@
 import { produce, type Draft } from "immer";
 import { useSyncExternalStore } from "react";
 import type { Project } from "./types";
-import { demoProject } from "./demo";
+import { demoProject, emptyProject } from "./demo";
 
-const STORAGE_KEY = "etude.project.v1";
+/** Which app this page is (set by a meta tag in its HTML): each keeps its own autosave. */
+export const APP = document.querySelector<HTMLMetaElement>('meta[name="etude-app"]')?.content ?? "studio";
+const STORAGE_KEY = APP === "practice" ? "etude.practice.project.v1" : "etude.project.v1";
 const HISTORY_LIMIT = 200;
 
 type Listener = () => void;
@@ -22,7 +24,7 @@ class ProjectStore {
   private saveTimer = 0;
 
   constructor() {
-    this.project = loadSaved() ?? demoProject();
+    this.project = loadSaved() ?? (APP === "practice" ? emptyProject() : demoProject());
   }
 
   subscribe = (fn: Listener) => {

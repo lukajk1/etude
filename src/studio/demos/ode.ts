@@ -1,5 +1,5 @@
-import { makeTrack } from "../model/demo";
-import { newId, PPQ, type Note, type Project } from "../model/types";
+import { makeTrack } from "../../model/demo";
+import { newId, PPQ, type Note, type Project } from "../../model/types";
 
 /**
  * A short arrangement of the "Ode to Joy" theme from the finale of Beethoven's Ninth,

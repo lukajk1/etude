@@ -7,7 +7,7 @@ import { store, useProject } from "../model/store";
 import { TIMBRES } from "../model/timbres";
 import { newId, ticksPerBar, ticksPerBeat, type Note, type Track } from "../model/types";
 import { hover, ui, useUi } from "../model/ui";
-import { focused, marks } from "../exercises/state";
+import { focusedNotes, marks } from "../model/marks";
 import { DRUM_NAMES, isBlackKey, noteName, scaleDegree, usesFlats } from "../theory/theory";
 import { Inspector } from "./Inspector";
 import { Ruler } from "./Ruler";
@@ -100,7 +100,7 @@ export function PianoRoll() {
       g.fillRect(x0, 0, tickToX(p.loop.end) - x0, h);
     }
 
-    const focusedIds = new Set(focused.value?.noteIds ?? []);
+    const focusedIds = new Set(focusedNotes.value);
     // Other lanes, faintly, so you can write against them.
     if (st.showGhosts && !isDrum) {
       for (const other of p.tracks) {
@@ -246,7 +246,7 @@ export function PianoRoll() {
   });
 
   useEffect(() => {
-    const unsubs = [marks.subscribe(() => grid.invalidate()), focused.subscribe(() => grid.invalidate())];
+    const unsubs = [marks.subscribe(() => grid.invalidate()), focusedNotes.subscribe(() => grid.invalidate())];
     return () => unsubs.forEach((u) => u());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

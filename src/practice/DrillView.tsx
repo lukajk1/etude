@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
 import { playNotes, preparePiano } from "../audio/live";
-import { DRILLS, EAR_INTERVALS, ROUND_LENGTH, SOLFEGE, type AnswerType, type Drill, type Question, type StaffSpec, type Step } from "../drills/catalog";
-import { activeDrill } from "../drills/state";
-import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vfKey } from "../drills/theory";
-import { progress, recordProgress } from "../exercises/state";
+import { DRILLS, EAR_INTERVALS, ROUND_LENGTH, SOLFEGE, type AnswerType, type Drill, type Question, type StaffSpec, type Step } from "./drills/catalog";
+import { go } from "./route";
+import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vfKey } from "./drills/theory";
+import { progress, recordProgress } from "./exercises/state";
 import { useSignal } from "../model/ui";
 
 // ---- Staff --------------------------------------------------------------------
@@ -197,8 +197,7 @@ function passMarks(d: Drill) {
   return `${Math.round(d.pass.accuracy * 100)}% correct${d.pass.medianSec ? `, answering in ${d.pass.medianSec} s or less (median)` : ""}`;
 }
 
-export default function DrillView() {
-  const id = useSignal(activeDrill);
+export default function DrillView({ id }: { id: string }) {
   const drill = DRILLS.find((d) => d.id === id)!;
   const best = useSignal(progress)[drill.id];
   const [phase, setPhase] = useState<"intro" | "run" | "done">("intro");
@@ -334,8 +333,8 @@ export default function DrillView() {
           <div className="drill-number">Foundations, drill {drill.number}</div>
           <h2 className="drill-title">{drill.title}</h2>
         </div>
-        <button className="btn" onClick={() => activeDrill.set(null)}>
-          Back to the editor
+        <button className="btn" onClick={() => go({ kind: "home" })}>
+          Back to the Practice Room
         </button>
       </div>
 
@@ -454,7 +453,7 @@ export default function DrillView() {
               Go again
             </button>
             {results.passed && DRILLS[DRILLS.indexOf(drill) + 1] && (
-              <button className="btn" onClick={() => activeDrill.set(DRILLS[DRILLS.indexOf(drill) + 1].id)}>
+              <button className="btn" onClick={() => go({ kind: "drill", id: DRILLS[DRILLS.indexOf(drill) + 1].id })}>
                 Next drill
               </button>
             )}

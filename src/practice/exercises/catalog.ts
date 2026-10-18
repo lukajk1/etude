@@ -1,5 +1,5 @@
-import { makeTrack } from "../model/demo";
-import { newId, PPQ, type Project, type ScaleId, type TimbreId } from "../model/types";
+import { makeTrack } from "../../model/demo";
+import { newId, PPQ, type Project, type ScaleId, type TimbreId } from "../../model/types";
 import { gradeCantus, gradeFirstSpecies, gradeSecondSpecies, type GradeInput, type Result } from "./grade";
 
 export interface Exercise {
