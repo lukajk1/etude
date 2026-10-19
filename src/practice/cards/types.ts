@@ -28,7 +28,8 @@ export interface Card {
   label: string;
   /** Short text for the mastery grid. */
   cell: string;
-  show(pool: string, clef: Clef): Shown;
+  /** `types` is what's selected in the deck, for decks whose answer choices follow it. */
+  show(pool: string, clef: Clef, types: string[]): Shown;
 }
 
 export interface DeckDef {
@@ -52,6 +53,10 @@ export interface DeckDef {
   drills?: string[];
   tag?: string;
   defaults: { pool: string; types: string[] };
+  /** One-click selections of card types, e.g. "3rds only". */
+  presets?: { label: string; types: string[] }[];
+  /** The fewest card types that can be selected (default 1). */
+  minTypes?: number;
   build(pool: string, types: string[]): Card[];
   /** The mastery grid: column headings, then a row of cards per direction. */
   grid(pool: string, cards: Card[]): { cols: string[]; rows: { label: string; cards: Card[] }[] };

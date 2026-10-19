@@ -136,7 +136,7 @@ repeating:
 | Intervals in semitones | interval ↔ number of semitones | 3rds, 4th, tritone, 5th, octave |
 | 0.6 Name triads | each quality in each position | root position |
 | 0.7 Build triads | each root and quality | natural roots |
-| 0.8 Hear intervals | each interval by ear | 3rds, 4th, 5th, octave |
+| 0.8 Hear intervals | each interval by ear; check any set, and the answer buttons are just those | presets: 3rds, 4th and 5th, essentials, all 12 |
 | 0.10–0.11 Hear chord quality, scale degrees | each quality, each degree | |
 
 Each deck lets you choose which directions or groups to study. A drill's intro screen links

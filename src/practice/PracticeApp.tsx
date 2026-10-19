@@ -19,6 +19,7 @@ import { useProject } from "../model/store";
 
 const DrillView = lazy(() => import("./DrillView"));
 const CardsView = lazy(() => import("./CardsView"));
+const IntervalTrainer = lazy(() => import("./IntervalTrainer"));
 
 function Header({ title, editor = false }: { title?: string; editor?: boolean }) {
   return (
@@ -123,6 +124,23 @@ function CardsScreen({ id }: { id: string }) {
   );
 }
 
+function TrainerScreen({ id }: { id: string }) {
+  useEffect(() => {
+    if (id !== "intervals") go({ kind: "home" });
+  }, [id]);
+  if (id !== "intervals") return null;
+  return (
+    <div className="app" style={{ gridTemplateRows: "auto 1fr" }}>
+      <Header title="Interval trainer" />
+      <div className="main">
+        <Suspense fallback={<div className="drill">Loading…</div>}>
+          <IntervalTrainer />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
 export function PracticeApp() {
   const route = useRoute();
   useEffect(() => {
@@ -139,6 +157,8 @@ export function PracticeApp() {
       return <TranscriptionScreen key={route.id} id={route.id} />;
     case "cards":
       return <CardsScreen key={route.id} id={route.id} />;
+    case "train":
+      return <TrainerScreen key={route.id} id={route.id} />;
     default:
       return (
         <div className="app pr-app" style={{ gridTemplateRows: "auto 1fr" }}>

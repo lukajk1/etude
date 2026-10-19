@@ -115,6 +115,21 @@ export function Home() {
       )}
 
       <section className="pr-unit">
+        <h2 className="pr-h2">Free practice</h2>
+        <ul className="pr-list">
+          <li>
+            <button className="pr-row" onClick={() => go({ kind: "train", id: "intervals" })}>
+              <span className="pr-num">♪</span>
+              <span className="pr-row-main">
+                <span className="pr-row-title">Interval trainer</span>
+                <span className="pr-row-summary">Pick the intervals and how they're played. Replay and compare as long as you like, then move on when you're ready.</span>
+              </span>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <section className="pr-unit">
         <h2 className="pr-h2">Flashcards</h2>
         <p className="pr-blurb">Every drill as a flashcard deck, with spaced review: the cards you miss come back sooner, the ones you know well days or weeks later.</p>
         <ul className="pr-list">

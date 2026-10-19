@@ -44,19 +44,25 @@ interface FactDeck {
   /** Directions or groups, each a row of the mastery grid. One means no choice. */
   types: { id: string; label: string; hint: string }[];
   defaults: { pool: string; types: string[] };
+  presets?: { label: string; types: string[] }[];
+  minTypes?: number;
+  /** A card's saved id, if not the default. */
+  cardId?(type: string, fact: string): string;
+  /** One grid row for all cards, instead of a row per type. */
+  oneRow?: string;
   facts(type: string, pool: string): string[];
   label(type: string, fact: string): string;
   cell(type: string, fact: string): string;
-  question(type: string, fact: string, pool: string): Question & { display?: string };
+  question(type: string, fact: string, pool: string, types: string[]): Question & { display?: string };
 }
 
 function factDeck(o: FactDeck): DeckDef {
   const card = (type: string, fact: string): Card => ({
-    id: o.types.length > 1 ? `${o.id}:${type}:${fact}` : `${o.id}:${fact}`,
+    id: o.cardId?.(type, fact) ?? (o.types.length > 1 ? `${o.id}:${type}:${fact}` : `${o.id}:${fact}`),
     type,
     label: o.label(type, fact),
     cell: o.cell(type, fact),
-    show: (pool) => o.question(type, fact, pool),
+    show: (pool, _clef, types) => o.question(type, fact, pool, types),
   });
   return {
     id: o.id,
@@ -72,10 +78,14 @@ function factDeck(o: FactDeck): DeckDef {
     types: o.types,
     clefs: false,
     defaults: o.defaults,
+    presets: o.presets,
+    minTypes: o.minTypes,
     build: (pool, types) => o.types.filter((t) => types.includes(t.id)).flatMap((t) => o.facts(t.id, pool).map((f) => card(t.id, f))),
     grid: (_pool, cards) => ({
       cols: [],
-      rows: o.types.map((t) => ({ label: t.label, cards: cards.filter((c) => c.type === t.id) })).filter((r) => r.cards.length),
+      rows: o.oneRow
+        ? [{ label: o.oneRow, cards }]
+        : o.types.map((t) => ({ label: t.label, cards: cards.filter((c) => c.type === t.id) })).filter((r) => r.cards.length),
     }),
   };
 }
@@ -216,23 +226,37 @@ export const BUILD_TRIADS_DECK = factDeck({
   question: (q, root) => buildTriadQuestion(q as TriadQuality, root),
 });
 
-const earSemis = (pool: string) => (pool === "full" ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : [3, 4, 5, 7, 12]);
+const ALL_SEMIS = range(1, 12);
 
+/** Each interval is its own type, so any set can be checked, and the answer buttons are just those. */
 export const HEAR_INTERVALS_DECK = factDeck({
   id: "hear-intervals",
   title: "Hear intervals",
-  summary: "Intervals by ear; each interval is a card.",
-  brief: "Listen to two notes and name the interval. Each interval is a card, played from a different note each time. Start with the essentials, the perfect intervals and 3rds.",
+  summary: "Intervals by ear; pick any set to drill, like just the two 3rds.",
+  brief: "Listen to two notes and name the interval. Check the intervals to drill: the answer buttons are just those, so checking two (say, the minor and major 3rd) drills that pair. Each interval is a card, played from a different note each time.",
   tag: "0.8",
   drills: ["d-ear-intervals-basic", "d-ear-intervals-all"],
   ear: true,
-  pools: corePool("Essentials: 3rds, 4th, 5th, octave", "All 12"),
-  types: one("Intervals"),
-  defaults: { pool: "core", types: ["all"] },
-  facts: (_t, pool) => earSemis(pool).map(String),
-  label: (_t, s) => EAR_INTERVALS[Number(s)].label,
-  cell: (_t, s) => EAR_INTERVALS[Number(s)].code,
-  question: (_t, s, pool) => earIntervalQuestion(Number(s), earSemis(pool).map((x) => EAR_INTERVALS[x].code)),
+  pools: [{ value: "full", label: "Chosen intervals" }],
+  types: ALL_SEMIS.map((s) => ({ id: s, label: EAR_INTERVALS[Number(s)].label, hint: `${s} semitones` })),
+  defaults: { pool: "full", types: ["3", "4", "5", "7", "12"] },
+  presets: [
+    { label: "3rds", types: ["3", "4"] },
+    { label: "4th and 5th", types: ["5", "7"] },
+    { label: "Essentials", types: ["3", "4", "5", "7", "12"] },
+    { label: "All 12", types: ALL_SEMIS },
+  ],
+  minTypes: 2,
+  cardId: (s) => `hear-intervals:${s}`,
+  oneRow: "Intervals",
+  facts: (s) => [s],
+  label: (s) => EAR_INTERVALS[Number(s)].label,
+  cell: (s) => EAR_INTERVALS[Number(s)].code,
+  question: (s, _f, _pool, types) =>
+    earIntervalQuestion(
+      Number(s),
+      ALL_SEMIS.filter((x) => types.includes(x)).map((x) => EAR_INTERVALS[Number(x)].code),
+    ),
 });
 
 export const HEAR_CHORDS_DECK = factDeck({

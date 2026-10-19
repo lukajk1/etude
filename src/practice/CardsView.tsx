@@ -115,7 +115,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
     const card = pickNext(deck, recent.current, settings.order);
     recent.current = [...recent.current.slice(-4), card.id];
     const clef = settings.clef === "both" ? (Math.random() < 0.5 ? "treble" : "bass") : settings.clef;
-    setShowing({ card, shown: card.show(settings.pool, clef) });
+    setShowing({ card, shown: card.show(settings.pool, clef, settings.types) });
     setChosen(null);
     setGiven([]);
     setRevealMs(null);
@@ -230,7 +230,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
 
   const toggleType = (t: string) => {
     const types = settings.types.includes(t) ? settings.types.filter((x) => x !== t) : [...settings.types, t];
-    if (types.length) setCardSettings({ types });
+    if (types.length >= (def.minTypes ?? 1)) setCardSettings({ types });
   };
 
   const correctCount = answered.filter((a) => a.ok).length;
@@ -263,12 +263,27 @@ export default function CardsView({ def }: { def: DeckDef }) {
             {def.types.length > 1 && (
               <>
                 <span className="cards-opt-label">Cards</span>
-                <div className="cards-checks">
-                  {def.types.map((t) => (
-                    <label key={t.id} title={t.hint}>
-                      <input type="checkbox" checked={settings.types.includes(t.id)} onChange={() => toggleType(t.id)} /> {t.label}
-                    </label>
-                  ))}
+                <div>
+                  <div className="cards-checks">
+                    {def.types.map((t) => (
+                      <label key={t.id} title={t.hint}>
+                        <input type="checkbox" checked={settings.types.includes(t.id)} onChange={() => toggleType(t.id)} /> {t.label}
+                      </label>
+                    ))}
+                  </div>
+                  {def.presets && (
+                    <div className="cards-presets">
+                      {def.presets.map((p) => (
+                        <button
+                          key={p.label}
+                          className={`btn${p.types.length === settings.types.length && p.types.every((t) => settings.types.includes(t)) ? " is-on" : ""}`}
+                          onClick={() => setCardSettings({ types: p.types })}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </>
             )}
