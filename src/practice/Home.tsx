@@ -1,61 +1,121 @@
+import { useRef, useState } from "react";
+import { exportProgress, importProgress, lastBackup } from "../lib/backup";
+import { useSignal } from "../model/ui";
+import { DECKS, deckSettings, settingsFor } from "./cards/decks";
+import { cardStates, summarize } from "./cards/srs";
 import { DRILLS, type Drill } from "./drills/catalog";
 import { EXERCISES, ROADMAP } from "./exercises/catalog";
 import { progress, type Progress } from "./exercises/state";
 import { go, type Route } from "./route";
-import { intervalsUsed, intervalShort, MELODIES } from "./transcription/melodies";
+import { intervalShort, MELODIES } from "./transcription/melodies";
 import { intervalStats, weakestIntervals } from "./transcription/state";
-import { DECKS, deckSettings, settingsFor } from "./cards/decks";
-import { cardStates, summarize } from "./cards/srs";
-import { useRef, useState } from "react";
-import { exportProgress, importProgress, lastBackup } from "../lib/backup";
-import { useSignal } from "../model/ui";
+
+/**
+ * The Practice Room home: what to do today, then the course as compact topic rows with a
+ * chip per checkpoint, the flashcard decks as tiles, and the roadmap and backups at the end.
+ */
 
 interface Item {
   route: Route;
   number: string;
   title: string;
   summary: string;
-  kind: string;
-  extra?: string[];
+  /** What sets it apart within its topic ("treble clef"), for the topic row. */
+  detail: string;
 }
 
-const written = DRILLS.filter((d) => !d.ear && !d.unit);
-const ear = DRILLS.filter((d) => d.ear && !d.unit);
-const harmony = DRILLS.filter((d) => d.unit === "harmony");
-const drillItem = (d: Drill, kind: string): Item => ({ route: { kind: "drill", id: d.id }, number: d.number, title: d.title, summary: d.summary, kind });
-const UNITS: { title: string; blurb: string; items: Item[] }[] = [
-  {
-    title: "Foundations: reading and theory",
-    blurb: "Timed drills for notes, keys, scales, intervals and triads, each graded on accuracy and speed. Each topic is split into small checkpoints (a, b, c…), so you can pass the first step before the whole thing.",
-    items: written.map((d) => drillItem(d, "Reading drill")),
-  },
-  {
-    title: "Foundations: ear training",
-    blurb: "Intervals, chord qualities and scale degrees by ear, played on your chosen piano sound. Intervals go ascending, then descending, then together, then mixed.",
-    items: ear.map((d) => drillItem(d, "Ear drill")),
-  },
+interface Topic {
+  number: string;
+  title: string;
+  items: Item[];
+}
+
+interface Unit {
+  title: string;
+  /** Shown on its Up next card. */
+  kind: string;
+  topics: Topic[];
+}
+
+/** Drills by topic: "0.1a Read notes: treble clef" is topic 0.1, "Read notes", checkpoint a. */
+function drillTopics(filter: (d: Drill) => boolean): Topic[] {
+  const topics: Topic[] = [];
+  for (const d of DRILLS.filter(filter)) {
+    const number = d.number.replace(/[a-z]$/, "");
+    const [title, detail = d.summary] = d.title.split(": ");
+    let t = topics.find((x) => x.number === number);
+    if (!t) topics.push((t = { number, title, items: [] }));
+    t.items.push({ route: { kind: "drill", id: d.id }, number: d.number, title: d.title, summary: d.summary, detail });
+  }
+  return topics;
+}
+
+function counterpointTopics(): Topic[] {
+  const kind = (title: string) => (/cantus firmus/i.test(title) ? "Cantus firmus" : /first species/i.test(title) ? "First species" : /second species/i.test(title) ? "Second species" : "Exercises");
+  const topics: Topic[] = [];
+  for (const e of EXERCISES) {
+    const title = kind(e.title);
+    let t = topics.find((x) => x.title === title);
+    if (!t) topics.push((t = { number: e.number, title, items: [] }));
+    t.items.push({ route: { kind: "exercise", id: e.id }, number: e.number, title: e.title, summary: e.summary, detail: e.title });
+  }
+  return topics;
+}
+
+const UNITS: Unit[] = [
+  { title: "Foundations: reading and theory", kind: "Reading drill", topics: drillTopics((d) => !d.ear && !d.unit) },
+  { title: "Foundations: ear training", kind: "Ear drill", topics: drillTopics((d) => d.ear && !d.unit) },
   {
     title: "Transcription",
-    blurb: "Write down melodies by ear. Each one adds only an interval or two, so you can build up a few at a time.",
-    items: MELODIES.map((m) => ({ route: { kind: "transcribe", id: m.id }, number: m.number, title: m.title, summary: m.summary, kind: "Transcription", extra: intervalsUsed(m) })),
+    kind: "Transcription",
+    topics: [
+      {
+        number: "T",
+        title: "Melodies by ear",
+        items: MELODIES.map((m) => ({ route: { kind: "transcribe", id: m.id }, number: m.number, title: m.title, summary: m.summary, detail: m.title })),
+      },
+    ],
   },
-  {
-    title: "Hearing harmony",
-    blurb: "Chords by their role in the key, I, IV, V, then vi and ii, first alone after a cadence, then in short progressions.",
-    items: harmony.map((d) => drillItem(d, "Harmony by ear")),
-  },
-  {
-    title: "Counterpoint essentials",
-    blurb: "Write lines against a given melody in the strict style of Fux, graded against the classic rules.",
-    items: EXERCISES.map((e) => ({ route: { kind: "exercise", id: e.id }, number: e.number, title: e.title, summary: e.summary, kind: "Counterpoint" })),
-  },
+  { title: "Hearing harmony", kind: "Harmony by ear", topics: drillTopics((d) => d.unit === "harmony") },
+  { title: "Counterpoint essentials", kind: "Counterpoint", topics: counterpointTopics() },
 ];
 
 const routeId = (r: Route) => (r.kind === "home" ? "" : r.id);
+const unitItems = (u: Unit) => u.topics.flatMap((t) => t.items);
 
-function Status({ p }: { p?: Progress }) {
-  if (!p) return <span className="pr-status">Not started</span>;
-  return <span className={`pr-status${p.passed ? " is-pass" : ""}`}>{p.passed ? "Passed" : `Best ${p.best}`}</span>;
+function statusText(p?: Progress) {
+  return !p ? "not started" : p.passed ? "passed" : `best ${p.best}%`;
+}
+
+/** A checkpoint's chip label: its letter within the topic, or its own number. */
+const chipLabel = (topic: Topic, it: Item) => (/[a-z]$/.test(it.number) && it.number.startsWith(topic.number) ? it.number.slice(-1) : it.number);
+
+function TopicRow({ topic, prog }: { topic: Topic; prog: Record<string, Progress> }) {
+  const next = topic.items.find((it) => !prog[routeId(it.route)]?.passed);
+  // Mark the next checkpoint only in topics already underway, so untouched ones stay quiet.
+  const started = topic.items.some((it) => prog[routeId(it.route)]);
+  return (
+    <li className="pr-topic">
+      <button className="pr-topic-main" onClick={() => go((next ?? topic.items[0]).route)} title={next ? `Open ${next.number} ${next.title}` : undefined}>
+        <span className="pr-num">{topic.number}</span>
+        <span className="pr-topic-text">
+          <span className="pr-row-title">{topic.title}</span>
+          <span className="pr-row-summary">{next ? `Next: ${next.detail}` : "All passed"}</span>
+        </span>
+      </button>
+      <span className="pr-chips">
+        {topic.items.map((it) => {
+          const p = prog[routeId(it.route)];
+          const cls = p?.passed ? " is-pass" : p ? " is-tried" : started && it === next ? " is-next" : "";
+          return (
+            <button key={it.number} className={`pr-chip${cls}`} title={`${it.number} ${it.title}: ${statusText(p)}`} onClick={() => go(it.route)}>
+              {chipLabel(topic, it)}
+            </button>
+          );
+        })}
+      </span>
+    </li>
+  );
 }
 
 export function Home() {
@@ -65,32 +125,43 @@ export function Home() {
   const cardPrefs = useSignal(deckSettings);
   useSignal(cardStates);
 
-  // Up next: the first unpassed item in each of the first four tracks.
+  // Up next: the first unpassed item in each of the first four units.
   const upNext = UNITS.slice(0, 4)
-    .map((u) => u.items.find((it) => !prog[routeId(it.route)]?.passed))
-    .filter((x): x is Item => !!x);
+    .map((u) => {
+      const it = unitItems(u).find((x) => !prog[routeId(x.route)]?.passed);
+      return it && { ...it, kind: u.kind };
+    })
+    .filter((x): x is Item & { kind: string } => !!x);
 
-  const passed = UNITS.flatMap((u) => u.items).filter((it) => prog[routeId(it.route)]?.passed).length;
-  const total = UNITS.reduce((n, u) => n + u.items.length, 0);
+  const all = UNITS.flatMap(unitItems);
+  const passed = all.filter((it) => prog[routeId(it.route)]?.passed).length;
+
+  const decks = DECKS.map((deck) => {
+    const prefs = settingsFor(deck, cardPrefs);
+    return { deck, sum: summarize(deck.build(prefs.pool, prefs.types)) };
+  });
+  const due = decks.filter((d) => d.sum.due > 0);
 
   return (
     <main className="pr-home">
       <section className="pr-hero">
-        <h1>Practice Room</h1>
-        <p>Drills, ear training, transcription and graded exercises for the foundations of tonal music. Ten to twenty minutes a day goes a long way.</p>
-        <div className="pr-overall" aria-label="Overall progress">
-          <div className="pr-overall-bar">
-            <div style={{ width: `${(passed / total) * 100}%` }} />
+        <div className="pr-hero-top">
+          <h1>Practice Room</h1>
+          <div className="pr-overall" aria-label="Overall progress">
+            <div className="pr-overall-bar">
+              <div style={{ width: `${(passed / all.length) * 100}%` }} />
+            </div>
+            <span>
+              {passed} of {all.length} passed
+            </span>
           </div>
-          <span>
-            {passed} of {total} passed
-          </span>
         </div>
+        <p>Drills, ear training, transcription and graded exercises for the foundations of tonal music. Ten to twenty minutes a day goes a long way.</p>
       </section>
 
-      {upNext.length > 0 && (
-        <section>
-          <h2 className="pr-h2">Up next</h2>
+      <section className="pr-today">
+        <h2 className="pr-h2">Today</h2>
+        {upNext.length > 0 && (
           <div className="pr-next">
             {upNext.map((it) => (
               <button key={routeId(it.route)} className="pr-next-card" onClick={() => go(it.route)}>
@@ -99,114 +170,101 @@ export function Home() {
                   {it.number} {it.title}
                 </span>
                 <span className="pr-next-summary">{it.summary}</span>
-                <Status p={prog[routeId(it.route)]} />
               </button>
             ))}
           </div>
-        </section>
-      )}
-
-      {weak.length > 0 && (
-        <section className="pr-weak">
-          <h2 className="pr-h2">Intervals to work on</h2>
-          <p className="pr-blurb">From your transcriptions so far. Drills 0.8 and 0.9 practice them on their own.</p>
-          <div className="pr-weak-list">
-            {weak.map((w) => (
-              <span key={w.semitones} className="pr-weak-item">
-                {w.semitones > 0 ? "up" : "down"} {intervalShort(w.semitones)}: {Math.round(w.rate * 100)}% of {w.ok + w.miss}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="pr-unit">
-        <h2 className="pr-h2">Free practice</h2>
-        <ul className="pr-list">
-          <li>
-            <button className="pr-row" onClick={() => go({ kind: "train", id: "intervals" })}>
-              <span className="pr-num">♪</span>
-              <span className="pr-row-main">
-                <span className="pr-row-title">Interval trainer</span>
-                <span className="pr-row-summary">Pick the intervals and how they're played. Replay and compare as long as you like, then move on when you're ready.</span>
-              </span>
-            </button>
-          </li>
-        </ul>
+        )}
+        <div className="pr-today-row">
+          <span className="pr-today-label">Flashcards</span>
+          {due.length ? (
+            due.map(({ deck, sum }) => (
+              <button key={deck.id} className="pr-due" onClick={() => go({ kind: "cards", id: deck.id })}>
+                {deck.title} <strong>{sum.due} due</strong>
+              </button>
+            ))
+          ) : (
+            <span className="pr-dim">Nothing due right now.</span>
+          )}
+          <button className="btn pr-trainer" onClick={() => go({ kind: "train", id: "intervals" })}>
+            ♪ Interval trainer
+          </button>
+        </div>
+        {weak.length > 0 && (
+          <p className="pr-dim pr-weak-line">
+            Missed most when transcribing:{" "}
+            {weak.map((w) => `${w.semitones > 0 ? "up" : "down"} ${intervalShort(w.semitones)} (${Math.round(w.rate * 100)}%)`).join(", ")}.
+          </p>
+        )}
       </section>
 
-      <section className="pr-unit">
-        <h2 className="pr-h2">Flashcards</h2>
-        <p className="pr-blurb">Every drill as a flashcard deck, with spaced review: the cards you miss come back sooner, the ones you know well days or weeks later.</p>
-        <ul className="pr-list">
-          {DECKS.map((deck) => {
-            const prefs = settingsFor(deck, cardPrefs);
-            const cards = summarize(deck.build(prefs.pool, prefs.types));
+      <section>
+        <h2 className="pr-h2">Course</h2>
+        <p className="pr-blurb">Each topic is split into checkpoints, narrow first. Click a topic to open its next checkpoint, or a chip to open that one.</p>
+        <div className="pr-units">
+          {UNITS.map((u) => {
+            const items = unitItems(u);
+            const done = items.filter((it) => prog[routeId(it.route)]?.passed).length;
             return (
-              <li key={deck.id}>
-                <button className="pr-row" onClick={() => go({ kind: "cards", id: deck.id })}>
-                  <span className="pr-num">{deck.tag ?? deck.icon}</span>
-                  <span className="pr-row-main">
-                    <span className="pr-row-title">{deck.title}</span>
-                    <span className="pr-row-summary">{deck.summary}</span>
+              <div key={u.title} className="pr-unit-card">
+                <div className="pr-unit-head">
+                  <h3>{u.title}</h3>
+                  <span className="pr-dim">
+                    {done} of {items.length}
                   </span>
-                  <span className={`pr-status${cards.due ? " is-due" : cards.mastered === cards.total ? " is-pass" : ""}`}>
-                    {cards.fresh === cards.total ? "Not started" : cards.due ? `${cards.due} due` : `${cards.mastered} of ${cards.total} mastered`}
-                  </span>
-                </button>
-              </li>
+                </div>
+                <ul className="pr-topics">
+                  {u.topics.map((t) => (
+                    <TopicRow key={t.number + t.title} topic={t} prog={prog} />
+                  ))}
+                </ul>
+              </div>
             );
           })}
-        </ul>
+        </div>
+        <div className="pr-legend pr-dim">
+          <span>
+            <i className="pr-chip is-pass" /> passed
+          </span>
+          <span>
+            <i className="pr-chip is-tried" /> tried
+          </span>
+          <span>
+            <i className="pr-chip is-next" /> next
+          </span>
+        </div>
       </section>
 
-      {UNITS.map((u) => (
-        <section key={u.title} className="pr-unit">
-          <h2 className="pr-h2">{u.title}</h2>
-          <p className="pr-blurb">{u.blurb}</p>
-          <ul className="pr-list">
-            {u.items.map((it) => (
-              <li key={routeId(it.route)}>
-                <button className="pr-row" onClick={() => go(it.route)}>
-                  <span className="pr-num">{it.number}</span>
-                  <span className="pr-row-main">
-                    <span className="pr-row-title">{it.title}</span>
-                    <span className="pr-row-summary">{it.summary}</span>
-                  </span>
-                  {it.extra && (
-                    <span className="tr-chips">
-                      {it.extra.map((x) => (
-                        <span key={x} className="tr-chip">
-                          {x}
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                  <Status p={prog[routeId(it.route)]} />
-                </button>
+      <section>
+        <h2 className="pr-h2">Flashcards</h2>
+        <p className="pr-blurb">A deck for each drill, with spaced review: missed cards come back sooner, known ones days or weeks later.</p>
+        <div className="pr-decks">
+          {decks.map(({ deck, sum }) => (
+            <button key={deck.id} className="pr-deck" onClick={() => go({ kind: "cards", id: deck.id })}>
+              <span className="pr-deck-top">
+                <span className="pr-deck-tag">{deck.tag ?? deck.icon}</span>
+                <span className="pr-deck-title">{deck.title}</span>
+              </span>
+              <span className={`pr-deck-status${sum.due ? " is-due" : sum.mastered === sum.total ? " is-pass" : ""}`}>
+                {sum.fresh === sum.total ? "Not started" : sum.due ? `${sum.due} due` : `${sum.mastered} of ${sum.total} mastered`}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <footer className="pr-foot">
+        <details className="pr-roadmap">
+          <summary>Coming next: {ROADMAP.map((r) => r.unit.replace(/ \(.*\)$/, "").toLowerCase()).join(", ")}</summary>
+          <ul>
+            {ROADMAP.map((r) => (
+              <li key={r.unit}>
+                <strong>{r.unit}</strong>: {r.topics}
               </li>
             ))}
           </ul>
-        </section>
-      ))}
-
-      <section className="pr-unit">
-        <h2 className="pr-h2">Coming next</h2>
-        <ul className="pr-list">
-          {ROADMAP.map((r) => (
-            <li key={r.unit}>
-              <div className="pr-row is-disabled">
-                <span className="pr-row-main">
-                  <span className="pr-row-title">{r.unit}</span>
-                  <span className="pr-row-summary">{r.topics}</span>
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <BackupSection />
+        </details>
+        <BackupSection />
+      </footer>
     </main>
   );
 }
@@ -216,33 +274,30 @@ function BackupSection() {
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   return (
-    <section className="pr-unit">
-      <h2 className="pr-h2">Your progress</h2>
-      <p className="pr-blurb">
-        Saved in this browser, which keeps it unless you clear site data. Back up to a file now and then to keep a second copy, or to move your progress
-        to another browser or computer. {last ? `Last backup: ${new Date(last).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}.` : "No backup yet."}
-      </p>
-      <div className="ex-actions">
-        <button className="btn" onClick={exportProgress}>
-          Back up to a file
-        </button>
-        <button className="btn" onClick={() => input.current?.click()}>
-          Restore from a file
-        </button>
-        <input
-          ref={input}
-          type="file"
-          accept="application/json,.json"
-          hidden
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            e.target.value = "";
-            if (!file || !confirm("Replace your saved progress with this backup?")) return;
-            setError((await importProgress(file)) ?? "");
-          }}
-        />
-      </div>
-      {error && <p className="pr-blurb pr-error">{error}</p>}
-    </section>
+    <div className="pr-backup">
+      <span className="pr-dim">
+        Progress is saved in this browser.{" "}
+        {last ? `Last backup ${new Date(last).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}.` : "No backup yet."}
+      </span>
+      <button className="btn" onClick={exportProgress}>
+        Back up to a file
+      </button>
+      <button className="btn" onClick={() => input.current?.click()}>
+        Restore
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (!file || !confirm("Replace your saved progress with this backup?")) return;
+          setError((await importProgress(file)) ?? "");
+        }}
+      />
+      {error && <span className="pr-error">{error}</span>}
+    </div>
   );
 }
