@@ -1198,19 +1198,16 @@ canvas {
   text-decoration: underline;
   cursor: pointer;
 }
-.it-after {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 10px;
+.it-last {
+  margin-top: 14px;
+  font-size: 13px;
   color: var(--text-dim);
-  font-weight: 400;
 }
-.it-next {
-  flex: none;
-  margin-left: auto;
-  min-width: 120px;
+.it-last.is-right {
+  color: var(--loop);
+}
+.it-last.is-wrong strong {
+  color: var(--text);
 }
 .drill-continue {
   margin-top: 10px;

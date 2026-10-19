@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { playNotes, preparePiano } from "../audio/live";
 import { Signal, useSignal } from "../model/ui";
 import type { AudioEvent } from "./drills/catalog";
@@ -98,31 +98,39 @@ export default function IntervalTrainer() {
   const [score, setScore] = useState({ right: 0, total: 0, streak: 0 });
   const [showSettings, setShowSettings] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  /** The previous answer, shown while the next interval plays. */
+  const [last, setLast] = useState<{ semis: number; chosen: number; mode: Mode } | null>(null);
+  const advance = useRef<ReturnType<typeof setTimeout>>(undefined);
+  /** Set the moment a question is answered, so a quick second click can't count too. */
+  const answered = useRef(false);
+  useEffect(() => () => clearTimeout(advance.current), []);
 
   useEffect(() => preparePiano(), []);
 
   const replay = useCallback(() => void playNotes(audioFor(question.low, question.semis, question.mode)), [question]);
 
   const next = useCallback(() => {
+    clearTimeout(advance.current);
+    answered.current = false;
     const q = newQuestion(settings.value, question);
     setQuestion(q);
     setChosen(null);
     void playNotes(audioFor(q.low, q.semis, q.mode));
   }, [question]);
 
+  // Answering moves straight on: a right answer at once, a wrong one after a moment to see the right button.
   const answer = (semis: number) => {
-    if (chosen !== null) {
-      // After answering, any button plays that interval from the same note, to compare.
-      void playNotes(audioFor(question.low, semis, question.mode));
-      return;
-    }
+    if (answered.current) return;
+    answered.current = true;
     const ok = semis === question.semis;
     recordAttempt({ semis: question.semis, mode: question.mode, low: question.low, ok });
     setChosen(semis);
+    setLast({ semis: question.semis, chosen: semis, mode: question.mode });
     setScore((sc) => ({ right: sc.right + (ok ? 1 : 0), total: sc.total + 1, streak: ok ? sc.streak + 1 : 0 }));
+    advance.current = setTimeout(next, ok ? 300 : 1100);
   };
 
-  // Space or R replays; Enter moves on once you've answered.
+  // Space or R replays.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey || (e.target as HTMLElement).closest("input")) return;
@@ -130,14 +138,11 @@ export default function IntervalTrainer() {
       if (e.key === " " || e.key.toLowerCase() === "r") {
         e.preventDefault();
         replay();
-      } else if (e.key === "Enter" && chosen !== null) {
-        e.preventDefault();
-        next();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [replay, next, chosen]);
+  }, [replay]);
 
   const toggleSemis = (n: number) => {
     const semis = s.semis.includes(n) ? s.semis.filter((x) => x !== n) : [...s.semis, n].sort((a, b) => a - b);
@@ -151,13 +156,13 @@ export default function IntervalTrainer() {
   // A changed setting can rule out the current question; start a fresh one.
   useEffect(() => {
     if (!s.semis.includes(question.semis) || !s.modes.includes(question.mode)) {
+      clearTimeout(advance.current);
+      answered.current = false;
       setQuestion(newQuestion(s));
       setChosen(null);
     }
   }, [s, question]);
 
-  const ok = chosen === question.semis;
-  const modeLabel = MODES.find((m) => m.id === question.mode)!.label.toLowerCase();
 
   return (
     <section className="drill" aria-label="Interval trainer">
@@ -247,30 +252,26 @@ export default function IntervalTrainer() {
           )}
         </div>
 
-        {chosen !== null && (
-          <div className={`drill-feedback ${ok ? "is-right" : "is-wrong"}`}>
-            {ok ? (
-              <>Correct: {NAMES[question.semis].toLowerCase()}, {modeLabel}.</>
+        {last && (
+          <div className={`it-last ${last.chosen === last.semis ? "is-right" : "is-wrong"}`}>
+            {last.chosen === last.semis ? (
+              <>
+                Last: {NAMES[last.semis].toLowerCase()}, {modeName(last.mode)}. Correct.
+              </>
             ) : (
               <>
-                <strong>
-                  Not quite: it was {question.semis === 12 ? "an" : "a"} {NAMES[question.semis].toLowerCase()}, {modeLabel}.
-                </strong>{" "}
-                You said {NAMES[chosen].toLowerCase()}.
+                Last: it was {last.semis === 12 ? "an" : "a"} <strong>{NAMES[last.semis].toLowerCase()}</strong>, {modeName(last.mode)}. You said{" "}
+                {NAMES[last.chosen].toLowerCase()}.
               </>
             )}
-            <div className="it-after">
-              Click any interval to hear it from the same note.
-              <button className="ex-check it-next" onClick={next} autoFocus>
-                Next (Enter)
-              </button>
-            </div>
           </div>
         )}
       </div>
     </section>
   );
 }
+
+const modeName = (m: Mode) => MODES.find((x) => x.id === m)!.label.toLowerCase();
 
 const pct = (t: Tally) => Math.round((100 * t.ok) / t.n);
 

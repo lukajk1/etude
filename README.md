@@ -171,8 +171,9 @@ JSON file, and **Restore from a file** loads it back, in this browser or another
 local dev server and the live site are separate sites, so each has its own progress.
 
 **Interval trainer** (free practice): choose any intervals and how they're played (up,
-down, together, or melodic then together), answer, then click any interval to hear it from
-the same note and compare. **Stats** shows your accuracy by register (where the two notes
+down, together, or melodic then together). Answering moves straight to the next interval
+(after a moment, if you missed, to see the right one), and a line shows what the last one
+was. **Stats** shows your accuracy by register (where the two notes
 center: low, middle or high in the trainer's D3–D5 range), split into melodic and played
 together, and says whether a register's gap from the middle is likely more than chance.
 
