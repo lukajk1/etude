@@ -58,9 +58,11 @@ function keyCard(type: KeyCardType, index: number, minor: boolean): Card {
         return {
           prompt: `Which ${minor ? "minor" : "major"} key has this signature?`,
           staff: { clef, keySig: major.code, groups: [] },
-          step: minor
-            ? { type: "minorKey", correct: rel.code, options: idx.map((k) => MINOR_KEYS[k].code) }
-            : { type: "majorKey", correct: major.code, options: idx.map((k) => MAJOR_KEYS[k].code) },
+          steps: [
+            minor
+              ? { type: "minorKey", correct: rel.code, options: idx.map((k) => MINOR_KEYS[k].code) }
+              : { type: "majorKey", correct: major.code, options: idx.map((k) => MAJOR_KEYS[k].code) },
+          ],
           explain: minor
             ? `${countText(acc)}: ${keyName(major)} major, so ${keyName(rel)} minor (a minor 3rd down).${readTrick(acc, major)}`
             : `${countText(acc)}: ${keyName(major)} major.${readTrick(acc, major)}`,
@@ -69,7 +71,7 @@ function keyCard(type: KeyCardType, index: number, minor: boolean): Card {
       return {
         prompt: "How many sharps or flats?",
         display: label,
-        step: { type: "accidentals", correct: String(acc), options: idx.map((k) => String(MAJOR_KEYS[k].accidentals)) },
+        steps: [{ type: "accidentals", correct: String(acc), options: idx.map((k) => String(MAJOR_KEYS[k].accidentals)) }],
         explain: minor
           ? `${keyName(rel)} minor is the relative minor of ${keyName(major)} major, a minor 3rd below it. They share a signature: ${countText(acc).replace(/^No/, "no")}.${buildTrick(acc, major)}`
           : `${countText(acc)}.${buildTrick(acc, major)}`,
@@ -94,6 +96,8 @@ export const KEYS_DECK: DeckDef = {
     { id: "key-sig", label: "Key → signature", hint: "See a key, say how many sharps or flats" },
   ],
   clefs: true,
+  drills: ["d-keys", "d-keys-all"],
+  tag: "0.2",
   defaults: { pool: "core", types: ["sig-major"] },
   build(pool, types) {
     const cards: Card[] = [];

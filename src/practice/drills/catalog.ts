@@ -89,7 +89,7 @@ const WRITTEN_INTERVALS = [
   "m2", "M2", "m3", "M3", "P4", "P5", "m6", "M6", "m7", "M7",
   "A4", "d5", "A2", "A5", "A6", "d7",
 ];
-const TRIAD_ROOTS = ["C", "D", "E", "F", "G", "A", "B", "Bb", "Eb", "Ab", "Db", "F#", "C#", "G#"];
+export const TRIAD_ROOTS = ["C", "D", "E", "F", "G", "A", "B", "Bb", "Eb", "Ab", "Db", "F#", "C#", "G#"];
 const TRIAD_QUALITIES: TriadQuality[] = ["major", "minor", "diminished", "augmented", "major", "minor"];
 
 const parseInterval = (code: string) => ({ q: code[0] as Quality, num: Number(code.slice(1)) });
@@ -104,6 +104,110 @@ function explainInterval(low: Spelled, high: Spelled): string {
   return `${nameOf(low)} to ${nameOf(high)} spans ${num} letter names (${letters}), so it's a ${numberName(num)}. It's ${halfSteps(semis)}, and ${ref}, so this is a ${intervalLabel(intervalCode(q, num))}.`;
 }
 
+// ---- Question builders ---------------------------------------------------------------
+// Each makes a question about one fact (a note, a scale, an interval…). The drills pick
+// the fact at random; the flashcards ask for the fact a card is about.
+
+/** Staff positions as letter + 7 × octave. Treble A3–C6, bass C2–E4. */
+export const READ_RANGE = { treble: [26, 42], bass: [14, 30] } as const;
+/** The same, without ledger lines: treble E4–F5, bass G2–A3. */
+export const ON_STAFF = { treble: [30, 38], bass: [18, 26] } as const;
+export const staffNote = (idx: number): Spelled => ({ letter: idx % 7, acc: 0, octave: Math.floor(idx / 7) });
+
+export function readNoteQuestion(clef: "treble" | "bass", idx: number): Question {
+  const note = staffNote(idx);
+  return {
+    prompt: "Name this note.",
+    staff: { clef, groups: [[note]] },
+    steps: [{ type: "letter", correct: LETTERS[note.letter] }],
+    explain: `It's ${nameOf(note, true)}. ${MNEMONIC[clef]}`,
+  };
+}
+
+export const SCALE_KINDS: ScaleKind[] = ["major", "natural minor", "harmonic minor", "melodic minor"];
+/** Keys whose scale of this kind needs no double sharps or flats. */
+export const scaleKeys = (kind: ScaleKind) =>
+  (kind === "major" ? MAJOR_KEYS : MINOR_KEYS).filter((k) => singleAccidentals(...scaleNotes(parseCode(k.code), kind)));
+
+export function scaleQuestion(kind: ScaleKind, keyCode: string, degree = randInt(2, 7)): Question {
+  const notes = scaleNotes(parseCode(keyCode), kind);
+  const answer = notes[degree - 1];
+  const label = `${nameOf(notes[0])} ${kind}`;
+  return {
+    prompt: `${label}: what is scale degree ${degree}?`,
+    steps: [{ type: "note", correct: codeOf(answer) }],
+    explain: `${label}: ${notes.map((n) => nameOf(n)).join(" ")}. Degree ${degree} is ${nameOf(answer)}.`,
+  };
+}
+
+export const COMMON_INTERVALS = ["m2", "M2", "m3", "M3", "P4", "P5", "m6", "M6", "m7", "M7", "P8"];
+export const RARE_INTERVALS = ["A4", "d5", "A2", "A5", "A6", "d7"];
+
+export function nameIntervalQuestion(code: string): Question {
+  const { q, num } = parseInterval(code);
+  for (;;) {
+    const low = parseCode(pick(LOWERS), Math.random() < 0.7 ? 4 : 3);
+    const high = above(low, q, num);
+    if (!singleAccidentals(low, high)) continue;
+    const harmonic = Math.random() < 0.4;
+    return {
+      prompt: "Name this interval.",
+      staff: { clef: clefFor([low]), groups: harmonic ? [[low, high]] : [[low], [high]] },
+      steps: [{ type: "interval", correct: intervalCode(q, num) }],
+      explain: explainInterval(low, high),
+    };
+  }
+}
+
+export function buildIntervalQuestion(code: string): Question {
+  const { q, num } = parseInterval(code);
+  for (;;) {
+    const low = parseCode(pick(LOWERS), 4);
+    const high = above(low, q, num);
+    if (!singleAccidentals(low, high)) continue;
+    return {
+      prompt: `What note is a ${intervalLabel(code)} above ${nameOf(low)}?`,
+      staff: { clef: "treble", groups: [[low]] },
+      steps: [{ type: "note", correct: codeOf(high) }],
+      explain: `Count ${num} letter names from ${nameOf(low)} (${lettersSpanned(low, num)}) to get ${LETTERS[high.letter]}. A ${intervalLabel(code)} is ${halfSteps(semitonesFor(q, num))}, which lands on ${nameOf(high)}.`,
+    };
+  }
+}
+
+export const TRIAD_KINDS: TriadQuality[] = ["major", "minor", "diminished", "augmented"];
+export const INVERSIONS = ["root position", "first inversion", "second inversion"];
+/** Whether a triad on this root is spelled without double sharps or flats. */
+export const triadOk = (root: string, quality: TriadQuality) => singleAccidentals(...triad(parseCode(root, 4), quality));
+
+export function nameTriadQuestion(quality: TriadQuality, inversion: number, root = pick(TRIAD_ROOTS.filter((r) => triadOk(r, quality)))): Question {
+  const notes = triad(parseCode(root, 4), quality);
+  const up = (n: Spelled): Spelled => ({ ...n, octave: n.octave + 1 });
+  const voiced = inversion === 0 ? notes : inversion === 1 ? [notes[1], notes[2], up(notes[0])] : [notes[2], up(notes[0]), up(notes[1])];
+  const invName = ["root position", "first inversion (3rd in the bass)", "second inversion (5th in the bass)"][inversion];
+  return {
+    prompt: "Name this triad: its root, then its quality.",
+    staff: { clef: "treble", groups: [voiced] },
+    steps: [
+      { type: "note", label: "Root", correct: codeOf(notes[0]) },
+      { type: "triadQuality", label: "Quality", correct: quality },
+    ],
+    explain: `Stacked in 3rds it's ${notes.map((n) => nameOf(n)).join(" ")}: ${nameOf(notes[0])} ${quality}, shown in ${invName}.`,
+  };
+}
+
+export function buildTriadQuestion(quality: TriadQuality, root: string): Question {
+  const notes = triad(parseCode(root, 4), quality);
+  return {
+    prompt: `Spell ${nameOf(notes[0])} ${quality}.`,
+    staff: { clef: "treble", groups: [[notes[0]]] },
+    steps: [
+      { type: "note", label: "Its 3rd", correct: codeOf(notes[1]) },
+      { type: "note", label: "Its 5th", correct: codeOf(notes[2]) },
+    ],
+    explain: `${nameOf(notes[0])} ${quality} is ${notes.map((n) => nameOf(n)).join(" ")}.`,
+  };
+}
+
 // ---- Written drills ---------------------------------------------------------------
 
 const readNotes: Drill = {
@@ -116,15 +220,8 @@ const readNotes: Drill = {
   pass: { accuracy: 0.95, medianSec: 2 },
   generate() {
     const clef = Math.random() < 0.5 ? "treble" : "bass";
-    // Index = letter + 7 × octave. Treble A3–C6, bass C2–E4.
-    const idx = clef === "treble" ? randInt(5 + 21, 0 + 42) : randInt(0 + 14, 2 + 28);
-    const note: Spelled = { letter: idx % 7, acc: 0, octave: Math.floor(idx / 7) };
-    return {
-      prompt: "Name this note.",
-      staff: { clef, groups: [[note]] },
-      steps: [{ type: "letter", correct: LETTERS[note.letter] }],
-      explain: `It's ${nameOf(note, true)}. ${MNEMONIC[clef]}`,
-    };
+    const [lo, hi] = READ_RANGE[clef];
+    return readNoteQuestion(clef, randInt(lo, hi));
   },
 };
 
@@ -182,20 +279,8 @@ const scales: Drill = {
   ear: false,
   pass: { accuracy: 0.9, medianSec: 4 },
   generate() {
-    for (;;) {
-      const kind = pick<ScaleKind>(["major", "major", "natural minor", "harmonic minor", "melodic minor"]);
-      const key = pick(kind === "major" ? MAJOR_KEYS : MINOR_KEYS);
-      const notes = scaleNotes(parseCode(key.code), kind);
-      if (!singleAccidentals(...notes)) continue;
-      const degree = randInt(2, 7);
-      const answer = notes[degree - 1];
-      const label = `${nameOf(notes[0])} ${kind}`;
-      return {
-        prompt: `${label}: what is scale degree ${degree}?`,
-        steps: [{ type: "note", correct: codeOf(answer) }],
-        explain: `${label}: ${notes.map((n) => nameOf(n)).join(" ")}. Degree ${degree} is ${nameOf(answer)}.`,
-      };
-    }
+    const kind = pick<ScaleKind>(["major", "major", "natural minor", "harmonic minor", "melodic minor"]);
+    return scaleQuestion(kind, pick(scaleKeys(kind)).code);
   },
 };
 
@@ -208,19 +293,7 @@ const nameIntervals: Drill = {
   ear: false,
   pass: { accuracy: 0.9, medianSec: 3 },
   generate() {
-    for (;;) {
-      const { q, num } = parseInterval(pick(WRITTEN_INTERVALS));
-      const low = parseCode(pick(LOWERS), Math.random() < 0.7 ? 4 : 3);
-      const high = above(low, q, num);
-      if (!singleAccidentals(low, high)) continue;
-      const harmonic = Math.random() < 0.4;
-      return {
-        prompt: "Name this interval.",
-        staff: { clef: clefFor([low]), groups: harmonic ? [[low, high]] : [[low], [high]] },
-        steps: [{ type: "interval", correct: intervalCode(q, num) }],
-        explain: explainInterval(low, high),
-      };
-    }
+    return nameIntervalQuestion(pick(WRITTEN_INTERVALS));
   },
 };
 
@@ -233,19 +306,7 @@ const buildIntervals: Drill = {
   ear: false,
   pass: { accuracy: 0.9, medianSec: 4 },
   generate() {
-    for (;;) {
-      const code = pick(WRITTEN_INTERVALS);
-      const { q, num } = parseInterval(code);
-      const low = parseCode(pick(LOWERS), 4);
-      const high = above(low, q, num);
-      if (!singleAccidentals(low, high)) continue;
-      return {
-        prompt: `What note is a ${intervalLabel(code)} above ${nameOf(low)}?`,
-        staff: { clef: "treble", groups: [[low]] },
-        steps: [{ type: "note", correct: codeOf(high) }],
-        explain: `Count ${num} letter names from ${nameOf(low)} (${lettersSpanned(low, num)}) to get ${LETTERS[high.letter]}. A ${intervalLabel(code)} is ${halfSteps(semitonesFor(q, num))}, which lands on ${nameOf(high)}.`,
-      };
-    }
+    return buildIntervalQuestion(pick(WRITTEN_INTERVALS));
   },
 };
 
@@ -258,24 +319,7 @@ const nameTriads: Drill = {
   ear: false,
   pass: { accuracy: 0.9, medianSec: 5 },
   generate() {
-    for (;;) {
-      const quality = pick(TRIAD_QUALITIES);
-      const notes = triad(parseCode(pick(TRIAD_ROOTS), 4), quality);
-      if (!singleAccidentals(...notes)) continue;
-      const inversion = randInt(0, 2);
-      const up = (n: Spelled): Spelled => ({ ...n, octave: n.octave + 1 });
-      const voiced = inversion === 0 ? notes : inversion === 1 ? [notes[1], notes[2], up(notes[0])] : [notes[2], up(notes[0]), up(notes[1])];
-      const invName = ["root position", "first inversion (3rd in the bass)", "second inversion (5th in the bass)"][inversion];
-      return {
-        prompt: "Name this triad: its root, then its quality.",
-        staff: { clef: "treble", groups: [voiced] },
-        steps: [
-          { type: "note", label: "Root", correct: codeOf(notes[0]) },
-          { type: "triadQuality", label: "Quality", correct: quality },
-        ],
-        explain: `Stacked in 3rds it's ${notes.map((n) => nameOf(n)).join(" ")}: ${nameOf(notes[0])} ${quality}, shown in ${invName}.`,
-      };
-    }
+    return nameTriadQuestion(pick(TRIAD_QUALITIES), randInt(0, 2));
   },
 };
 
@@ -288,20 +332,8 @@ const buildTriads: Drill = {
   ear: false,
   pass: { accuracy: 0.9, medianSec: 6 },
   generate() {
-    for (;;) {
-      const quality = pick(TRIAD_QUALITIES);
-      const notes = triad(parseCode(pick(TRIAD_ROOTS), 4), quality);
-      if (!singleAccidentals(...notes)) continue;
-      return {
-        prompt: `Spell ${nameOf(notes[0])} ${quality}.`,
-        staff: { clef: "treble", groups: [[notes[0]]] },
-        steps: [
-          { type: "note", label: "Its 3rd", correct: codeOf(notes[1]) },
-          { type: "note", label: "Its 5th", correct: codeOf(notes[2]) },
-        ],
-        explain: `${nameOf(notes[0])} ${quality} is ${notes.map((n) => nameOf(n)).join(" ")}.`,
-      };
-    }
+    const quality = pick(TRIAD_QUALITIES);
+    return buildTriadQuestion(quality, pick(TRIAD_ROOTS.filter((r) => triadOk(r, quality))));
   },
 };
 
@@ -327,19 +359,23 @@ function earIntervalDrill(id: string, number: string, title: string, summary: st
     ear: true,
     pass: { accuracy },
     generate() {
-      const s = pick(semis);
-      const low = randInt(50, 67);
-      const harmonic = Math.random() < 0.3;
-      const audio: AudioEvent[] = harmonic
-        ? [{ pitches: [low, low + s], at: 0, dur: 1.8 }]
-        : [{ pitches: [low], at: 0, dur: 0.9 }, { pitches: [low + s], at: 0.95, dur: 1.3 }];
-      return {
-        prompt: `Name the interval${harmonic ? " (played together)" : ""}.`,
-        audio,
-        steps: [{ type: "earInterval", correct: EAR_INTERVALS[s].code, options }],
-        explain: `That was a ${EAR_INTERVALS[s].label}, ${halfSteps(s)}.`,
-      };
+      return earIntervalQuestion(pick(semis), options);
     },
+  };
+}
+
+/** An interval of `s` semitones, by ear, answered from `options` (interval codes). */
+export function earIntervalQuestion(s: number, options: string[]): Question {
+  const low = randInt(50, 67);
+  const harmonic = Math.random() < 0.3;
+  const audio: AudioEvent[] = harmonic
+    ? [{ pitches: [low, low + s], at: 0, dur: 1.8 }]
+    : [{ pitches: [low], at: 0, dur: 0.9 }, { pitches: [low + s], at: 0.95, dur: 1.3 }];
+  return {
+    prompt: `Name the interval${harmonic ? " (played together)" : ""}.`,
+    audio,
+    steps: [{ type: "earInterval", correct: EAR_INTERVALS[s].code, options }],
+    explain: `That was a ${EAR_INTERVALS[s].label}, ${halfSteps(s)}.`,
   };
 }
 
@@ -359,17 +395,20 @@ const hearChords: Drill = {
   ear: true,
   pass: { accuracy: 0.9 },
   generate() {
-    const quality = pick<TriadQuality>(["major", "minor", "diminished", "augmented"]);
-    const root = randInt(50, 62);
-    const p = CHORD_SHAPES[quality].map((s) => root + s);
-    return {
-      prompt: "Name the chord's quality.",
-      audio: [{ pitches: p, at: 0, dur: 1.4 }, ...p.map((x, i) => ({ pitches: [x], at: 1.6 + i * 0.45, dur: 0.5 }))],
-      steps: [{ type: "triadQuality", correct: quality }],
-      explain: `That was ${quality}: ${quality === "major" ? "major 3rd + minor 3rd" : quality === "minor" ? "minor 3rd + major 3rd" : quality === "diminished" ? "two minor 3rds" : "two major 3rds"}.`,
-    };
+    return chordQuestion(pick(TRIAD_KINDS));
   },
 };
+
+export function chordQuestion(quality: TriadQuality): Question {
+  const root = randInt(50, 62);
+  const p = CHORD_SHAPES[quality].map((s) => root + s);
+  return {
+    prompt: "Name the chord's quality.",
+    audio: [{ pitches: p, at: 0, dur: 1.4 }, ...p.map((x, i) => ({ pitches: [x], at: 1.6 + i * 0.45, dur: 0.5 }))],
+    steps: [{ type: "triadQuality", correct: quality }],
+    explain: `That was ${quality}: ${quality === "major" ? "major 3rd + minor 3rd" : quality === "minor" ? "minor 3rd + major 3rd" : quality === "diminished" ? "two minor 3rds" : "two major 3rds"}.`,
+  };
+}
 
 export const SOLFEGE = ["do", "re", "mi", "fa", "sol", "la", "ti"];
 const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
@@ -383,23 +422,26 @@ const hearDegrees: Drill = {
   ear: true,
   pass: { accuracy: 0.85 },
   generate() {
-    const t = randInt(55, 66);
-    const degree = randInt(1, 7);
-    const target = t + MAJOR_STEPS[degree - 1];
-    const chords = [
-      [t - 12, t, t + 4, t + 7],
-      [t - 7, t, t + 5, t + 9],
-      [t - 5, t - 1, t + 2, t + 7],
-      [t - 12, t, t + 4, t + 7],
-    ];
-    return {
-      prompt: "Which scale degree is the last note?",
-      audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), { pitches: [target], at: 3.6, dur: 1.4 }],
-      steps: [{ type: "degree", correct: String(degree) }],
-      explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}).`,
-    };
+    return degreeQuestion(randInt(1, 7));
   },
 };
+
+export function degreeQuestion(degree: number): Question {
+  const t = randInt(55, 66);
+  const target = t + MAJOR_STEPS[degree - 1];
+  const chords = [
+    [t - 12, t, t + 4, t + 7],
+    [t - 7, t, t + 5, t + 9],
+    [t - 5, t - 1, t + 2, t + 7],
+    [t - 12, t, t + 4, t + 7],
+  ];
+  return {
+    prompt: "Which scale degree is the last note?",
+    audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), { pitches: [target], at: 3.6, dur: 1.4 }],
+    steps: [{ type: "degree", correct: String(degree) }],
+    explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}).`,
+  };
+}
 
 export const DRILLS: Drill[] = [
   readNotes,

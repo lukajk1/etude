@@ -1,0 +1,270 @@
+import {
+  buildIntervalQuestion,
+  buildTriadQuestion,
+  chordQuestion,
+  COMMON_INTERVALS,
+  degreeQuestion,
+  EAR_INTERVALS,
+  earIntervalQuestion,
+  INVERSIONS,
+  nameIntervalQuestion,
+  nameTriadQuestion,
+  ON_STAFF,
+  RARE_INTERVALS,
+  READ_RANGE,
+  readNoteQuestion,
+  scaleKeys,
+  scaleQuestion,
+  SOLFEGE,
+  staffNote,
+  TRIAD_KINDS,
+  TRIAD_ROOTS,
+  triadOk,
+  type Question,
+} from "../drills/catalog";
+import { intervalLabel, nameOf, prettyCode, randInt, type ScaleKind, type TriadQuality } from "../drills/theory";
+import type { Card, DeckDef } from "./types";
+
+/**
+ * Flashcard decks for the drills. Each card is one fact (a staff position, a scale, an
+ * interval, a triad), and each showing is a fresh question about it from the drill's
+ * own question builder, so a weak fact comes back without the question repeating.
+ */
+
+interface FactDeck {
+  id: string;
+  title: string;
+  summary: string;
+  brief: string;
+  tag: string;
+  drills: string[];
+  ear?: boolean;
+  fastMs?: number;
+  pools: { value: string; label: string }[];
+  /** Directions or groups, each a row of the mastery grid. One means no choice. */
+  types: { id: string; label: string; hint: string }[];
+  defaults: { pool: string; types: string[] };
+  facts(type: string, pool: string): string[];
+  label(type: string, fact: string): string;
+  cell(type: string, fact: string): string;
+  question(type: string, fact: string, pool: string): Question & { display?: string };
+}
+
+function factDeck(o: FactDeck): DeckDef {
+  const card = (type: string, fact: string): Card => ({
+    id: o.types.length > 1 ? `${o.id}:${type}:${fact}` : `${o.id}:${fact}`,
+    type,
+    label: o.label(type, fact),
+    cell: o.cell(type, fact),
+    show: (pool) => o.question(type, fact, pool),
+  });
+  return {
+    id: o.id,
+    title: o.title,
+    summary: o.summary,
+    brief: o.brief,
+    icon: o.tag,
+    tag: o.tag,
+    drills: o.drills,
+    ear: o.ear,
+    fastMs: o.fastMs,
+    pools: o.pools,
+    types: o.types,
+    clefs: false,
+    defaults: o.defaults,
+    build: (pool, types) => o.types.filter((t) => types.includes(t.id)).flatMap((t) => o.facts(t.id, pool).map((f) => card(t.id, f))),
+    grid: (_pool, cards) => ({
+      cols: [],
+      rows: o.types.map((t) => ({ label: t.label, cards: cards.filter((c) => c.type === t.id) })).filter((r) => r.cards.length),
+    }),
+  };
+}
+
+const range = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_, i) => String(lo + i));
+const one = (label: string) => [{ id: "all", label, hint: "" }];
+const corePool = (core: string, full: string) => [
+  { value: "core", label: core },
+  { value: "full", label: full },
+];
+
+export const NOTES_DECK = factDeck({
+  id: "notes",
+  title: "Read notes",
+  summary: "Every note on the treble and bass staff, each its own card.",
+  brief: "Name the note on the staff. Each line and space is a card, so the ones you hesitate on come back more. Start on the staff, then add ledger lines.",
+  tag: "0.1",
+  drills: ["d-notes"],
+  fastMs: 2000,
+  pools: corePool("On the staff", "With ledger lines"),
+  types: [
+    { id: "treble", label: "Treble clef", hint: "Notes on the treble staff" },
+    { id: "bass", label: "Bass clef", hint: "Notes on the bass staff" },
+  ],
+  defaults: { pool: "core", types: ["treble", "bass"] },
+  facts: (clef, pool) => {
+    const [lo, hi] = (pool === "full" ? READ_RANGE : ON_STAFF)[clef as "treble" | "bass"];
+    return range(lo, hi);
+  },
+  label: (clef, f) => `${nameOf(staffNote(Number(f)), true)}, ${clef} clef`,
+  cell: (_clef, f) => nameOf(staffNote(Number(f)), true),
+  question: (clef, f) => readNoteQuestion(clef as "treble" | "bass", Number(f)),
+});
+
+const SCALE_TYPES: { id: string; kind: ScaleKind }[] = [
+  { id: "major", kind: "major" },
+  { id: "natural", kind: "natural minor" },
+  { id: "harmonic", kind: "harmonic minor" },
+  { id: "melodic", kind: "melodic minor" },
+];
+const kindOf = (type: string) => SCALE_TYPES.find((t) => t.id === type)!.kind;
+
+export const SCALES_DECK = factDeck({
+  id: "scales",
+  title: "Scales",
+  summary: "Spell a degree of each major and minor scale; each scale is a card.",
+  brief: "Name a degree of a scale. Each scale is a card, asked about a different degree each time. Start with major in the core keys, then add the minor forms.",
+  tag: "0.3",
+  drills: ["d-scales"],
+  fastMs: 4000,
+  pools: corePool("Core keys: up to 4 ♯ or ♭", "All keys"),
+  types: SCALE_TYPES.map((t) => ({ id: t.id, label: t.kind[0].toUpperCase() + t.kind.slice(1), hint: `${t.kind} scales` })),
+  defaults: { pool: "core", types: ["major"] },
+  facts: (type, pool) =>
+    scaleKeys(kindOf(type))
+      .filter((k) => pool === "full" || Math.abs(k.accidentals) <= 4)
+      .map((k) => k.code),
+  label: (type, code) => `${prettyCode(code)} ${kindOf(type)}`,
+  cell: (type, code) => prettyCode(code) + (type === "major" ? "" : "m"),
+  question: (type, code) => {
+    const degree = randInt(2, 7);
+    return { ...scaleQuestion(kindOf(type), code, degree), prompt: "Spell this scale degree.", display: `${prettyCode(code)} ${kindOf(type)}: degree ${degree}` };
+  },
+});
+
+const intervalFacts = (pool: string) => (pool === "full" ? [...COMMON_INTERVALS, ...RARE_INTERVALS] : COMMON_INTERVALS);
+const intervalPools = corePool("Major, minor and perfect", "Plus augmented and diminished");
+
+export const NAME_INTERVALS_DECK = factDeck({
+  id: "name-intervals",
+  title: "Name intervals",
+  summary: "Name intervals on the staff; each interval is a card.",
+  brief: "Name the interval on the staff. Each interval is a card, shown from a different note each time, so the ones you find hard come back more.",
+  tag: "0.4",
+  drills: ["d-name-intervals"],
+  fastMs: 3000,
+  pools: intervalPools,
+  types: one("Intervals"),
+  defaults: { pool: "core", types: ["all"] },
+  facts: (_t, pool) => intervalFacts(pool),
+  label: (_t, code) => intervalLabel(code),
+  cell: (_t, code) => code,
+  question: (_t, code) => nameIntervalQuestion(code),
+});
+
+export const BUILD_INTERVALS_DECK = factDeck({
+  id: "build-intervals",
+  title: "Build intervals",
+  summary: "Spell the note an interval above; each interval is a card.",
+  brief: "Spell the note a given interval above the one shown. Each interval is a card, built from a different note each time.",
+  tag: "0.5",
+  drills: ["d-build-intervals"],
+  fastMs: 4000,
+  pools: intervalPools,
+  types: one("Intervals"),
+  defaults: { pool: "core", types: ["all"] },
+  facts: (_t, pool) => intervalFacts(pool),
+  label: (_t, code) => intervalLabel(code),
+  cell: (_t, code) => code,
+  question: (_t, code) => buildIntervalQuestion(code),
+});
+
+const qualityTypes = TRIAD_KINDS.map((q) => ({ id: q, label: q[0].toUpperCase() + q.slice(1), hint: `${q} triads` }));
+
+export const NAME_TRIADS_DECK = factDeck({
+  id: "name-triads",
+  title: "Name triads",
+  summary: "Root and quality of triads; each quality and inversion is a card.",
+  brief: "Name a triad's root and quality. Each quality in each position is a card, on a different root each time. Start in root position, then add inversions.",
+  tag: "0.6",
+  drills: ["d-name-triads"],
+  fastMs: 5000,
+  pools: corePool("Root position", "All inversions"),
+  types: qualityTypes,
+  defaults: { pool: "core", types: [...TRIAD_KINDS] },
+  facts: (_q, pool) => (pool === "full" ? ["0", "1", "2"] : ["0"]),
+  label: (q, inv) => `${q}, ${INVERSIONS[Number(inv)]}`,
+  cell: (_q, inv) => ["root", "1st inv", "2nd inv"][Number(inv)],
+  question: (q, inv) => nameTriadQuestion(q as TriadQuality, Number(inv)),
+});
+
+const NATURAL_ROOTS = ["C", "D", "E", "F", "G", "A", "B"];
+
+export const BUILD_TRIADS_DECK = factDeck({
+  id: "build-triads",
+  title: "Build triads",
+  summary: "Spell the 3rd and 5th of a triad; each root and quality is a card.",
+  brief: "Spell a triad from its root: the 3rd, then the 5th. Each root and quality is a card. Start on the natural roots, then add the sharp and flat ones.",
+  tag: "0.7",
+  drills: ["d-build-triads"],
+  fastMs: 6000,
+  pools: corePool("Natural roots", "All roots"),
+  types: qualityTypes,
+  defaults: { pool: "core", types: [...TRIAD_KINDS] },
+  facts: (q, pool) => (pool === "full" ? TRIAD_ROOTS : NATURAL_ROOTS).filter((r) => triadOk(r, q as TriadQuality)),
+  label: (q, root) => `${prettyCode(root)} ${q}`,
+  cell: (_q, root) => prettyCode(root),
+  question: (q, root) => buildTriadQuestion(q as TriadQuality, root),
+});
+
+const earSemis = (pool: string) => (pool === "full" ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : [3, 4, 5, 7, 12]);
+
+export const HEAR_INTERVALS_DECK = factDeck({
+  id: "hear-intervals",
+  title: "Hear intervals",
+  summary: "Intervals by ear; each interval is a card.",
+  brief: "Listen to two notes and name the interval. Each interval is a card, played from a different note each time. Start with the essentials, the perfect intervals and 3rds.",
+  tag: "0.8",
+  drills: ["d-ear-intervals-basic", "d-ear-intervals-all"],
+  ear: true,
+  pools: corePool("Essentials: 3rds, 4th, 5th, octave", "All 12"),
+  types: one("Intervals"),
+  defaults: { pool: "core", types: ["all"] },
+  facts: (_t, pool) => earSemis(pool).map(String),
+  label: (_t, s) => EAR_INTERVALS[Number(s)].label,
+  cell: (_t, s) => EAR_INTERVALS[Number(s)].code,
+  question: (_t, s, pool) => earIntervalQuestion(Number(s), earSemis(pool).map((x) => EAR_INTERVALS[x].code)),
+});
+
+export const HEAR_CHORDS_DECK = factDeck({
+  id: "hear-chords",
+  title: "Hear chord quality",
+  summary: "Major, minor, diminished and augmented by ear.",
+  brief: "A triad plays as a chord, then one note at a time. Name its quality. Each quality is a card.",
+  tag: "0.10",
+  drills: ["d-ear-chords"],
+  ear: true,
+  pools: [{ value: "full", label: "All four" }],
+  types: one("Qualities"),
+  defaults: { pool: "full", types: ["all"] },
+  facts: () => [...TRIAD_KINDS],
+  label: (_t, q) => q,
+  cell: (_t, q) => q,
+  question: (_t, q) => chordQuestion(q as TriadQuality),
+});
+
+export const HEAR_DEGREES_DECK = factDeck({
+  id: "hear-degrees",
+  title: "Hear scale degrees",
+  summary: "Which degree of the key a note is, after a cadence; each degree is a card.",
+  brief: "A cadence sets the key, then one note plays. Name its scale degree. Each degree is a card, in a different key each time.",
+  tag: "0.11",
+  drills: ["d-ear-degrees"],
+  ear: true,
+  pools: [{ value: "full", label: "All seven" }],
+  types: one("Degrees"),
+  defaults: { pool: "full", types: ["all"] },
+  facts: () => range(1, 7),
+  label: (_t, d) => `degree ${d} (${SOLFEGE[Number(d) - 1]})`,
+  cell: (_t, d) => `${d} ${SOLFEGE[Number(d) - 1]}`,
+  question: (_t, d) => degreeQuestion(Number(d)),
+});

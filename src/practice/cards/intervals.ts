@@ -39,9 +39,9 @@ function intervalCard(type: "int-semis" | "int-name", n: number): Card {
     show(pool): Shown {
       const explain = `A ${label} is ${semitones(n)} (${INFO[n].example}). ${INFO[n].tip}`;
       if (type === "int-semis") {
-        return { prompt: "How many semitones?", display: capital(label), step: { type: "semitones", correct: String(n), options: inPool(pool).map(String) }, explain };
+        return { prompt: "How many semitones?", display: capital(label), steps: [{ type: "semitones", correct: String(n), options: inPool(pool).map(String) }], explain };
       }
-      return { prompt: "Which interval?", display: semitones(n), step: { type: "earInterval", correct: code, options: inPool(pool).map((s) => EAR_INTERVALS[s].code) }, explain };
+      return { prompt: "Which interval?", display: semitones(n), steps: [{ type: "earInterval", correct: code, options: inPool(pool).map((s) => EAR_INTERVALS[s].code) }], explain };
     },
   };
 }

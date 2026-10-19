@@ -6,6 +6,8 @@ import { intervalsUsed, intervalShort, MELODIES } from "./transcription/melodies
 import { intervalStats, weakestIntervals } from "./transcription/state";
 import { DECKS, deckSettings, settingsFor } from "./cards/decks";
 import { cardStates, summarize } from "./cards/srs";
+import { useRef, useState } from "react";
+import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
 
 interface Item {
@@ -114,7 +116,7 @@ export function Home() {
 
       <section className="pr-unit">
         <h2 className="pr-h2">Flashcards</h2>
-        <p className="pr-blurb">Spaced review: the cards you miss come back sooner, the ones you know well come back days or weeks later.</p>
+        <p className="pr-blurb">Every drill as a flashcard deck, with spaced review: the cards you miss come back sooner, the ones you know well days or weeks later.</p>
         <ul className="pr-list">
           {DECKS.map((deck) => {
             const prefs = settingsFor(deck, cardPrefs);
@@ -122,7 +124,7 @@ export function Home() {
             return (
               <li key={deck.id}>
                 <button className="pr-row" onClick={() => go({ kind: "cards", id: deck.id })}>
-                  <span className="pr-num">{deck.icon}</span>
+                  <span className="pr-num">{deck.tag ?? deck.icon}</span>
                   <span className="pr-row-main">
                     <span className="pr-row-title">{deck.title}</span>
                     <span className="pr-row-summary">{deck.summary}</span>
@@ -182,6 +184,44 @@ export function Home() {
           ))}
         </ul>
       </section>
+
+      <BackupSection />
     </main>
+  );
+}
+
+function BackupSection() {
+  const last = useSignal(lastBackup);
+  const [error, setError] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <section className="pr-unit">
+      <h2 className="pr-h2">Your progress</h2>
+      <p className="pr-blurb">
+        Saved in this browser, which keeps it unless you clear site data. Back up to a file now and then to keep a second copy, or to move your progress
+        to another browser or computer. {last ? `Last backup: ${new Date(last).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}.` : "No backup yet."}
+      </p>
+      <div className="ex-actions">
+        <button className="btn" onClick={exportProgress}>
+          Back up to a file
+        </button>
+        <button className="btn" onClick={() => input.current?.click()}>
+          Restore from a file
+        </button>
+        <input
+          ref={input}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file || !confirm("Replace your saved progress with this backup?")) return;
+            setError((await importProgress(file)) ?? "");
+          }}
+        />
+      </div>
+      {error && <p className="pr-blurb pr-error">{error}</p>}
+    </section>
   );
 }

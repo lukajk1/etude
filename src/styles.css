@@ -1395,6 +1395,9 @@ a.btn {
 .tr-listen .ex-check {
   flex: 1 1 100%;
 }
+.pr-error {
+  color: #e08a8a;
+}
 .pr-weak-list {
   display: flex;
   flex-wrap: wrap;

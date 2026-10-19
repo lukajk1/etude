@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnswerPad, answerLabel, Staff } from "./Answers";
+import { playNotes, preparePiano } from "../audio/live";
+import { AnswerPad, answerLabel, LETTERS, Staff } from "./Answers";
+import type { Step } from "./drills/catalog";
 import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
 import type { Card, DeckDef, Shown } from "./cards/types";
 import { cardStates, FAST_MS, MAX_BOX, pickNext, resetCards, review, stageOf, summarize, type CardState } from "./cards/srs";
@@ -9,7 +11,7 @@ import { useSignal } from "../model/ui";
 interface Answered {
   card: Card;
   shown: Shown;
-  given: string;
+  given: string[];
   ok: boolean;
   ms: number;
 }
@@ -31,12 +33,16 @@ function Segmented<T extends string | number>({ value, options, onChange }: { va
   );
 }
 
+/** "C major", or "Root C, quality major" for a card with several answers. */
+const answerText = (steps: Step[]) =>
+  steps.length === 1 ? answerLabel(steps[0].type, steps[0].correct) : steps.map((s) => `${s.label ?? ""} ${answerLabel(s.type, s.correct)}`.trim()).join(", ");
+
 const STAGE_LABEL: Record<string, string> = { new: "New", learning: "Learning", familiar: "Familiar", strong: "Strong", mastered: "Mastered" };
 
 function cellTitle(card: Card, s: CardState | undefined) {
   if (!s) return `${card.label}: not seen yet`;
   const due = s.due <= Date.now() ? "due now" : `due ${new Date(s.due).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
-  return `${card.label}: level ${s.box} of ${MAX_BOX}, ${s.correct} of ${s.seen} right, last ${(s.lastMs / 1000).toFixed(1)} s, ${due}`;
+  return `${card.label}: level ${s.box} of ${MAX_BOX}, ${s.correct} of ${s.seen} right, ${due}`;
 }
 
 /** Every card in the deck, shaded by how well it's known. */
@@ -90,14 +96,20 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const [showing, setShowing] = useState<Showing | null>(null);
   const [answered, setAnswered] = useState<Answered[]>([]);
   const [chosen, setChosen] = useState<string | null>(null);
+  /** Answers given so far to a card with several steps. */
+  const [given, setGiven] = useState<string[]>([]);
   /** Recall mode: how long it took to bring up the answer, once it's shown. */
   const [revealMs, setRevealMs] = useState<number | null>(null);
-  const [now, setNow] = useState(0);
   const shownAt = useRef(0);
   const recent = useRef<string[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const summary = summarize(deck);
+  const fast = def.ear ? Infinity : (def.fastMs ?? FAST_MS);
+
+  useEffect(() => {
+    if (def.ear) preparePiano();
+  }, [def]);
 
   const deal = useCallback(() => {
     const card = pickNext(deck, recent.current, settings.order);
@@ -105,9 +117,9 @@ export default function CardsView({ def }: { def: DeckDef }) {
     const clef = settings.clef === "both" ? (Math.random() < 0.5 ? "treble" : "bass") : settings.clef;
     setShowing({ card, shown: card.show(settings.pool, clef) });
     setChosen(null);
+    setGiven([]);
     setRevealMs(null);
     shownAt.current = performance.now();
-    setNow(performance.now());
   }, [deck, settings.order, settings.pool, settings.clef]);
 
   const start = () => {
@@ -132,13 +144,17 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const pick = useCallback(
     (value: string) => {
       if (!showing || chosen !== null) return;
+      const { steps } = showing.shown;
+      const all = [...given, value];
+      setGiven(all);
+      if (all.length < steps.length) return;
       const ms = performance.now() - shownAt.current;
-      const ok = value === showing.shown.step.correct;
-      review(showing.card.id, ok, ms);
+      const ok = steps.every((s, i) => s.correct === all[i]);
+      review(showing.card.id, ok, ms, Date.now(), fast);
       setChosen(value);
-      setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: value, ok, ms }]);
+      setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: all, ok, ms }]);
     },
-    [showing, chosen],
+    [showing, chosen, given, fast],
   );
 
   const reveal = useCallback(() => {
@@ -149,14 +165,22 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const selfGrade = useCallback(
     (ok: boolean) => {
       if (!showing || revealMs === null) return;
-      const { step } = showing.shown;
-      review(showing.card.id, ok, revealMs);
-      setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: ok ? step.correct : "", ok, ms: revealMs }]);
+      const { steps } = showing.shown;
+      review(showing.card.id, ok, revealMs, Date.now(), fast);
+      setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: ok ? steps.map((s) => s.correct) : [], ok, ms: revealMs }]);
       if (settings.length && answered.length + 1 >= settings.length) finish();
       else deal();
     },
-    [showing, revealMs, settings.length, answered.length, finish, deal],
+    [showing, revealMs, settings.length, answered.length, finish, deal, fast],
   );
+
+  // Ear cards play as they appear.
+  const replay = useCallback(() => {
+    if (showing?.shown.audio) void playNotes(showing.shown.audio);
+  }, [showing]);
+  useEffect(() => {
+    if (phase === "run") replay();
+  }, [phase, replay]);
 
   // Right answers move on by themselves.
   const last = answered[answered.length - 1];
@@ -166,16 +190,13 @@ export default function CardsView({ def }: { def: DeckDef }) {
     return () => clearTimeout(timer.current);
   }, [phase, chosen, last, next]);
 
-  // A running clock for the current card.
-  useEffect(() => {
-    if (phase !== "run" || chosen !== null || revealMs !== null) return;
-    const t = setInterval(() => setNow(performance.now()), 100);
-    return () => clearInterval(t);
-  }, [phase, chosen, revealMs, showing]);
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (phase === "run" && (e.key === "r" || e.key === "R") && showing?.shown.audio) {
+        replay();
+        return;
+      }
       if (phase === "run" && settings.answer === "recall") {
         if (revealMs === null && (e.key === " " || e.key === "Enter")) {
           e.preventDefault();
@@ -185,6 +206,13 @@ export default function CardsView({ def }: { def: DeckDef }) {
           selfGrade(e.key === "2");
         }
         return;
+      }
+      // Letters answer note questions and 1–7 scale degrees, as in the drills.
+      const step = showing?.shown.steps[given.length];
+      if (phase === "run" && chosen === null && step) {
+        const k = e.key.toUpperCase();
+        if ((step.type === "letter" || step.type === "note") && LETTERS.includes(k)) pick(k);
+        else if (step.type === "degree" && /^[1-7]$/.test(e.key)) pick(e.key);
       }
       if (e.key !== "Enter") return;
       if (phase === "setup" || phase === "done") {
@@ -205,7 +233,6 @@ export default function CardsView({ def }: { def: DeckDef }) {
     if (types.length) setCardSettings({ types });
   };
 
-  const elapsed = phase === "run" && chosen === null && revealMs === null ? Math.max(0, (now - shownAt.current) / 1000) : null;
   const correctCount = answered.filter((a) => a.ok).length;
 
   return (
@@ -223,20 +250,28 @@ export default function CardsView({ def }: { def: DeckDef }) {
       {phase === "setup" && (
         <div className="drill-card">
           <p className="drill-brief">
-            {def.brief} With intelligent review on, cards you miss come back within a few cards, and ones you answer quickly (under {FAST_MS / 1000} s) are
+            {def.brief} With intelligent review on, cards you miss come back within a few cards, and ones you answer quickly are
             spaced further apart each time: minutes, then a day, then days, then weeks.
           </p>
           <div className="cards-options">
-            <span className="cards-opt-label">Pool</span>
-            <Segmented value={settings.pool} onChange={(pool) => setCardSettings({ pool })} options={def.pools} />
-            <span className="cards-opt-label">Cards</span>
-            <div className="cards-checks">
-              {def.types.map((t) => (
-                <label key={t.id} title={t.hint}>
-                  <input type="checkbox" checked={settings.types.includes(t.id)} onChange={() => toggleType(t.id)} /> {t.label}
-                </label>
-              ))}
-            </div>
+            {def.pools.length > 1 && (
+              <>
+                <span className="cards-opt-label">Pool</span>
+                <Segmented value={settings.pool} onChange={(pool) => setCardSettings({ pool })} options={def.pools} />
+              </>
+            )}
+            {def.types.length > 1 && (
+              <>
+                <span className="cards-opt-label">Cards</span>
+                <div className="cards-checks">
+                  {def.types.map((t) => (
+                    <label key={t.id} title={t.hint}>
+                      <input type="checkbox" checked={settings.types.includes(t.id)} onChange={() => toggleType(t.id)} /> {t.label}
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
             {def.clefs && (
               <>
                 <span className="cards-opt-label">Clef</span>
@@ -307,7 +342,6 @@ export default function CardsView({ def }: { def: DeckDef }) {
           <div className="drill-progress">
             <span>{settings.length ? `Card ${answered.length + (chosen === null ? 1 : 0)} of ${settings.length}` : `Card ${answered.length + (chosen === null ? 1 : 0)}`}</span>
             <span>{correctCount} correct</span>
-            <span className="drill-clock">{elapsed !== null ? `${elapsed.toFixed(1)} s` : ""}</span>
           </div>
           <div className="drill-bar">
             <div style={{ width: settings.length ? `${(answered.length / settings.length) * 100}%` : "0%" }} />
@@ -317,8 +351,22 @@ export default function CardsView({ def }: { def: DeckDef }) {
             <div className="drill-paper">
               <Staff spec={showing.shown.staff} />
             </div>
-          ) : (
+          ) : showing.shown.display ? (
             <div className="cards-key">{showing.shown.display}</div>
+          ) : null}
+          {showing.shown.audio && (
+            <button className="btn drill-replay" onClick={replay}>
+              Play again (R)
+            </button>
+          )}
+          {settings.answer === "choose" && showing.shown.steps.length > 1 && (
+            <div className="drill-steps">
+              {showing.shown.steps.map((s, i) => (
+                <span key={i} className={i === given.length && chosen === null ? "is-current" : ""}>
+                  {s.label}: {given[i] ? answerLabel(s.type, given[i]) : "…"}
+                </span>
+              ))}
+            </div>
           )}
           {settings.answer === "recall" ? (
             revealMs === null ? (
@@ -330,7 +378,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
             ) : (
               <>
                 <div className="cards-answer">
-                  <div className="cards-answer-main">{answerLabel(showing.shown.step.type, showing.shown.step.correct)}</div>
+                  <div className="cards-answer-main">{answerText(showing.shown.steps)}</div>
                   <div className="cards-answer-why">{showing.shown.explain}</div>
                 </div>
                 <div className="cards-recall">
@@ -344,7 +392,12 @@ export default function CardsView({ def }: { def: DeckDef }) {
               </>
             )
           ) : (
-            <AnswerPad step={showing.shown.step} chosen={chosen} reveal={chosen !== null} onPick={pick} />
+            <AnswerPad
+              step={showing.shown.steps[Math.min(given.length, showing.shown.steps.length) - (chosen !== null ? 1 : 0)]}
+              chosen={chosen}
+              reveal={chosen !== null}
+              onPick={pick}
+            />
           )}
           {chosen !== null && last && (
             <div className={`drill-feedback ${last.ok ? "is-right" : "is-wrong"}`}>
@@ -352,7 +405,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
                 "Correct."
               ) : (
                 <>
-                  <strong>Not quite: {answerLabel(last.shown.step.type, last.shown.step.correct)}.</strong> {last.shown.explain}
+                  <strong>Not quite: {answerText(last.shown.steps)}.</strong> {last.shown.explain}
                   <div>
                     <button className="btn drill-continue" onClick={next} autoFocus>
                       Continue (Enter)
@@ -371,21 +424,20 @@ export default function CardsView({ def }: { def: DeckDef }) {
       )}
 
       {phase === "done" && (
-        <SessionSummary def={def} answered={answered} settings={settings} onAgain={start} onSetup={() => setPhase("setup")} />
+        <SessionSummary def={def} fast={fast} answered={answered} settings={settings} onAgain={start} onSetup={() => setPhase("setup")} />
       )}
     </section>
   );
 }
 
-function SessionSummary({ def, answered, settings, onAgain, onSetup }: { def: DeckDef; answered: Answered[]; settings: DeckSettings; onAgain: () => void; onSetup: () => void }) {
+function SessionSummary({ def, fast, answered, settings, onAgain, onSetup }: { def: DeckDef; fast: number; answered: Answered[]; settings: DeckSettings; onAgain: () => void; onSetup: () => void }) {
   const correct = answered.filter((a) => a.ok).length;
-  const avg = answered.length ? answered.reduce((s, a) => s + a.ms, 0) / answered.length / 1000 : 0;
   // The keys missed most this session, then the slowest right answers.
   const byCard = new Map<string, { card: Card; miss: number; slow: number; explain: string }>();
   for (const a of answered) {
     const e = byCard.get(a.card.id) ?? { card: a.card, miss: 0, slow: 0, explain: a.shown.explain };
     if (!a.ok) e.miss++;
-    else if (a.ms > FAST_MS) e.slow++;
+    else if (a.ms > fast) e.slow++;
     byCard.set(a.card.id, e);
   }
   const weak = [...byCard.values()].filter((e) => e.miss || e.slow).sort((x, y) => y.miss - x.miss || y.slow - x.slow);
@@ -395,7 +447,7 @@ function SessionSummary({ def, answered, settings, onAgain, onSetup }: { def: De
       <div className="ex-score">
         <span className="ex-score-num">{answered.length ? Math.round((100 * correct) / answered.length) : 0}%</span>
         <span className="ex-score-of">
-          {correct} of {answered.length} right, {avg.toFixed(1)} s on average
+          {correct} of {answered.length} right
         </span>
       </div>
       <p className="drill-pass">
@@ -407,7 +459,7 @@ function SessionSummary({ def, answered, settings, onAgain, onSetup }: { def: De
           <ul className="drill-missed">
             {weak.slice(0, 6).map((e) => (
               <li key={e.card.id}>
-                <span className="drill-missed-q">{def.types.find((t) => t.id === e.card.type)?.label}: {e.card.label}.</span>{" "}
+                <span className="drill-missed-q">{def.types.length > 1 ? `${def.types.find((t) => t.id === e.card.type)?.label}: ` : ""}{e.card.label}.</span>{" "}
                 {e.miss ? `Missed ${e.miss}×. ` : `Slow ${e.slow}×. `}
                 {e.explain}
               </li>

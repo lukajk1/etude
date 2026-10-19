@@ -1,4 +1,4 @@
-import type { StaffSpec, Step } from "../drills/catalog";
+import type { AudioEvent, StaffSpec, Step } from "../drills/catalog";
 
 /**
  * A flashcard deck: a set of facts, the card types (directions) to study them in, and
@@ -13,7 +13,10 @@ export interface Shown {
   /** A staff to read, or else `display`, a big line of text. */
   staff?: StaffSpec;
   display?: string;
-  step: Step;
+  /** Notes to play when the card appears (ear cards). */
+  audio?: AudioEvent[];
+  /** One answer, or several in order (a triad's root, then its quality). */
+  steps: Step[];
   explain: string;
 }
 
@@ -41,6 +44,13 @@ export interface DeckDef {
   types: { id: string; label: string; hint: string }[];
   /** Whether the cards are read on a staff, so the clef can be chosen. */
   clefs: boolean;
+  /** Ear cards: the piano is loaded up front, and speed doesn't count. */
+  ear?: boolean;
+  /** Answers at or under this many ms count as fast. Defaults to the scheduler's. */
+  fastMs?: number;
+  /** The drills this deck practices (ids), and their numbers for the home page. */
+  drills?: string[];
+  tag?: string;
   defaults: { pool: string; types: string[] };
   build(pool: string, types: string[]): Card[];
   /** The mastery grid: column headings, then a row of cards per direction. */

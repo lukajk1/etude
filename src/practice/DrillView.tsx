@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, preparePiano } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, Staff } from "./Answers";
+import { deckForDrill } from "./cards/decks";
 import { DRILLS, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
 import { go } from "./route";
 import { progress, recordProgress } from "./exercises/state";
@@ -29,6 +30,7 @@ function passMarks(d: Drill) {
 export default function DrillView({ id }: { id: string }) {
   const drill = DRILLS.find((d) => d.id === id)!;
   const best = useSignal(progress)[drill.id];
+  const deck = deckForDrill(drill.id);
   const [phase, setPhase] = useState<"intro" | "run" | "done">("intro");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [index, setIndex] = useState(0);
@@ -179,9 +181,16 @@ export default function DrillView({ id }: { id: string }) {
               Your best: {best.best}% {best.passed ? "(passed)" : ""}
             </p>
           )}
-          <button className="ex-check drill-start" onClick={start}>
-            Start
-          </button>
+          <div className="ex-actions">
+            <button className="ex-check drill-start" onClick={start}>
+              Start
+            </button>
+            {deck && (
+              <button className="btn" onClick={() => go({ kind: "cards", id: deck.id })}>
+                Practice as flashcards
+              </button>
+            )}
+          </div>
         </div>
       )}
 

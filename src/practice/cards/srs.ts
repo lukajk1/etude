@@ -58,14 +58,14 @@ function save(next: Record<string, CardState>) {
 
 export type Grade = "again" | "hard" | "good";
 
-export function gradeFor(ok: boolean, ms: number): Grade {
-  return !ok ? "again" : ms <= FAST_MS ? "good" : "hard";
+export function gradeFor(ok: boolean, ms: number, fastMs = FAST_MS): Grade {
+  return !ok ? "again" : ms <= fastMs ? "good" : "hard";
 }
 
 /** Apply an answer to a card's state and save it. Returns the new state. */
-export function review(cardId: string, ok: boolean, ms: number, now = Date.now()): CardState {
+export function review(cardId: string, ok: boolean, ms: number, now = Date.now(), fastMs = FAST_MS): CardState {
   const prev = cardStates.value[cardId] ?? { box: 0, due: now, seen: 0, correct: 0, lastMs: 0 };
-  const grade = gradeFor(ok, ms);
+  const grade = gradeFor(ok, ms, fastMs);
   const counts = { seen: prev.seen + 1, correct: prev.correct + (ok ? 1 : 0), lastMs: ms };
   let next: CardState;
   if (grade === "again") next = { ...counts, box: 0, due: now };

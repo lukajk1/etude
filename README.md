@@ -121,18 +121,32 @@ Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale deg
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,
 with spelling handled properly (A♯ and B♭ are different answers).
 
-**Flashcards**, with spaced review in the style of Anki. There are two decks:
+**Flashcards**, with spaced review in the style of Anki. Every drill has a deck, plus one
+for interval sizes in semitones. A card is one fact (a line or space on the staff, a key, a
+scale, an interval, a triad, a chord quality by ear), and each showing is a fresh question
+about it from the drill's own generator, so a weak fact comes back without the question
+repeating:
 
-- **Key signatures:** signature → major key, signature → minor key, and key → signature,
-  over the core keys (up to four sharps or flats) or all 15, in treble, bass or both clefs.
-- **Intervals in semitones:** interval → semitones and semitones → interval, over the core
-  six (3rds, 4th, tritone, 5th, octave) or all 12.
+| Deck | Cards | Smaller pool to start |
+|---|---|---|
+| 0.1 Read notes | each staff position, treble and bass | on the staff, no ledger lines |
+| 0.2 Key signatures | signature → major or minor key, key → signature | up to 4 ♯ or ♭ |
+| 0.3 Scales | each scale, a different degree each time | core keys, major first |
+| 0.4–0.5 Name and build intervals | each interval, from different notes | major, minor and perfect |
+| Intervals in semitones | interval ↔ number of semitones | 3rds, 4th, tritone, 5th, octave |
+| 0.6 Name triads | each quality in each position | root position |
+| 0.7 Build triads | each root and quality | natural roots |
+| 0.8 Hear intervals | each interval by ear | 3rds, 4th, 5th, octave |
+| 0.10–0.11 Hear chord quality, scale degrees | each quality, each degree | |
 
-Each deck lets you choose which directions to study and a smaller pool to start with. Under
+Each deck lets you choose which directions or groups to study. A drill's intro screen links
+to its deck. Under
 **intelligent review**, each card sits in a level from 0 to 6 (a Leitner box):
 
-- A right answer in under 3 seconds, on a card that's due, moves it up a level, and its next
-  review moves further out: 1 minute, then 1 day, 3, 7, 16 and 35 days.
+- A fast right answer on a card that's due moves it up a level, and its next review moves
+  further out: 1 minute, then 1 day, 3, 7, 16 and 35 days. "Fast" follows the drill's speed
+  target (2 s for notes, 3 s for keys, up to 6 s for building triads); for ear cards any
+  right answer counts. No timer is shown.
 - A right but slow answer keeps it at its level, since it isn't automatic yet.
 - A miss sends it back to level 0, where it comes back within a few cards.
 - The next card is a weighted draw that favors low levels and cards that are due. New cards
@@ -146,8 +160,15 @@ You can answer by picking from buttons, or in **recall** mode, Anki-style: think
 answer, press Space to reveal it, then grade yourself with 1 (Again) or 2 (Pass). The time
 to reveal counts as your answer time.
 
-Progress is saved in the browser. The scheduler is `src/practice/cards/srs.ts`; each deck is
-a file in `src/practice/cards/`, listed in `decks.ts`.
+The scheduler is `src/practice/cards/srs.ts`; decks are in `src/practice/cards/`, listed in
+`decks.ts`.
+
+**Saving.** All progress (drill scores, flashcards, transcription stats, the autosaved
+projects) is kept in the browser's local storage, which lasts until you clear the site's
+data. The app asks the browser to keep it even when disk space runs low. For a second copy,
+**Back up to a file** at the bottom of the Practice Room home page saves everything as one
+JSON file, and **Restore from a file** loads it back, in this browser or another one. The
+local dev server and the live site are separate sites, so each has its own progress.
 
 **Transcription** (melodic dictation): a melody plays, and you write it down by ear in a
 piano roll, in C major with the first note given. The seven melodies (Hot Cross Buns, Mary Had

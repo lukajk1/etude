@@ -1,9 +1,35 @@
 import { Signal } from "../../model/ui";
+import {
+  BUILD_INTERVALS_DECK,
+  BUILD_TRIADS_DECK,
+  HEAR_CHORDS_DECK,
+  HEAR_DEGREES_DECK,
+  HEAR_INTERVALS_DECK,
+  NAME_INTERVALS_DECK,
+  NAME_TRIADS_DECK,
+  NOTES_DECK,
+  SCALES_DECK,
+} from "./drillDecks";
 import { INTERVALS_DECK } from "./intervals";
 import { KEYS_DECK } from "./keys";
 import type { DeckDef } from "./types";
 
-export const DECKS: DeckDef[] = [KEYS_DECK, INTERVALS_DECK];
+/** In drill order, with the semitones deck beside the interval drills. */
+export const DECKS: DeckDef[] = [
+  NOTES_DECK,
+  KEYS_DECK,
+  SCALES_DECK,
+  NAME_INTERVALS_DECK,
+  BUILD_INTERVALS_DECK,
+  INTERVALS_DECK,
+  NAME_TRIADS_DECK,
+  BUILD_TRIADS_DECK,
+  HEAR_INTERVALS_DECK,
+  HEAR_CHORDS_DECK,
+  HEAR_DEGREES_DECK,
+];
+/** The deck that practices a drill, if any. */
+export const deckForDrill = (drillId: string) => DECKS.find((d) => d.drills?.includes(drillId));
 export const getDeck = (id: string) => DECKS.find((d) => d.id === id);
 
 // ---- Settings, per deck ---------------------------------------------------------
