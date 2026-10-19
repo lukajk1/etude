@@ -25,12 +25,12 @@ const drillItem = (d: Drill, kind: string): Item => ({ route: { kind: "drill", i
 const UNITS: { title: string; blurb: string; items: Item[] }[] = [
   {
     title: "Foundations: reading and theory",
-    blurb: "Timed drills for notes, keys, scales, intervals and triads, each graded on accuracy and speed.",
+    blurb: "Timed drills for notes, keys, scales, intervals and triads, each graded on accuracy and speed. Each topic is split into small checkpoints (a, b, c…), so you can pass the first step before the whole thing.",
     items: written.map((d) => drillItem(d, "Reading drill")),
   },
   {
     title: "Foundations: ear training",
-    blurb: "Intervals, chord qualities and scale degrees by ear, played on your chosen piano sound.",
+    blurb: "Intervals, chord qualities and scale degrees by ear, played on your chosen piano sound. Intervals go ascending, then descending, then together, then mixed.",
     items: ear.map((d) => drillItem(d, "Ear drill")),
   },
   {

@@ -154,7 +154,7 @@ export function AnswerPad(props: PadProps) {
     case "triadQuality":
       return (
         <div className="drill-row">
-          {["major", "minor", "diminished", "augmented"].map((q) => (
+          {["major", "minor", "diminished", "augmented"].filter((q) => !step.options || step.options.includes(q)).map((q) => (
             <Choice key={q} {...props} value={q} label={q[0].toUpperCase() + q.slice(1)} wide />
           ))}
         </div>
@@ -162,9 +162,9 @@ export function AnswerPad(props: PadProps) {
     case "degree":
       return (
         <div className="drill-row">
-          {SOLFEGE.map((s, i) => (
-            <Choice key={s} {...props} value={String(i + 1)} label={`${i + 1} ${s}`} />
-          ))}
+          {SOLFEGE.map((s, i) =>
+            !step.options || step.options.includes(String(i + 1)) ? <Choice key={s} {...props} value={String(i + 1)} label={`${i + 1} ${s}`} /> : null,
+          )}
         </div>
       );
     case "earInterval":

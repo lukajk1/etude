@@ -96,7 +96,7 @@ export const KEYS_DECK: DeckDef = {
     { id: "key-sig", label: "Key → signature", hint: "See a key, say how many sharps or flats" },
   ],
   clefs: true,
-  drills: ["d-keys", "d-keys-all"],
+  drills: ["d-keys-major", "d-keys", "d-keys-all"],
   tag: "0.2",
   defaults: { pool: "core", types: ["sig-major"] },
   build(pool, types) {

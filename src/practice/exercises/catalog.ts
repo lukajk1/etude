@@ -188,6 +188,7 @@ export const EXERCISES: Exercise[] = [
 
 /** Later units, shown in the menu as a roadmap. */
 export const ROADMAP: { unit: string; topics: string }[] = [
+  { unit: "Hearing harmony", topics: "I, IV and V by ear after a cadence, then vi and ii, then short progressions." },
   { unit: "Suspensions (fourth species)", topics: "Tied notes that clash and resolve down: the Romantic ache." },
   { unit: "Four-part harmony", topics: "Chorales: I, IV, V, cadences, doubling, voice leading in four voices." },
   { unit: "Romantic harmony", topics: "Secondary dominants, borrowed chords, diminished sevenths, the Neapolitan." },

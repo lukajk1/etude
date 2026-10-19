@@ -99,23 +99,26 @@ The Practice Room's home page lists every unit with your progress, and suggests 
 next. Best scores are saved in the browser.
 
 **Unit 0, Foundations** is timed drills for the fundamentals that counterpoint and harmony
-rely on. Each round is 20 questions; wrong answers show the reasoning (letter names counted,
-half steps compared), and the round is graded against accuracy and speed targets:
+rely on. Each topic is split into small checkpoints, narrow first, so you can pass the first
+step before the whole thing. Each round is 20 questions; wrong answers show the reasoning
+(letter names counted, half steps compared), and the round is graded against accuracy and
+speed targets:
 
-| | Drill | To pass |
+| | Checkpoints | To pass |
 |---|---|---|
-| 0.1 | Read notes (treble and bass clef, ledger lines) | 95%, median 2 s |
-| 0.2 | Key signatures, the 18 core keys (up to 4 ♯ or ♭), both directions | 95%, median 3 s |
-| 0.3 | Scale degrees in major and the three minor forms | 90%, median 4 s |
-| 0.4 | Name intervals on the staff | 90%, median 3 s |
-| 0.5 | Build intervals (spell the note above) | 90%, median 4 s |
-| 0.6 | Name triads in any inversion | 90%, median 5 s |
-| 0.7 | Build triads (spell the 3rd and 5th) | 90%, median 6 s |
-| 0.8 | Hear intervals: P4, P5, octave, 3rds | 90% |
-| 0.9 | Hear intervals: all within an octave | 80% |
-| 0.10 | Hear chord quality | 90% |
-| 0.11 | Hear scale degrees after a cadence | 85% |
-| 0.12 | Key signatures, all 30 keys, for later | 95%, median 3 s |
+| 0.1 | Read notes: a treble clef, b bass clef, c both with ledger lines | 95%, median 2 s |
+| 0.2 | Key signatures: a major core keys, b major and minor core keys, c all 30 | 95%, median 3 s |
+| 0.3 | Scale degrees: a major, b natural minor (core keys), c all four kinds, any key | 90%, median 4 s |
+| 0.4 | Name intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 3 s |
+| 0.5 | Build intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 4 s |
+| 0.6 | Name triads: a major and minor in root position, b all qualities and inversions | 90%, median 5 s |
+| 0.7 | Build triads: a major and minor, b all four qualities | 90%, median 6 s |
+| 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, c together, d mixed | 90% |
+| 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
+| 0.10 | Hear chord quality: a major or minor, b all four | 90% |
+| 0.11 | Hear scale degrees after a cadence: a do mi sol, b do to sol, c all seven | 85% |
+
+The last checkpoint of each topic is the original full drill, so earlier passes still count.
 
 Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,

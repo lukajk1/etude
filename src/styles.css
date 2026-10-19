@@ -1398,7 +1398,7 @@ a.btn {
 }
 .pr-num {
   flex: none;
-  width: 34px;
+  width: 44px;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }

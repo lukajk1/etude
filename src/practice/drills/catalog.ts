@@ -209,12 +209,16 @@ export function buildTriadQuestion(quality: TriadQuality, root: string): Questio
 }
 
 // ---- Written drills ---------------------------------------------------------------
+// Each drill is split into checkpoints (a, b, c…), narrow first, with the full drill last.
+
+/** A narrower step of a drill: the same pass marks and brief, a smaller range of questions. */
+const checkpoint = (base: Drill, c: Pick<Drill, "id" | "number" | "title" | "summary" | "generate"> & Partial<Drill>): Drill => ({ ...base, ...c });
 
 const readNotes: Drill = {
   id: "d-notes",
-  number: "0.1",
-  title: "Read notes",
-  summary: "Name notes on the treble and bass staff.",
+  number: "0.1c",
+  title: "Read notes: both clefs, with ledger lines",
+  summary: "Treble and bass, including notes above and below the staff.",
   brief: "A note appears on the treble or bass staff, sometimes on ledger lines. Name it as fast as you can. Type the letter on your keyboard, or click it.",
   ear: false,
   pass: { accuracy: 0.95, medianSec: 2 },
@@ -225,8 +229,24 @@ const readNotes: Drill = {
   },
 };
 
-/** Key signature drills over the keys with at most `maxAcc` sharps or flats. */
-function keySignatureDrill(id: string, number: string, title: string, summary: string, maxAcc: number): Drill {
+const readTreble = checkpoint(readNotes, {
+  id: "d-notes-treble",
+  number: "0.1a",
+  title: "Read notes: treble clef",
+  summary: "Notes on the treble staff, no ledger lines.",
+  generate: () => readNoteQuestion("treble", randInt(ON_STAFF.treble[0], ON_STAFF.treble[1])),
+});
+
+const readBass = checkpoint(readNotes, {
+  id: "d-notes-bass",
+  number: "0.1b",
+  title: "Read notes: bass clef",
+  summary: "Notes on the bass staff, no ledger lines.",
+  generate: () => readNoteQuestion("bass", randInt(ON_STAFF.bass[0], ON_STAFF.bass[1])),
+});
+
+/** Key signature drills over the keys with at most `maxAcc` sharps or flats, for major keys, minor keys or both. */
+function keySignatureDrill(id: string, number: string, title: string, summary: string, maxAcc: number, which: "major" | "both" = "both"): Drill {
   const pool = MAJOR_KEYS.map((_, i) => i).filter((i) => Math.abs(MAJOR_KEYS[i].accidentals) <= maxAcc);
   // Answer pads offer only the keys in the pool.
   const majorOptions = pool.map((i) => MAJOR_KEYS[i].code);
@@ -237,7 +257,10 @@ function keySignatureDrill(id: string, number: string, title: string, summary: s
     number,
     title,
     summary,
-    brief: "Name the major or minor key a signature belongs to, or say how many sharps or flats a key has. Remember: a minor key shares its signature with the major key a minor 3rd above it.",
+    brief:
+      which === "major"
+        ? "Name the major key a signature belongs to, or say how many sharps or flats a major key has."
+        : "Name the major or minor key a signature belongs to, or say how many sharps or flats a key has. Remember: a minor key shares its signature with the major key a minor 3rd above it.",
     ear: false,
     pass: { accuracy: 0.95, medianSec: 3 },
     generate() {
@@ -245,7 +268,8 @@ function keySignatureDrill(id: string, number: string, title: string, summary: s
       const major = MAJOR_KEYS[i];
       const minor = MINOR_KEYS[i];
       const sig = signatureNotes(major.accidentals);
-      const kind = pick(["major", "minor", "count-major", "count-minor"] as const);
+      const kinds: ("major" | "minor" | "count-major" | "count-minor")[] = which === "major" ? ["major", "count-major"] : ["major", "minor", "count-major", "count-minor"];
+      const kind = pick(kinds);
       const n = Math.abs(major.accidentals);
       const count = n === 0 ? "No sharps or flats" : `${n} ${major.accidentals > 0 ? (n === 1 ? "sharp" : "sharps") : n === 1 ? "flat" : "flats"} (${sig})`;
       const where = `${count}: ${nameOf(parseCode(major.code))} major, and its relative minor, ${nameOf(parseCode(minor.code))} minor.`;
@@ -267,14 +291,15 @@ function keySignatureDrill(id: string, number: string, title: string, summary: s
   };
 }
 
-const keySignatures = keySignatureDrill("d-keys", "0.2", "Key signatures: core keys", "The 9 major and 9 minor keys with up to 4 sharps or flats.", 4);
-const keySignaturesAll = keySignatureDrill("d-keys-all", "0.12", "Key signatures: all 30 keys", "Every major and minor key, up to 7 sharps or flats. Take it once 0.2 is easy.", 7);
+const keySignaturesMajor = keySignatureDrill("d-keys-major", "0.2a", "Key signatures: major, core keys", "The 9 major keys with up to 4 sharps or flats.", 4, "major");
+const keySignatures = keySignatureDrill("d-keys", "0.2b", "Key signatures: major and minor, core keys", "The 9 major and 9 minor keys with up to 4 sharps or flats.", 4);
+const keySignaturesAll = keySignatureDrill("d-keys-all", "0.2c", "Key signatures: all 30 keys", "Every major and minor key, up to 7 sharps or flats.", 7);
 
 const scales: Drill = {
   id: "d-scales",
-  number: "0.3",
-  title: "Scales",
-  summary: "Spell any degree of major and the three minor scales.",
+  number: "0.3c",
+  title: "Scales: major and all three minors",
+  summary: "Spell any degree of major, natural, harmonic and melodic minor, in any key.",
   brief: "Name a degree of a major, natural minor, harmonic minor (raised 7th) or melodic minor (raised 6th and 7th, going up) scale. Spelling counts: each degree uses the next letter name.",
   ear: false,
   pass: { accuracy: 0.9, medianSec: 4 },
@@ -284,11 +309,32 @@ const scales: Drill = {
   },
 };
 
+const coreScaleKeys = (kind: ScaleKind) => scaleKeys(kind).filter((k) => Math.abs(k.accidentals) <= 4);
+
+const scalesMajor = checkpoint(scales, {
+  id: "d-scales-major",
+  number: "0.3a",
+  title: "Scales: major",
+  summary: "Spell any degree of a major scale, in the core keys.",
+  generate: () => scaleQuestion("major", pick(coreScaleKeys("major")).code),
+});
+
+const scalesNatural = checkpoint(scales, {
+  id: "d-scales-natural",
+  number: "0.3b",
+  title: "Scales: natural minor",
+  summary: "Spell any degree of a natural minor scale, in the core keys.",
+  generate: () => scaleQuestion("natural minor", pick(coreScaleKeys("natural minor")).code),
+});
+
+/** The written intervals without augmented and diminished, common ones still weighted up. */
+const COMMON_WEIGHTED = WRITTEN_INTERVALS.filter((c) => COMMON_INTERVALS.includes(c));
+
 const nameIntervals: Drill = {
   id: "d-name-intervals",
-  number: "0.4",
-  title: "Name intervals",
-  summary: "Number and quality of intervals on the staff.",
+  number: "0.4b",
+  title: "Name intervals: all, with augmented and diminished",
+  summary: "Number and quality of any interval on the staff.",
   brief: "Two notes appear, one after the other or stacked. Name the interval: count the letter names for the number, then the half steps for the quality.",
   ear: false,
   pass: { accuracy: 0.9, medianSec: 3 },
@@ -297,11 +343,19 @@ const nameIntervals: Drill = {
   },
 };
 
+const nameIntervalsCommon = checkpoint(nameIntervals, {
+  id: "d-name-intervals-common",
+  number: "0.4a",
+  title: "Name intervals: major, minor and perfect",
+  summary: "Number and quality of intervals on the staff, no augmented or diminished.",
+  generate: () => nameIntervalQuestion(pick(COMMON_WEIGHTED)),
+});
+
 const buildIntervals: Drill = {
   id: "d-build-intervals",
-  number: "0.5",
-  title: "Build intervals",
-  summary: "Spell the note a given interval above.",
+  number: "0.5b",
+  title: "Build intervals: all, with augmented and diminished",
+  summary: "Spell the note any interval above.",
   brief: "Find the note a given interval above the one shown. First count letter names to get the right letter, then adjust with a sharp or flat to get the right number of half steps.",
   ear: false,
   pass: { accuracy: 0.9, medianSec: 4 },
@@ -310,11 +364,19 @@ const buildIntervals: Drill = {
   },
 };
 
+const buildIntervalsCommon = checkpoint(buildIntervals, {
+  id: "d-build-intervals-common",
+  number: "0.5a",
+  title: "Build intervals: major, minor and perfect",
+  summary: "Spell the note an interval above, no augmented or diminished.",
+  generate: () => buildIntervalQuestion(pick(COMMON_WEIGHTED)),
+});
+
 const nameTriads: Drill = {
   id: "d-name-triads",
-  number: "0.6",
-  title: "Name triads",
-  summary: "Root and quality of triads in any inversion.",
+  number: "0.6b",
+  title: "Name triads: all four qualities, any inversion",
+  summary: "Root and quality of any triad, in root position or an inversion.",
   brief: "A triad appears in root position or an inversion. Find the root (stack it in 3rds; the bottom note of the stack is the root), then name its quality.",
   ear: false,
   pass: { accuracy: 0.9, medianSec: 5 },
@@ -323,10 +385,18 @@ const nameTriads: Drill = {
   },
 };
 
+const nameTriadsBasic = checkpoint(nameTriads, {
+  id: "d-name-triads-basic",
+  number: "0.6a",
+  title: "Name triads: major and minor, root position",
+  summary: "Root and quality of major and minor triads stacked in 3rds.",
+  generate: () => nameTriadQuestion(pick<TriadQuality>(["major", "minor"]), 0),
+});
+
 const buildTriads: Drill = {
   id: "d-build-triads",
-  number: "0.7",
-  title: "Build triads",
+  number: "0.7b",
+  title: "Build triads: all four qualities",
   summary: "Spell the 3rd and 5th of any triad.",
   brief: "Spell a triad from its root: pick the 3rd, then the 5th. Major is a major 3rd and perfect 5th; minor has a minor 3rd; diminished has a minor 3rd and diminished 5th; augmented has a major 3rd and augmented 5th.",
   ear: false,
@@ -336,6 +406,17 @@ const buildTriads: Drill = {
     return buildTriadQuestion(quality, pick(TRIAD_ROOTS.filter((r) => triadOk(r, quality))));
   },
 };
+
+const buildTriadsBasic = checkpoint(buildTriads, {
+  id: "d-build-triads-basic",
+  number: "0.7a",
+  title: "Build triads: major and minor",
+  summary: "Spell the 3rd and 5th of major and minor triads.",
+  generate: () => {
+    const quality = pick<TriadQuality>(["major", "minor"]);
+    return buildTriadQuestion(quality, pick(TRIAD_ROOTS.filter((r) => triadOk(r, quality))));
+  },
+});
 
 // ---- Ear drills ------------------------------------------------------------------
 
@@ -348,31 +429,46 @@ export const EAR_INTERVALS: Record<number, { code: string; label: string }> = {
   11: { code: "M7", label: "major 7th" }, 12: { code: "P8", label: "octave" },
 };
 
-function earIntervalDrill(id: string, number: string, title: string, summary: string, semis: number[], accuracy: number): Drill {
+/** How an ear interval is played: low note first, high note first, both at once, or any of those. */
+export type EarMode = "up" | "down" | "together" | "mixed";
+
+const MODE_BRIEF: Record<EarMode, string> = {
+  up: "Listen to two notes, low then high, and name the interval.",
+  down: "Listen to two notes, high then low, and name the interval.",
+  together: "Listen to two notes played together and name the interval.",
+  mixed: "Listen to two notes, played rising, falling or together, and name the interval.",
+};
+
+function earIntervalDrill(id: string, number: string, title: string, summary: string, semis: number[], accuracy: number, mode: EarMode): Drill {
   const options = semis.map((s) => EAR_INTERVALS[s].code);
   return {
     id,
     number,
     title,
     summary,
-    brief: `Listen to two notes, played one after the other or together, and name the interval. Replay as often as you like. ${semis.length < 12 ? "This round uses only the most distinct intervals: the perfect ones and the 3rds." : "All intervals within an octave."}`,
+    brief: `${MODE_BRIEF[mode]} Replay as often as you like. ${semis.length < 12 ? "This uses only the most distinct intervals: the perfect ones and the 3rds." : "All intervals within an octave."}`,
     ear: true,
     pass: { accuracy },
     generate() {
-      return earIntervalQuestion(pick(semis), options);
+      return earIntervalQuestion(pick(semis), options, mode);
     },
   };
 }
 
 /** An interval of `s` semitones, by ear, answered from `options` (interval codes). */
-export function earIntervalQuestion(s: number, options: string[]): Question {
+export function earIntervalQuestion(s: number, options: string[], mode: EarMode = "mixed"): Question {
   const low = randInt(50, 67);
-  const harmonic = Math.random() < 0.3;
-  const audio: AudioEvent[] = harmonic
-    ? [{ pitches: [low, low + s], at: 0, dur: 1.8 }]
-    : [{ pitches: [low], at: 0, dur: 0.9 }, { pitches: [low + s], at: 0.95, dur: 1.3 }];
+  const r = Math.random();
+  const how = mode !== "mixed" ? mode : r < 0.4 ? "up" : r < 0.7 ? "down" : "together";
+  const [first, second] = how === "down" ? [low + s, low] : [low, low + s];
+  const audio: AudioEvent[] =
+    how === "together"
+      ? [{ pitches: [low, low + s], at: 0, dur: 1.8 }]
+      : [{ pitches: [first], at: 0, dur: 0.9 }, { pitches: [second], at: 0.95, dur: 1.3 }];
+  // Say how it's played only when it varies.
+  const note = mode === "mixed" ? { up: " (rising)", down: " (falling)", together: " (played together)" }[how] : "";
   return {
-    prompt: `Name the interval${harmonic ? " (played together)" : ""}.`,
+    prompt: `Name the interval${note}.`,
     audio,
     steps: [{ type: "earInterval", correct: EAR_INTERVALS[s].code, options }],
     explain: `That was a ${EAR_INTERVALS[s].label}, ${halfSteps(s)}.`,
@@ -388,8 +484,8 @@ const CHORD_SHAPES: Record<TriadQuality, number[]> = {
 
 const hearChords: Drill = {
   id: "d-ear-chords",
-  number: "0.10",
-  title: "Hear chord quality",
+  number: "0.10b",
+  title: "Hear chord quality: all four",
   summary: "Major, minor, diminished or augmented, by ear.",
   brief: "A triad plays as a chord, then one note at a time. Name its quality. Major sounds bright and settled, minor darker, diminished tense and narrow, augmented unsettled and wide.",
   ear: true,
@@ -399,13 +495,22 @@ const hearChords: Drill = {
   },
 };
 
-export function chordQuestion(quality: TriadQuality): Question {
+const hearMajorMinor = checkpoint(hearChords, {
+  id: "d-ear-chords-mm",
+  number: "0.10a",
+  title: "Hear chord quality: major or minor",
+  summary: "Just major against minor, by ear.",
+  generate: () => chordQuestion(pick<TriadQuality>(["major", "minor"]), ["major", "minor"]),
+});
+
+/** A triad by ear; `options` limits the answer buttons. */
+export function chordQuestion(quality: TriadQuality, options?: string[]): Question {
   const root = randInt(50, 62);
   const p = CHORD_SHAPES[quality].map((s) => root + s);
   return {
     prompt: "Name the chord's quality.",
     audio: [{ pitches: p, at: 0, dur: 1.4 }, ...p.map((x, i) => ({ pitches: [x], at: 1.6 + i * 0.45, dur: 0.5 }))],
-    steps: [{ type: "triadQuality", correct: quality }],
+    steps: [{ type: "triadQuality", correct: quality, options }],
     explain: `That was ${quality}: ${quality === "major" ? "major 3rd + minor 3rd" : quality === "minor" ? "minor 3rd + major 3rd" : quality === "diminished" ? "two minor 3rds" : "two major 3rds"}.`,
   };
 }
@@ -415,8 +520,8 @@ const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 
 const hearDegrees: Drill = {
   id: "d-ear-degrees",
-  number: "0.11",
-  title: "Hear scale degrees",
+  number: "0.11c",
+  title: "Hear scale degrees: all seven",
   summary: "Which degree of the key a note is, after a cadence.",
   brief: "A cadence (I–IV–V–I) sets the key, then one note plays. Name its scale degree, 1 to 7. This is functional ear training: hearing each note's role in the key, not just its distance from the last note.",
   ear: true,
@@ -426,7 +531,24 @@ const hearDegrees: Drill = {
   },
 };
 
-export function degreeQuestion(degree: number): Question {
+const hearDoMiSol = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-135",
+  number: "0.11a",
+  title: "Hear scale degrees: do, mi, sol",
+  summary: "Degrees 1, 3 and 5, the notes of the home chord.",
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"]),
+});
+
+const hearDoToSol = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-15",
+  number: "0.11b",
+  title: "Hear scale degrees: do to sol",
+  summary: "Degrees 1 to 5.",
+  generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"]),
+});
+
+/** A scale degree after a cadence; `options` limits the answer buttons. */
+export function degreeQuestion(degree: number, options?: string[]): Question {
   const t = randInt(55, 66);
   const target = t + MAJOR_STEPS[degree - 1];
   const chords = [
@@ -438,24 +560,46 @@ export function degreeQuestion(degree: number): Question {
   return {
     prompt: "Which scale degree is the last note?",
     audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), { pitches: [target], at: 3.6, dur: 1.4 }],
-    steps: [{ type: "degree", correct: String(degree) }],
+    steps: [{ type: "degree", correct: String(degree), options }],
     explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}).`,
   };
 }
 
+const ESSENTIALS = [3, 4, 5, 7, 12];
+const ALL_12 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+/** Checkpoints in order. Ids of the full drills are unchanged, so earlier passes still count. */
 export const DRILLS: Drill[] = [
+  readTreble,
+  readBass,
   readNotes,
+  keySignaturesMajor,
   keySignatures,
-  scales,
-  nameIntervals,
-  buildIntervals,
-  nameTriads,
-  buildTriads,
-  earIntervalDrill("d-ear-intervals-basic", "0.8", "Hear intervals: the essentials", "Perfect 4th, 5th, octave and 3rds by ear.", [3, 4, 5, 7, 12], 0.9),
-  earIntervalDrill("d-ear-intervals-all", "0.9", "Hear intervals: all of them", "Every interval within an octave, by ear.", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 0.8),
-  hearChords,
-  hearDegrees,
   keySignaturesAll,
+  scalesMajor,
+  scalesNatural,
+  scales,
+  nameIntervalsCommon,
+  nameIntervals,
+  buildIntervalsCommon,
+  buildIntervals,
+  nameTriadsBasic,
+  nameTriads,
+  buildTriadsBasic,
+  buildTriads,
+  earIntervalDrill("d-ear-ess-up", "0.8a", "Hear the essentials: ascending", "Minor and major 3rd, perfect 4th and 5th, octave; low note first.", ESSENTIALS, 0.9, "up"),
+  earIntervalDrill("d-ear-ess-down", "0.8b", "Hear the essentials: descending", "The same five, high note first.", ESSENTIALS, 0.9, "down"),
+  earIntervalDrill("d-ear-ess-together", "0.8c", "Hear the essentials: together", "The same five, played as a chord.", ESSENTIALS, 0.9, "together"),
+  earIntervalDrill("d-ear-intervals-basic", "0.8d", "Hear the essentials: mixed", "The same five, rising, falling or together.", ESSENTIALS, 0.9, "mixed"),
+  earIntervalDrill("d-ear-all-up", "0.9a", "Hear all intervals: ascending", "Every interval within an octave, low note first.", ALL_12, 0.8, "up"),
+  earIntervalDrill("d-ear-all-down", "0.9b", "Hear all intervals: descending", "Every interval within an octave, high note first.", ALL_12, 0.8, "down"),
+  earIntervalDrill("d-ear-all-together", "0.9c", "Hear all intervals: together", "Every interval within an octave, played as a chord.", ALL_12, 0.8, "together"),
+  earIntervalDrill("d-ear-intervals-all", "0.9d", "Hear all intervals: mixed", "Every interval within an octave, rising, falling or together.", ALL_12, 0.8, "mixed"),
+  hearMajorMinor,
+  hearChords,
+  hearDoMiSol,
+  hearDoToSol,
+  hearDegrees,
 ];
 
 export function getDrill(id: string | null): Drill | null {
