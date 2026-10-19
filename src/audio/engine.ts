@@ -43,8 +43,8 @@ export class Engine {
   private tempoKey = "";
   private tempoEvents: number[] = [];
   private loopStart = 0;
-  /** Voices for playing notes outside the project (ear training). */
-  private previews = new Map<TimbreId, { voice: Voice; source: string }>();
+  /** Voices playing notes outside the project (ear training), each behind its own gate. */
+  private previews: { voice: Voice; gate: Tone.Gain }[] = [];
 
   /** @param sourceId the sound source to play with (see audio/sources). */
   constructor(private sourceId: string) {
@@ -142,22 +142,25 @@ export class Engine {
    * seconds from now.
    */
   preview(timbre: TimbreId, events: { pitches: number[]; at: number; dur: number; vel?: number }[]) {
-    const source = sourceFor(this.sourceId, timbre);
-    let p = this.previews.get(timbre);
-    if (!p || p.source !== source.id) {
-      p?.voice.dispose();
-      const voice = source.createVoice(timbre);
-      voice.output.connect(this.bus);
-      p = { voice, source: source.id };
-      this.previews.set(timbre, p);
-    }
-    p.voice.releaseAll();
+    // A new preview replaces the last one, including notes it hasn't reached yet.
+    this.stopPreview();
+    const voice = sourceFor(this.sourceId, timbre).createVoice(timbre);
+    const gate = new Tone.Gain(1).connect(this.bus);
+    voice.output.connect(gate);
+    this.previews.push({ voice, gate });
     const t0 = this.ctx.currentTime + 0.05;
-    for (const e of events) for (const pitch of e.pitches) p.voice.play(pitch, t0 + e.at, e.dur, e.vel ?? 0.7);
+    for (const e of events) for (const pitch of e.pitches) voice.play(pitch, t0 + e.at, e.dur, e.vel ?? 0.7);
   }
 
+  /** Fade out and discard any preview, cancelling its scheduled notes. */
   stopPreview() {
-    for (const p of this.previews.values()) p.voice.releaseAll();
+    for (const { voice, gate } of this.previews.splice(0)) {
+      gate.gain.rampTo(0, 0.04);
+      setTimeout(() => {
+        voice.dispose();
+        gate.dispose();
+      }, 150);
+    }
   }
 
   /** Switch sound source. Takes effect on the next `sync`. */
