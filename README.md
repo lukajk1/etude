@@ -105,7 +105,7 @@ half steps compared), and the round is graded against accuracy and speed targets
 | | Drill | To pass |
 |---|---|---|
 | 0.1 | Read notes (treble and bass clef, ledger lines) | 95%, median 2 s |
-| 0.2 | Key signatures, all 30 keys, both directions | 95%, median 3 s |
+| 0.2 | Key signatures, the 18 core keys (up to 4 ♯ or ♭), both directions | 95%, median 3 s |
 | 0.3 | Scale degrees in major and the three minor forms | 90%, median 4 s |
 | 0.4 | Name intervals on the staff | 90%, median 3 s |
 | 0.5 | Build intervals (spell the note above) | 90%, median 4 s |
@@ -115,6 +115,7 @@ half steps compared), and the round is graded against accuracy and speed targets
 | 0.9 | Hear intervals: all within an octave | 80% |
 | 0.10 | Hear chord quality | 90% |
 | 0.11 | Hear scale degrees after a cadence | 85% |
+| 0.12 | Key signatures, all 30 keys, for later | 95%, median 3 s |
 
 Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,

@@ -128,39 +128,50 @@ const readNotes: Drill = {
   },
 };
 
-const keySignatures: Drill = {
-  id: "d-keys",
-  number: "0.2",
-  title: "Key signatures",
-  summary: "All 15 major and 15 minor keys, both directions.",
-  brief: "Name the major or minor key a signature belongs to, or say how many sharps or flats a key has. Remember: a minor key shares its signature with the major key a minor 3rd above it.",
-  ear: false,
-  pass: { accuracy: 0.95, medianSec: 3 },
-  generate() {
-    const i = randInt(0, 14);
-    const major = MAJOR_KEYS[i];
-    const minor = MINOR_KEYS[i];
-    const sig = signatureNotes(major.accidentals);
-    const kind = pick(["major", "minor", "count-major", "count-minor"] as const);
-    const n = Math.abs(major.accidentals);
-    const count = n === 0 ? "No sharps or flats" : `${n} ${major.accidentals > 0 ? (n === 1 ? "sharp" : "sharps") : n === 1 ? "flat" : "flats"} (${sig})`;
-    const where = `${count}: ${nameOf(parseCode(major.code))} major, and its relative minor, ${nameOf(parseCode(minor.code))} minor.`;
-    if (kind === "major" || kind === "minor") {
+/** Key signature drills over the keys with at most `maxAcc` sharps or flats. */
+function keySignatureDrill(id: string, number: string, title: string, summary: string, maxAcc: number): Drill {
+  const pool = MAJOR_KEYS.map((_, i) => i).filter((i) => Math.abs(MAJOR_KEYS[i].accidentals) <= maxAcc);
+  // Answer pads offer only the keys in the pool.
+  const majorOptions = pool.map((i) => MAJOR_KEYS[i].code);
+  const minorOptions = pool.map((i) => MINOR_KEYS[i].code);
+  const countOptions = pool.map((i) => String(MAJOR_KEYS[i].accidentals));
+  return {
+    id,
+    number,
+    title,
+    summary,
+    brief: "Name the major or minor key a signature belongs to, or say how many sharps or flats a key has. Remember: a minor key shares its signature with the major key a minor 3rd above it.",
+    ear: false,
+    pass: { accuracy: 0.95, medianSec: 3 },
+    generate() {
+      const i = pick(pool);
+      const major = MAJOR_KEYS[i];
+      const minor = MINOR_KEYS[i];
+      const sig = signatureNotes(major.accidentals);
+      const kind = pick(["major", "minor", "count-major", "count-minor"] as const);
+      const n = Math.abs(major.accidentals);
+      const count = n === 0 ? "No sharps or flats" : `${n} ${major.accidentals > 0 ? (n === 1 ? "sharp" : "sharps") : n === 1 ? "flat" : "flats"} (${sig})`;
+      const where = `${count}: ${nameOf(parseCode(major.code))} major, and its relative minor, ${nameOf(parseCode(minor.code))} minor.`;
+      if (kind === "major" || kind === "minor") {
+        return {
+          prompt: `Which ${kind} key has this signature?`,
+          staff: { clef: "treble", keySig: major.code, groups: [] },
+          steps: [kind === "major" ? { type: "majorKey", correct: major.code, options: majorOptions } : { type: "minorKey", correct: minor.code, options: minorOptions }],
+          explain: where,
+        };
+      }
+      const key = kind === "count-major" ? major : minor;
       return {
-        prompt: `Which ${kind} key has this signature?`,
-        staff: { clef: "treble", keySig: major.code, groups: [] },
-        steps: [{ type: kind === "major" ? "majorKey" : "minorKey", correct: kind === "major" ? major.code : minor.code }],
+        prompt: `How many sharps or flats in ${nameOf(parseCode(key.code))} ${kind === "count-major" ? "major" : "minor"}?`,
+        steps: [{ type: "accidentals", correct: String(key.accidentals), options: countOptions }],
         explain: where,
       };
-    }
-    const key = kind === "count-major" ? major : minor;
-    return {
-      prompt: `How many sharps or flats in ${nameOf(parseCode(key.code))} ${kind === "count-major" ? "major" : "minor"}?`,
-      steps: [{ type: "accidentals", correct: String(key.accidentals) }],
-      explain: where,
-    };
-  },
-};
+    },
+  };
+}
+
+const keySignatures = keySignatureDrill("d-keys", "0.2", "Key signatures: core keys", "The 9 major and 9 minor keys with up to 4 sharps or flats.", 4);
+const keySignaturesAll = keySignatureDrill("d-keys-all", "0.12", "Key signatures: all 30 keys", "Every major and minor key, up to 7 sharps or flats. Take it once 0.2 is easy.", 7);
 
 const scales: Drill = {
   id: "d-scales",
@@ -402,6 +413,7 @@ export const DRILLS: Drill[] = [
   earIntervalDrill("d-ear-intervals-all", "0.9", "Hear intervals: all of them", "Every interval within an octave, by ear.", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 0.8),
   hearChords,
   hearDegrees,
+  keySignaturesAll,
 ];
 
 export function getDrill(id: string | null): Drill | null {
