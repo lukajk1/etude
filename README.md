@@ -121,9 +121,14 @@ Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale deg
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,
 with spelling handled properly (A♯ and B♭ are different answers).
 
-**Flashcards** for key signatures, with spaced review in the style of Anki. Choose which
-cards to study (signature → major key, signature → minor key, key → signature), the core
-keys (up to four sharps or flats) or all 15, and treble, bass or both clefs. Under
+**Flashcards**, with spaced review in the style of Anki. There are two decks:
+
+- **Key signatures:** signature → major key, signature → minor key, and key → signature,
+  over the core keys (up to four sharps or flats) or all 15, in treble, bass or both clefs.
+- **Intervals in semitones:** interval → semitones and semitones → interval, over the core
+  six (3rds, 4th, tritone, 5th, octave) or all 12.
+
+Each deck lets you choose which directions to study and a smaller pool to start with. Under
 **intelligent review**, each card sits in a level from 0 to 6 (a Leitner box):
 
 - A right answer in under 3 seconds, on a card that's due, moves it up a level, and its next
@@ -134,13 +139,15 @@ keys (up to four sharps or flats) or all 15, and treble, bass or both clefs. Und
   come in a few at a time (no more than five still being learned), and the same card never
   shows twice in a row.
 
-A grid shows every key shaded by level, so you can see which ones to drill. **Random** order
+A grid shows every card shaded by level, so you can see which ones to drill. **Random** order
 skips the scheduling.
 
 You can answer by picking from buttons, or in **recall** mode, Anki-style: think of the
 answer, press Space to reveal it, then grade yourself with 1 (Again) or 2 (Pass). The time
-to reveal counts as your answer time. Progress is saved in the browser; the scheduler is
-`src/practice/cards/srs.ts` and the deck is `src/practice/cards/deck.ts`.
+to reveal counts as your answer time.
+
+Progress is saved in the browser. The scheduler is `src/practice/cards/srs.ts`; each deck is
+a file in `src/practice/cards/`, listed in `decks.ts`.
 
 **Transcription** (melodic dictation): a melody plays, and you write it down by ear in a
 piano roll, in C major with the first note given. The seven melodies (Hot Cross Buns, Mary Had

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnswerPad, answerLabel, Staff } from "./Answers";
-import type { StaffSpec } from "./drills/catalog";
-import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, prettyCode } from "./drills/theory";
-import { buildDeck, CARD_TYPES, cardKey, cardSettings, poolIndexes, setCardSettings, showCard, type Card, type CardSettings, type Shown } from "./cards/deck";
+import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
+import type { Card, DeckDef, Shown } from "./cards/types";
 import { cardStates, FAST_MS, MAX_BOX, pickNext, resetCards, review, stageOf, summarize, type CardState } from "./cards/srs";
 import { go } from "./route";
 import { useSignal } from "../model/ui";
@@ -18,7 +17,6 @@ interface Answered {
 interface Showing {
   card: Card;
   shown: Shown;
-  staff?: StaffSpec;
 }
 
 function Segmented<T extends string | number>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
@@ -36,32 +34,23 @@ function Segmented<T extends string | number>({ value, options, onChange }: { va
 const STAGE_LABEL: Record<string, string> = { new: "New", learning: "Learning", familiar: "Familiar", strong: "Strong", mastered: "Mastered" };
 
 function cellTitle(card: Card, s: CardState | undefined) {
-  if (!s) return `${cardKey(card)}: not seen yet`;
+  if (!s) return `${card.label}: not seen yet`;
   const due = s.due <= Date.now() ? "due now" : `due ${new Date(s.due).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
-  return `${cardKey(card)}: level ${s.box} of ${MAX_BOX}, ${s.correct} of ${s.seen} right, last ${(s.lastMs / 1000).toFixed(1)} s, ${due}`;
+  return `${card.label}: level ${s.box} of ${MAX_BOX}, ${s.correct} of ${s.seen} right, last ${(s.lastMs / 1000).toFixed(1)} s, ${due}`;
 }
 
-/** Every card in the deck, by signature, shaded by how well it's known. */
-function MasteryGrid({ settings }: { settings: CardSettings }) {
+/** Every card in the deck, shaded by how well it's known. */
+function MasteryGrid({ def, settings }: { def: DeckDef; settings: DeckSettings }) {
   const states = useSignal(cardStates);
-  const deck = useMemo(() => buildDeck(settings.pool, settings.types), [settings.pool, settings.types]);
-  const cols = poolIndexes(settings.pool);
-  const rows: { label: string; cards: Card[] }[] = [];
-  for (const t of CARD_TYPES) {
-    if (!settings.types.includes(t.id)) continue;
-    if (t.id === "key-sig") {
-      rows.push({ label: "Major key → signature", cards: deck.filter((c) => c.type === t.id && !c.minor) });
-      rows.push({ label: "Minor key → signature", cards: deck.filter((c) => c.type === t.id && c.minor) });
-    } else rows.push({ label: t.label, cards: deck.filter((c) => c.type === t.id) });
-  }
+  const { cols, rows } = useMemo(() => def.grid(settings.pool, def.build(settings.pool, settings.types)), [def, settings.pool, settings.types]);
   return (
     <div className="cards-grid-wrap">
       <table className="cards-grid">
         <thead>
           <tr>
             <th />
-            {cols.map((i) => (
-              <th key={i}>{accidentalsLabel(MAJOR_KEYS[i].accidentals)}</th>
+            {cols.map((c) => (
+              <th key={c}>{c}</th>
             ))}
           </tr>
         </thead>
@@ -73,8 +62,7 @@ function MasteryGrid({ settings }: { settings: CardSettings }) {
                 const s = states[c.id];
                 return (
                   <td key={c.id} className={`cards-cell is-${stageOf(s)}`} title={cellTitle(c, s)}>
-                    {prettyCode((c.minor ? MINOR_KEYS : MAJOR_KEYS)[c.index].code)}
-                    {c.minor ? "m" : ""}
+                    {c.cell}
                   </td>
                 );
               })}
@@ -93,10 +81,11 @@ function MasteryGrid({ settings }: { settings: CardSettings }) {
   );
 }
 
-export default function CardsView() {
-  const settings = useSignal(cardSettings);
+export default function CardsView({ def }: { def: DeckDef }) {
+  const settings = settingsFor(def, useSignal(deckSettings));
+  const setCardSettings = (patch: Partial<DeckSettings>) => setDeckSettings(def, patch);
   useSignal(cardStates);
-  const deck = useMemo(() => buildDeck(settings.pool, settings.types), [settings.pool, settings.types]);
+  const deck = useMemo(() => def.build(settings.pool, settings.types), [def, settings.pool, settings.types]);
   const [phase, setPhase] = useState<"setup" | "run" | "done">("setup");
   const [showing, setShowing] = useState<Showing | null>(null);
   const [answered, setAnswered] = useState<Answered[]>([]);
@@ -113,9 +102,8 @@ export default function CardsView() {
   const deal = useCallback(() => {
     const card = pickNext(deck, recent.current, settings.order);
     recent.current = [...recent.current.slice(-4), card.id];
-    const shown = showCard(card, settings.pool);
     const clef = settings.clef === "both" ? (Math.random() < 0.5 ? "treble" : "bass") : settings.clef;
-    setShowing({ card, shown, staff: shown.keySig ? { clef, keySig: shown.keySig, groups: [] } : undefined });
+    setShowing({ card, shown: card.show(settings.pool, clef) });
     setChosen(null);
     setRevealMs(null);
     shownAt.current = performance.now();
@@ -212,7 +200,7 @@ export default function CardsView() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const toggleType = (t: Card["type"]) => {
+  const toggleType = (t: string) => {
     const types = settings.types.includes(t) ? settings.types.filter((x) => x !== t) : [...settings.types, t];
     if (types.length) setCardSettings({ types });
   };
@@ -221,11 +209,11 @@ export default function CardsView() {
   const correctCount = answered.filter((a) => a.ok).length;
 
   return (
-    <section className="drill" aria-label="Key signature flashcards">
+    <section className="drill" aria-label={`${def.title} flashcards`}>
       <div className="drill-head">
         <div>
           <div className="drill-number">Flashcards</div>
-          <h2 className="drill-title">Key signatures</h2>
+          <h2 className="drill-title">{def.title}</h2>
         </div>
         <button className="btn" onClick={() => go({ kind: "home" })}>
           Back to the Practice Room
@@ -235,38 +223,34 @@ export default function CardsView() {
       {phase === "setup" && (
         <div className="drill-card">
           <p className="drill-brief">
-            Name the key from its signature, or the signature from its key. With intelligent review on, cards you miss come back within a few cards, and ones
-            you answer quickly (under {FAST_MS / 1000} s) are spaced further apart each time: minutes, then a day, then days, then weeks. Start with the core
-            keys and widen the pool once most of the grid is green.
+            {def.brief} With intelligent review on, cards you miss come back within a few cards, and ones you answer quickly (under {FAST_MS / 1000} s) are
+            spaced further apart each time: minutes, then a day, then days, then weeks.
           </p>
           <div className="cards-options">
-            <span className="cards-opt-label">Keys</span>
-            <Segmented
-              value={settings.pool}
-              onChange={(pool) => setCardSettings({ pool })}
-              options={[
-                { value: "core", label: "Core: up to 4 ♯ or ♭" },
-                { value: "full", label: "All 15" },
-              ]}
-            />
+            <span className="cards-opt-label">Pool</span>
+            <Segmented value={settings.pool} onChange={(pool) => setCardSettings({ pool })} options={def.pools} />
             <span className="cards-opt-label">Cards</span>
             <div className="cards-checks">
-              {CARD_TYPES.map((t) => (
+              {def.types.map((t) => (
                 <label key={t.id} title={t.hint}>
                   <input type="checkbox" checked={settings.types.includes(t.id)} onChange={() => toggleType(t.id)} /> {t.label}
                 </label>
               ))}
             </div>
-            <span className="cards-opt-label">Clef</span>
-            <Segmented
-              value={settings.clef}
-              onChange={(clef) => setCardSettings({ clef })}
-              options={[
-                { value: "treble", label: "Treble" },
-                { value: "bass", label: "Bass" },
-                { value: "both", label: "Both, mixed" },
-              ]}
-            />
+            {def.clefs && (
+              <>
+                <span className="cards-opt-label">Clef</span>
+                <Segmented
+                  value={settings.clef}
+                  onChange={(clef) => setCardSettings({ clef })}
+                  options={[
+                    { value: "treble", label: "Treble" },
+                    { value: "bass", label: "Bass" },
+                    { value: "both", label: "Both, mixed" },
+                  ]}
+                />
+              </>
+            )}
             <span className="cards-opt-label">Order</span>
             <Segmented
               value={settings.order}
@@ -313,8 +297,8 @@ export default function CardsView() {
               Reset progress
             </button>
           </div>
-          <h3 className="drill-missed-title">How well you know each key</h3>
-          <MasteryGrid settings={settings} />
+          <h3 className="drill-missed-title">How well you know each card</h3>
+          <MasteryGrid def={def} settings={settings} />
         </div>
       )}
 
@@ -329,12 +313,12 @@ export default function CardsView() {
             <div style={{ width: settings.length ? `${(answered.length / settings.length) * 100}%` : "0%" }} />
           </div>
           <p className="drill-prompt">{showing.shown.prompt}</p>
-          {showing.staff ? (
+          {showing.shown.staff ? (
             <div className="drill-paper">
-              <Staff spec={showing.staff} />
+              <Staff spec={showing.shown.staff} />
             </div>
           ) : (
-            <div className="cards-key">{cardKey(showing.card)}</div>
+            <div className="cards-key">{showing.shown.display}</div>
           )}
           {settings.answer === "recall" ? (
             revealMs === null ? (
@@ -387,13 +371,13 @@ export default function CardsView() {
       )}
 
       {phase === "done" && (
-        <SessionSummary answered={answered} settings={settings} onAgain={start} onSetup={() => setPhase("setup")} />
+        <SessionSummary def={def} answered={answered} settings={settings} onAgain={start} onSetup={() => setPhase("setup")} />
       )}
     </section>
   );
 }
 
-function SessionSummary({ answered, settings, onAgain, onSetup }: { answered: Answered[]; settings: CardSettings; onAgain: () => void; onSetup: () => void }) {
+function SessionSummary({ def, answered, settings, onAgain, onSetup }: { def: DeckDef; answered: Answered[]; settings: DeckSettings; onAgain: () => void; onSetup: () => void }) {
   const correct = answered.filter((a) => a.ok).length;
   const avg = answered.length ? answered.reduce((s, a) => s + a.ms, 0) / answered.length / 1000 : 0;
   // The keys missed most this session, then the slowest right answers.
@@ -423,7 +407,7 @@ function SessionSummary({ answered, settings, onAgain, onSetup }: { answered: An
           <ul className="drill-missed">
             {weak.slice(0, 6).map((e) => (
               <li key={e.card.id}>
-                <span className="drill-missed-q">{CARD_TYPES.find((t) => t.id === e.card.type)!.label}: {cardKey(e.card)}.</span>{" "}
+                <span className="drill-missed-q">{def.types.find((t) => t.id === e.card.type)?.label}: {e.card.label}.</span>{" "}
                 {e.miss ? `Missed ${e.miss}×. ` : `Slow ${e.slow}×. `}
                 {e.explain}
               </li>
@@ -439,8 +423,8 @@ function SessionSummary({ answered, settings, onAgain, onSetup }: { answered: An
           Change the deck
         </button>
       </div>
-      <h3 className="drill-missed-title">How well you know each key</h3>
-      <MasteryGrid settings={settings} />
+      <h3 className="drill-missed-title">How well you know each card</h3>
+      <MasteryGrid def={def} settings={settings} />
     </div>
   );
 }

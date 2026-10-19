@@ -73,6 +73,8 @@ export function answerLabel(type: AnswerType, value: string): string {
       return `${value} (${SOLFEGE[Number(value) - 1]})`;
     case "earInterval":
       return Object.values(EAR_INTERVALS).find((e) => e.code === value)?.label ?? value;
+    case "semitones":
+      return `${value} semitone${value === "1" ? "" : "s"}`;
   }
 }
 
@@ -170,6 +172,14 @@ export function AnswerPad(props: PadProps) {
         <div className="drill-grid" style={{ gridTemplateColumns: `repeat(${Math.min(6, step.options?.length ?? 6)}, minmax(0, 1fr))` }}>
           {(step.options ?? []).map((code) => (
             <Choice key={code} {...props} value={code} label={answerLabel("earInterval", code)} wide />
+          ))}
+        </div>
+      );
+    case "semitones":
+      return (
+        <div className="drill-grid" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
+          {(step.options ?? []).map((n) => (
+            <Choice key={n} {...props} value={n} label={n} />
           ))}
         </div>
       );

@@ -25,7 +25,7 @@ import {
   type TriadQuality,
 } from "./theory";
 
-export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval";
+export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones";
 
 export interface Step {
   type: AnswerType;

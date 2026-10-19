@@ -5,6 +5,7 @@ import { Overview } from "../components/Overview";
 import { StatusBar } from "../components/StatusBar";
 import { useEditorShortcuts } from "../lib/shortcuts";
 import { preparePiano } from "../audio/live";
+import { getDeck } from "./cards/decks";
 import { DRILLS } from "./drills/catalog";
 import { getExercise } from "./exercises/catalog";
 import { currentExercise, openExercise } from "./exercises/state";
@@ -105,16 +106,17 @@ function DrillScreen({ id }: { id: string }) {
 }
 
 function CardsScreen({ id }: { id: string }) {
+  const deck = getDeck(id);
   useEffect(() => {
-    if (id !== "keys") go({ kind: "home" });
-  }, [id]);
-  if (id !== "keys") return null;
+    if (!deck) go({ kind: "home" });
+  }, [deck]);
+  if (!deck) return null;
   return (
     <div className="app" style={{ gridTemplateRows: "auto 1fr" }}>
-      <Header title="Key signature flashcards" />
+      <Header title={`${deck.title} flashcards`} />
       <div className="main">
         <Suspense fallback={<div className="drill">Loading…</div>}>
-          <CardsView />
+          <CardsView def={deck} />
         </Suspense>
       </div>
     </div>

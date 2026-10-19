@@ -1,5 +1,5 @@
 import { Signal } from "../../model/ui";
-import type { Card } from "./deck";
+import type { Card } from "./types";
 
 /**
  * Spaced review, Leitner style. Each card sits in a box from 0 (new or just missed) to

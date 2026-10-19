@@ -4,7 +4,7 @@ import { progress, type Progress } from "./exercises/state";
 import { go, type Route } from "./route";
 import { intervalsUsed, intervalShort, MELODIES } from "./transcription/melodies";
 import { intervalStats, weakestIntervals } from "./transcription/state";
-import { buildDeck, cardSettings } from "./cards/deck";
+import { DECKS, deckSettings, settingsFor } from "./cards/decks";
 import { cardStates, summarize } from "./cards/srs";
 import { useSignal } from "../model/ui";
 
@@ -54,9 +54,8 @@ export function Home() {
   const prog = useSignal(progress);
   const stats = useSignal(intervalStats);
   const weak = weakestIntervals(stats);
-  const cardPrefs = useSignal(cardSettings);
+  const cardPrefs = useSignal(deckSettings);
   useSignal(cardStates);
-  const cards = summarize(buildDeck(cardPrefs.pool, cardPrefs.types));
 
   // Up next: the first unpassed item in each of the first three tracks, plus counterpoint once reading is underway.
   const upNext = UNITS.slice(0, 3)
@@ -117,18 +116,24 @@ export function Home() {
         <h2 className="pr-h2">Flashcards</h2>
         <p className="pr-blurb">Spaced review: the cards you miss come back sooner, the ones you know well come back days or weeks later.</p>
         <ul className="pr-list">
-          <li>
-            <button className="pr-row" onClick={() => go({ kind: "cards", id: "keys" })}>
-              <span className="pr-num">♯♭</span>
-              <span className="pr-row-main">
-                <span className="pr-row-title">Key signatures</span>
-                <span className="pr-row-summary">Signature to key and key to signature, major and minor, treble and bass. Start with the core keys.</span>
-              </span>
-              <span className={`pr-status${cards.due ? " is-due" : cards.mastered === cards.total ? " is-pass" : ""}`}>
-                {cards.fresh === cards.total ? "Not started" : cards.due ? `${cards.due} due` : `${cards.mastered} of ${cards.total} mastered`}
-              </span>
-            </button>
-          </li>
+          {DECKS.map((deck) => {
+            const prefs = settingsFor(deck, cardPrefs);
+            const cards = summarize(deck.build(prefs.pool, prefs.types));
+            return (
+              <li key={deck.id}>
+                <button className="pr-row" onClick={() => go({ kind: "cards", id: deck.id })}>
+                  <span className="pr-num">{deck.icon}</span>
+                  <span className="pr-row-main">
+                    <span className="pr-row-title">{deck.title}</span>
+                    <span className="pr-row-summary">{deck.summary}</span>
+                  </span>
+                  <span className={`pr-status${cards.due ? " is-due" : cards.mastered === cards.total ? " is-pass" : ""}`}>
+                    {cards.fresh === cards.total ? "Not started" : cards.due ? `${cards.due} due` : `${cards.mastered} of ${cards.total} mastered`}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
