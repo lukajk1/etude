@@ -1518,6 +1518,41 @@ a.btn {
   flex-wrap: wrap;
   gap: 6px 18px;
 }
+.it-stats {
+  margin-bottom: 14px;
+}
+.it-stat-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.it-stat-table th,
+.it-stat-table td {
+  padding: 6px 12px 6px 0;
+  text-align: left;
+  white-space: nowrap;
+}
+.it-stat-table thead th {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.it-stat-table tbody th {
+  font-weight: 600;
+}
+.it-stat-table tr.is-total {
+  border-top: 1px solid var(--line-strong);
+}
+.it-stat-n {
+  color: var(--text-dim);
+  font-weight: 400;
+  font-size: 12px;
+}
+.it-stat-notes {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .cards-presets {
   display: flex;
   flex-wrap: wrap;

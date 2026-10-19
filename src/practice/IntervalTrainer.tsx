@@ -4,6 +4,7 @@ import { Signal, useSignal } from "../model/ui";
 import type { AudioEvent } from "./drills/catalog";
 import { pick, randInt } from "./drills/theory";
 import { go } from "./route";
+import { attempts, clearAttempts, gapP, isMelodicOnly, recordAttempt, REGISTERS, registerOf, tally, type Attempt, type Mode, type Tally } from "./trainerStats";
 
 /**
  * Free interval practice: choose the intervals and the ways they're played, answer,
@@ -24,7 +25,6 @@ const ROWS: [number | null, number][] = [
   [null, 12],
 ];
 
-type Mode = "up" | "down" | "together" | "up-together" | "down-together";
 const MODES: { id: Mode; label: string }[] = [
   { id: "up", label: "Ascending" },
   { id: "down", label: "Descending" },
@@ -97,6 +97,7 @@ export default function IntervalTrainer() {
   const [chosen, setChosen] = useState<number | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0, streak: 0 });
   const [showSettings, setShowSettings] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => preparePiano(), []);
 
@@ -116,6 +117,7 @@ export default function IntervalTrainer() {
       return;
     }
     const ok = semis === question.semis;
+    recordAttempt({ semis: question.semis, mode: question.mode, low: question.low, ok });
     setChosen(semis);
     setScore((sc) => ({ right: sc.right + (ok ? 1 : 0), total: sc.total + 1, streak: ok ? sc.streak + 1 : 0 }));
   };
@@ -165,6 +167,9 @@ export default function IntervalTrainer() {
           <h2 className="drill-title">Interval trainer</h2>
         </div>
         <div className="ex-actions">
+          <button className="btn" aria-pressed={showStats} onClick={() => setShowStats(!showStats)}>
+            Stats
+          </button>
           <button className="btn" aria-pressed={showSettings} onClick={() => setShowSettings(!showSettings)}>
             {showSettings ? "Done" : "Settings"}
           </button>
@@ -203,6 +208,8 @@ export default function IntervalTrainer() {
           <p className="drill-pass">Start with a few that sound very different (major 3rd, perfect 5th, octave), then add more once those are easy.</p>
         </div>
       )}
+
+      {showStats && <RegisterStats />}
 
       <div className="drill-card">
         <div className="drill-progress">
@@ -262,5 +269,106 @@ export default function IntervalTrainer() {
         )}
       </div>
     </section>
+  );
+}
+
+const pct = (t: Tally) => Math.round((100 * t.ok) / t.n);
+
+function cell(t: Tally) {
+  return t.n ? (
+    <>
+      {pct(t)}% <span className="it-stat-n">({t.ok} of {t.n})</span>
+    </>
+  ) : (
+    "–"
+  );
+}
+
+/** One register against the middle: the gap, and whether it's likely more than chance. */
+function compare(label: string, a: Tally, mid: Tally) {
+  if (a.n < 10 || mid.n < 10) return null;
+  const p = gapP(a, mid);
+  const gap = pct(a) - pct(mid);
+  const verdict = p < 0.05 ? "it's probably real" : "it could easily be chance";
+  return (
+    <li key={label}>
+      {label}: {pct(a)}% against {pct(mid)}% in the middle ({gap > 0 ? "+" : ""}
+      {gap} points). A gap this size would turn up by chance {p < 0.001 ? "less than 0.1%" : `about ${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`} of the time, so {verdict}.
+    </li>
+  );
+}
+
+/** Accuracy by register (where the two notes center), overall and split by how it was played. */
+function RegisterStats() {
+  const all = useSignal(attempts);
+  const by = (list: Attempt[], reg: string) => tally(list.filter((a) => registerOf(a.low, a.semis) === reg));
+  const columns = [
+    { label: "All", list: all },
+    { label: "One after the other", list: all.filter((a) => isMelodicOnly(a.mode)) },
+    { label: "Played together", list: all.filter((a) => !isMelodicOnly(a.mode)) },
+  ];
+  const low = by(all, "low");
+  const mid = by(all, "middle");
+  const high = by(all, "high");
+  const notes = [compare("Low", low, mid), compare("High", high, mid)].filter(Boolean);
+  return (
+    <div className="drill-card it-stats">
+      <h3 className="drill-missed-title">Accuracy by register</h3>
+      <p className="drill-pass">
+        Every first answer is counted, by where the interval's two notes center in the trainer's range (D3 to D5). "Played together" includes the ones played
+        melodically first, then together.
+      </p>
+      {all.length === 0 ? (
+        <p className="drill-pass">No answers yet.</p>
+      ) : (
+        <>
+          <div className="cards-grid-wrap">
+            <table className="it-stat-table">
+              <thead>
+                <tr>
+                  <th />
+                  {columns.map((c) => (
+                    <th key={c.label}>{c.label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {REGISTERS.map((r) => (
+                  <tr key={r.id}>
+                    <th scope="row">
+                      {r.label} <span className="it-stat-n">{r.hint}</span>
+                    </th>
+                    {columns.map((c) => (
+                      <td key={c.label}>{cell(by(c.list, r.id))}</td>
+                    ))}
+                  </tr>
+                ))}
+                <tr className="is-total">
+                  <th scope="row">Total</th>
+                  {columns.map((c) => (
+                    <td key={c.label}>{cell(tally(c.list))}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          {notes.length ? <ul className="it-stat-notes">{notes}</ul> : <p className="drill-pass">Comparisons appear once each register has at least 10 answers.</p>}
+          <p className="drill-pass">
+            Big intervals can't sit at the very top or bottom of the range, so if you mostly miss small ones, the edges will look worse partly for that reason.
+          </p>
+        </>
+      )}
+      <div className="ex-actions">
+        <button
+          className="btn"
+          disabled={all.length === 0}
+          onClick={() => {
+            if (confirm(`Clear all ${all.length} recorded answers?`)) clearAttempts();
+          }}
+        >
+          Clear stats
+        </button>
+      </div>
+    </div>
   );
 }

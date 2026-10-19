@@ -170,6 +170,12 @@ data. The app asks the browser to keep it even when disk space runs low. For a s
 JSON file, and **Restore from a file** loads it back, in this browser or another one. The
 local dev server and the live site are separate sites, so each has its own progress.
 
+**Interval trainer** (free practice): choose any intervals and how they're played (up,
+down, together, or melodic then together), answer, then click any interval to hear it from
+the same note and compare. **Stats** shows your accuracy by register (where the two notes
+center: low, middle or high in the trainer's D3–D5 range), split into melodic and played
+together, and says whether a register's gap from the middle is likely more than chance.
+
 **Transcription** (melodic dictation): a melody plays, and you write it down by ear in a
 piano roll, in C major with the first note given. The seven melodies (Hot Cross Buns, Mary Had
 a Little Lamb, Ode to Joy, Twinkle, Jingle Bells, Frère Jacques, Amazing Grace) are ordered so
