@@ -13,8 +13,6 @@ interface Answered {
   given: string;
   ok: boolean;
   ms: number;
-  before: number;
-  after: number;
 }
 
 interface Showing {
@@ -145,19 +143,18 @@ export default function CardsView() {
       if (!showing || chosen !== null) return;
       const ms = performance.now() - shownAt.current;
       const ok = value === showing.shown.step.correct;
-      const before = cardStates.value[showing.card.id]?.box ?? 0;
-      const after = review(showing.card.id, ok, ms).box;
+      review(showing.card.id, ok, ms);
       setChosen(value);
-      setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: value, ok, ms, before, after }]);
+      setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: value, ok, ms }]);
     },
     [showing, chosen],
   );
 
-  // Right answers move on by themselves; a slow one waits a little longer so the note can be read.
+  // Right answers move on by themselves.
   const last = answered[answered.length - 1];
   useEffect(() => {
     if (phase !== "run" || chosen === null || !last?.ok) return;
-    timer.current = setTimeout(next, last.ms <= FAST_MS ? 650 : 1400);
+    timer.current = setTimeout(next, 650);
     return () => clearTimeout(timer.current);
   }, [phase, chosen, last, next]);
 
@@ -287,7 +284,6 @@ export default function CardsView() {
           <div className="drill-progress">
             <span>{settings.length ? `Card ${answered.length + (chosen === null ? 1 : 0)} of ${settings.length}` : `Card ${answered.length + (chosen === null ? 1 : 0)}`}</span>
             <span>{correctCount} correct</span>
-            <span className={`cards-stage is-${stageOf(cardStates.value[showing.card.id])}`}>{STAGE_LABEL[stageOf(cardStates.value[showing.card.id])]}</span>
             <span className="drill-clock">{elapsed !== null ? `${elapsed.toFixed(1)} s` : ""}</span>
           </div>
           <div className="drill-bar">
@@ -305,16 +301,10 @@ export default function CardsView() {
           {chosen !== null && last && (
             <div className={`drill-feedback ${last.ok ? "is-right" : "is-wrong"}`}>
               {last.ok ? (
-                last.after > last.before ? (
-                  `Correct, ${(last.ms / 1000).toFixed(1)} s. Up to level ${last.after}.`
-                ) : last.ms > FAST_MS ? (
-                  `Correct, but ${(last.ms / 1000).toFixed(1)} s. It stays at level ${last.after} until you answer it in under ${FAST_MS / 1000} s.`
-                ) : (
-                  `Correct, ${(last.ms / 1000).toFixed(1)} s.`
-                )
+                "Correct."
               ) : (
                 <>
-                  <strong>Not quite: {answerLabel(last.shown.step.type, last.shown.step.correct)}.</strong> {last.shown.explain} This card will come back soon.
+                  <strong>Not quite: {answerLabel(last.shown.step.type, last.shown.step.correct)}.</strong> {last.shown.explain}
                   <div>
                     <button className="btn drill-continue" onClick={next} autoFocus>
                       Continue (Enter)
@@ -342,7 +332,6 @@ export default function CardsView() {
 function SessionSummary({ answered, settings, onAgain, onSetup }: { answered: Answered[]; settings: CardSettings; onAgain: () => void; onSetup: () => void }) {
   const correct = answered.filter((a) => a.ok).length;
   const avg = answered.length ? answered.reduce((s, a) => s + a.ms, 0) / answered.length / 1000 : 0;
-  const up = answered.filter((a) => a.after > a.before).length;
   // The keys missed most this session, then the slowest right answers.
   const byCard = new Map<string, { card: Card; miss: number; slow: number; explain: string }>();
   for (const a of answered) {
@@ -362,8 +351,7 @@ function SessionSummary({ answered, settings, onAgain, onSetup }: { answered: An
         </span>
       </div>
       <p className="drill-pass">
-        {up} card{up === 1 ? "" : "s"} moved up a level. Cards are due again on their own schedule, so coming back tomorrow does more than a longer session
-        today.
+        Cards are due again on their own schedule, so coming back tomorrow does more than a longer session today.
       </p>
       {weak.length > 0 && (
         <>

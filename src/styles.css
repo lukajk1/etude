@@ -1469,11 +1469,6 @@ a.btn {
   font-size: 30px;
   font-weight: 700;
 }
-.cards-stage {
-  padding: 0 7px;
-  border-radius: 999px;
-  border: 1px solid var(--line-strong);
-}
 .cards-foot {
   display: flex;
   justify-content: flex-end;
@@ -1525,16 +1520,6 @@ a.btn {
 .cards-swatch.is-mastered {
   background: rgba(90, 200, 120, 0.7);
   color: #0d1a10;
-}
-.cards-stage.is-learning {
-  border-color: rgba(224, 92, 92, 0.6);
-}
-.cards-stage.is-familiar {
-  border-color: rgba(232, 176, 74, 0.6);
-}
-.cards-stage.is-strong,
-.cards-stage.is-mastered {
-  border-color: rgba(90, 200, 120, 0.7);
 }
 .cards-legend {
   display: flex;
