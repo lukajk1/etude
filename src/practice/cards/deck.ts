@@ -125,12 +125,14 @@ export interface CardSettings {
   types: CardType[];
   clef: "treble" | "bass" | "both";
   order: "smart" | "random";
+  /** Pick from answer buttons, or recall the answer, reveal it and grade yourself. */
+  answer: "choose" | "recall";
   /** Cards per session; 0 for no limit. */
   length: number;
 }
 
 const SETTINGS_KEY = "etude.cards.settings.v1";
-const DEFAULT_SETTINGS: CardSettings = { pool: "core", types: ["sig-major"], clef: "treble", order: "smart", length: 20 };
+const DEFAULT_SETTINGS: CardSettings = { pool: "core", types: ["sig-major"], clef: "treble", order: "smart", answer: "choose", length: 20 };
 
 function loadSettings(): CardSettings {
   try {

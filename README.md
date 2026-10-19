@@ -135,7 +135,11 @@ keys (up to four sharps or flats) or all 15, and treble, bass or both clefs. Und
   shows twice in a row.
 
 A grid shows every key shaded by level, so you can see which ones to drill. **Random** order
-skips the scheduling. Progress is saved in the browser; the scheduler is
+skips the scheduling.
+
+You can answer by picking from buttons, or in **recall** mode, Anki-style: think of the
+answer, press Space to reveal it, then grade yourself with 1 (Again) or 2 (Pass). The time
+to reveal counts as your answer time. Progress is saved in the browser; the scheduler is
 `src/practice/cards/srs.ts` and the deck is `src/practice/cards/deck.ts`.
 
 **Transcription** (melodic dictation): a melody plays, and you write it down by ear in a

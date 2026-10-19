@@ -1469,6 +1469,46 @@ a.btn {
   font-size: 30px;
   font-weight: 700;
 }
+.cards-recall {
+  display: flex;
+  gap: 10px;
+}
+.cards-recall > * {
+  flex: 1;
+  min-height: 44px;
+}
+.cards-recall kbd {
+  margin-right: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.cards-again {
+  border-color: rgba(224, 92, 92, 0.55);
+}
+.cards-pass {
+  border-color: rgba(90, 200, 120, 0.6);
+}
+.cards-answer {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--ink-2);
+}
+.cards-answer-main {
+  font-size: 22px;
+  font-weight: 700;
+}
+.cards-answer-why {
+  margin-top: 4px;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
 .cards-foot {
   display: flex;
   justify-content: flex-end;

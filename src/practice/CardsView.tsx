@@ -101,6 +101,8 @@ export default function CardsView() {
   const [showing, setShowing] = useState<Showing | null>(null);
   const [answered, setAnswered] = useState<Answered[]>([]);
   const [chosen, setChosen] = useState<string | null>(null);
+  /** Recall mode: how long it took to bring up the answer, once it's shown. */
+  const [revealMs, setRevealMs] = useState<number | null>(null);
   const [now, setNow] = useState(0);
   const shownAt = useRef(0);
   const recent = useRef<string[]>([]);
@@ -115,6 +117,7 @@ export default function CardsView() {
     const clef = settings.clef === "both" ? (Math.random() < 0.5 ? "treble" : "bass") : settings.clef;
     setShowing({ card, shown, staff: shown.keySig ? { clef, keySig: shown.keySig, groups: [] } : undefined });
     setChosen(null);
+    setRevealMs(null);
     shownAt.current = performance.now();
     setNow(performance.now());
   }, [deck, settings.order, settings.pool, settings.clef]);
@@ -150,6 +153,23 @@ export default function CardsView() {
     [showing, chosen],
   );
 
+  const reveal = useCallback(() => {
+    if (showing && revealMs === null) setRevealMs(performance.now() - shownAt.current);
+  }, [showing, revealMs]);
+
+  /** Recall mode: grade yourself once the answer is showing. Timed to when you revealed it. */
+  const selfGrade = useCallback(
+    (ok: boolean) => {
+      if (!showing || revealMs === null) return;
+      const { step } = showing.shown;
+      review(showing.card.id, ok, revealMs);
+      setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: ok ? step.correct : "", ok, ms: revealMs }]);
+      if (settings.length && answered.length + 1 >= settings.length) finish();
+      else deal();
+    },
+    [showing, revealMs, settings.length, answered.length, finish, deal],
+  );
+
   // Right answers move on by themselves.
   const last = answered[answered.length - 1];
   useEffect(() => {
@@ -160,14 +180,24 @@ export default function CardsView() {
 
   // A running clock for the current card.
   useEffect(() => {
-    if (phase !== "run" || chosen !== null) return;
+    if (phase !== "run" || chosen !== null || revealMs !== null) return;
     const t = setInterval(() => setNow(performance.now()), 100);
     return () => clearInterval(t);
-  }, [phase, chosen, showing]);
+  }, [phase, chosen, revealMs, showing]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (phase === "run" && settings.answer === "recall") {
+        if (revealMs === null && (e.key === " " || e.key === "Enter")) {
+          e.preventDefault();
+          reveal();
+        } else if (revealMs !== null && (e.key === "1" || e.key === "2")) {
+          e.preventDefault();
+          selfGrade(e.key === "2");
+        }
+        return;
+      }
       if (e.key !== "Enter") return;
       if (phase === "setup" || phase === "done") {
         if ((e.target as HTMLElement)?.tagName === "BUTTON") return;
@@ -187,7 +217,7 @@ export default function CardsView() {
     if (types.length) setCardSettings({ types });
   };
 
-  const elapsed = phase === "run" && chosen === null ? Math.max(0, (now - shownAt.current) / 1000) : null;
+  const elapsed = phase === "run" && chosen === null && revealMs === null ? Math.max(0, (now - shownAt.current) / 1000) : null;
   const correctCount = answered.filter((a) => a.ok).length;
 
   return (
@@ -246,6 +276,15 @@ export default function CardsView() {
                 { value: "random", label: "Random" },
               ]}
             />
+            <span className="cards-opt-label">Answer</span>
+            <Segmented
+              value={settings.answer}
+              onChange={(answer) => setCardSettings({ answer })}
+              options={[
+                { value: "choose", label: "Pick from choices" },
+                { value: "recall", label: "Recall, then grade myself" },
+              ]}
+            />
             <span className="cards-opt-label">Length</span>
             <Segmented
               value={settings.length}
@@ -297,7 +336,32 @@ export default function CardsView() {
           ) : (
             <div className="cards-key">{cardKey(showing.card)}</div>
           )}
-          <AnswerPad step={showing.shown.step} chosen={chosen} reveal={chosen !== null} onPick={pick} />
+          {settings.answer === "recall" ? (
+            revealMs === null ? (
+              <div className="cards-recall">
+                <button className="ex-check" onClick={reveal}>
+                  Show answer (Space)
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="cards-answer">
+                  <div className="cards-answer-main">{answerLabel(showing.shown.step.type, showing.shown.step.correct)}</div>
+                  <div className="cards-answer-why">{showing.shown.explain}</div>
+                </div>
+                <div className="cards-recall">
+                  <button className="btn cards-again" onClick={() => selfGrade(false)}>
+                    <kbd>1</kbd> Again
+                  </button>
+                  <button className="btn cards-pass" onClick={() => selfGrade(true)}>
+                    <kbd>2</kbd> Pass
+                  </button>
+                </div>
+              </>
+            )
+          ) : (
+            <AnswerPad step={showing.shown.step} chosen={chosen} reveal={chosen !== null} onPick={pick} />
+          )}
           {chosen !== null && last && (
             <div className={`drill-feedback ${last.ok ? "is-right" : "is-wrong"}`}>
               {last.ok ? (
