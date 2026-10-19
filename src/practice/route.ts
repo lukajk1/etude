@@ -5,11 +5,12 @@ export type Route =
   | { kind: "home" }
   | { kind: "drill"; id: string }
   | { kind: "exercise"; id: string }
-  | { kind: "transcribe"; id: string };
+  | { kind: "transcribe"; id: string }
+  | { kind: "cards"; id: string };
 
 function parse(hash: string): Route {
   const [, kind, id] = hash.replace(/^#/, "").split("/");
-  if ((kind === "drill" || kind === "exercise" || kind === "transcribe") && id) return { kind, id: decodeURIComponent(id) };
+  if ((kind === "drill" || kind === "exercise" || kind === "transcribe" || kind === "cards") && id) return { kind, id: decodeURIComponent(id) };
   return { kind: "home" };
 }
 

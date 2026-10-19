@@ -6,8 +6,8 @@ codebase:
 - **Etude Studio:** place notes in a piano roll, spread them across lanes of orchestral
   instruments, read them back as a score, and hear what you wrote.
   **[lukajk1.github.io/etude](https://lukajk1.github.io/etude/)**
-- **Etude Practice Room:** timed drills, ear training, transcription and graded counterpoint
-  exercises for the foundations of tonal music.
+- **Etude Practice Room:** timed drills, spaced-review flashcards, ear training,
+  transcription and graded counterpoint exercises for the foundations of tonal music.
   **[lukajk1.github.io/etude/practice](https://lukajk1.github.io/etude/practice/)**
 
 Both run entirely in the browser (click anywhere once to allow audio).
@@ -22,7 +22,7 @@ npm run dev        # Studio at http://localhost:4820, Practice Room at /practice
 | Folder | What's in it |
 |---|---|
 | `src/studio/` | Studio only: its toolbar, file menu, demos |
-| `src/practice/` | Practice Room only: home page, drills, transcription, counterpoint exercises, graders |
+| `src/practice/` | Practice Room only: home page, drills, flashcards, transcription, counterpoint exercises, graders |
 | `src/components/` | Shared editor: piano roll, lanes, score, overview, transport and sound controls |
 | `src/audio/`, `src/model/`, `src/theory/`, `src/notation/`, `src/midi/`, `src/lib/` | Shared engine: sound sources, project model, theory and spelling, engraving, MIDI |
 
@@ -119,6 +119,23 @@ half steps compared), and the round is graded against accuracy and speed targets
 Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,
 with spelling handled properly (A♯ and B♭ are different answers).
+
+**Flashcards** for key signatures, with spaced review in the style of Anki. Choose which
+cards to study (signature → major key, signature → minor key, key → signature), the core
+keys (up to four sharps or flats) or all 15, and treble, bass or both clefs. Under
+**intelligent review**, each card sits in a level from 0 to 6 (a Leitner box):
+
+- A right answer in under 3 seconds, on a card that's due, moves it up a level, and its next
+  review moves further out: 1 minute, then 1 day, 3, 7, 16 and 35 days.
+- A right but slow answer keeps it at its level, since it isn't automatic yet.
+- A miss sends it back to level 0, where it comes back within a few cards.
+- The next card is a weighted draw that favors low levels and cards that are due. New cards
+  come in a few at a time (no more than five still being learned), and the same card never
+  shows twice in a row.
+
+A grid shows every key shaded by level, so you can see which ones to drill. **Random** order
+skips the scheduling. Progress is saved in the browser; the scheduler is
+`src/practice/cards/srs.ts` and the deck is `src/practice/cards/deck.ts`.
 
 **Transcription** (melodic dictation): a melody plays, and you write it down by ear in a
 piano roll, in C major with the first note given. The seven melodies (Hot Cross Buns, Mary Had

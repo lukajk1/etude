@@ -1408,6 +1408,163 @@ a.btn {
   font-size: 13px;
 }
 
+/* ---- Flashcards --------------------------------------------------------------- */
+
+.pr-status.is-due {
+  color: var(--warn, #e8b04a);
+  font-weight: 600;
+}
+.cards-options {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 14px 0 16px;
+}
+.cards-opt-label {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.cards-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-self: start;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.cards-seg button {
+  padding: 5px 12px;
+  border: 0;
+  border-right: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.cards-seg button:last-child {
+  border-right: 0;
+}
+.cards-seg button.is-on {
+  background: var(--ink-3);
+  color: var(--text);
+  font-weight: 600;
+}
+.cards-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.cards-checks label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.cards-key {
+  margin: 0 0 16px;
+  padding: 26px 0;
+  border-radius: 8px;
+  background: var(--ink-2);
+  text-align: center;
+  font-size: 30px;
+  font-weight: 700;
+}
+.cards-stage {
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+}
+.cards-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+.cards-grid-wrap {
+  overflow-x: auto;
+}
+.cards-grid {
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-size: 12px;
+}
+.cards-grid th {
+  color: var(--text-dim);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.cards-grid th[scope="row"] {
+  padding-right: 8px;
+  text-align: right;
+}
+.cards-cell {
+  min-width: 34px;
+  padding: 5px 4px;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.is-new.cards-cell,
+.cards-swatch.is-new {
+  background: var(--ink-2);
+  color: var(--text-dim);
+}
+.is-learning.cards-cell,
+.cards-swatch.is-learning {
+  background: rgba(224, 92, 92, 0.32);
+}
+.is-familiar.cards-cell,
+.cards-swatch.is-familiar {
+  background: rgba(232, 176, 74, 0.34);
+}
+.is-strong.cards-cell,
+.cards-swatch.is-strong {
+  background: rgba(120, 190, 120, 0.34);
+}
+.is-mastered.cards-cell,
+.cards-swatch.is-mastered {
+  background: rgba(90, 200, 120, 0.7);
+  color: #0d1a10;
+}
+.cards-stage.is-learning {
+  border-color: rgba(224, 92, 92, 0.6);
+}
+.cards-stage.is-familiar {
+  border-color: rgba(232, 176, 74, 0.6);
+}
+.cards-stage.is-strong,
+.cards-stage.is-mastered {
+  border-color: rgba(90, 200, 120, 0.7);
+}
+.cards-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.cards-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.cards-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+@media (max-width: 600px) {
+  .cards-options {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .cards-opt-label {
+    margin-top: 8px;
+  }
+}
+
 /* ---- Status bar --------------------------------------------------------- */
 
 .status {

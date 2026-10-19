@@ -17,6 +17,7 @@ import { TranscriptionPanel } from "./TranscriptionPanel";
 import { useProject } from "../model/store";
 
 const DrillView = lazy(() => import("./DrillView"));
+const CardsView = lazy(() => import("./CardsView"));
 
 function Header({ title, editor = false }: { title?: string; editor?: boolean }) {
   return (
@@ -103,6 +104,23 @@ function DrillScreen({ id }: { id: string }) {
   );
 }
 
+function CardsScreen({ id }: { id: string }) {
+  useEffect(() => {
+    if (id !== "keys") go({ kind: "home" });
+  }, [id]);
+  if (id !== "keys") return null;
+  return (
+    <div className="app" style={{ gridTemplateRows: "auto 1fr" }}>
+      <Header title="Key signature flashcards" />
+      <div className="main">
+        <Suspense fallback={<div className="drill">Loading…</div>}>
+          <CardsView />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
 export function PracticeApp() {
   const route = useRoute();
   useEffect(() => {
@@ -117,6 +135,8 @@ export function PracticeApp() {
       return <ExerciseScreen key={route.id} id={route.id} />;
     case "transcribe":
       return <TranscriptionScreen key={route.id} id={route.id} />;
+    case "cards":
+      return <CardsScreen key={route.id} id={route.id} />;
     default:
       return (
         <div className="app pr-app" style={{ gridTemplateRows: "auto 1fr" }}>
