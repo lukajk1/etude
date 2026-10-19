@@ -19,8 +19,9 @@ interface Item {
   extra?: string[];
 }
 
-const written = DRILLS.filter((d) => !d.ear);
-const ear = DRILLS.filter((d) => d.ear);
+const written = DRILLS.filter((d) => !d.ear && !d.unit);
+const ear = DRILLS.filter((d) => d.ear && !d.unit);
+const harmony = DRILLS.filter((d) => d.unit === "harmony");
 const drillItem = (d: Drill, kind: string): Item => ({ route: { kind: "drill", id: d.id }, number: d.number, title: d.title, summary: d.summary, kind });
 const UNITS: { title: string; blurb: string; items: Item[] }[] = [
   {
@@ -37,6 +38,11 @@ const UNITS: { title: string; blurb: string; items: Item[] }[] = [
     title: "Transcription",
     blurb: "Write down melodies by ear. Each one adds only an interval or two, so you can build up a few at a time.",
     items: MELODIES.map((m) => ({ route: { kind: "transcribe", id: m.id }, number: m.number, title: m.title, summary: m.summary, kind: "Transcription", extra: intervalsUsed(m) })),
+  },
+  {
+    title: "Hearing harmony",
+    blurb: "Chords by their role in the key, I, IV, V, then vi and ii, first alone after a cadence, then in short progressions.",
+    items: harmony.map((d) => drillItem(d, "Harmony by ear")),
   },
   {
     title: "Counterpoint essentials",
@@ -59,8 +65,8 @@ export function Home() {
   const cardPrefs = useSignal(deckSettings);
   useSignal(cardStates);
 
-  // Up next: the first unpassed item in each of the first three tracks, plus counterpoint once reading is underway.
-  const upNext = UNITS.slice(0, 3)
+  // Up next: the first unpassed item in each of the first four tracks.
+  const upNext = UNITS.slice(0, 4)
     .map((u) => u.items.find((it) => !prog[routeId(it.route)]?.passed))
     .filter((x): x is Item => !!x);
 

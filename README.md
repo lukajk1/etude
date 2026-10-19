@@ -141,6 +141,8 @@ repeating:
 | 0.7 Build triads | each root and quality | natural roots |
 | 0.8 Hear intervals | each interval by ear; check any set, and the answer buttons are just those | presets: 3rds, 4th and 5th, essentials, all 12 |
 | 0.10–0.11 Hear chord quality, scale degrees | each quality, each degree | |
+| 2.1 Chords in a key | I, ii, IV, V, vi by ear; check any set | presets: I and V, I IV V, add vi, all five |
+| 2.2 Progressions | each common four-chord progression | I, IV and V only |
 
 Each deck lets you choose which directions or groups to study. A drill's intro screen links
 to its deck. Under
@@ -172,6 +174,14 @@ data. The app asks the browser to keep it even when disk space runs low. For a s
 **Back up to a file** at the bottom of the Practice Room home page saves everything as one
 JSON file, and **Restore from a file** loads it back, in this browser or another one. The
 local dev server and the live site are separate sites, so each has its own progress.
+
+**Unit 2, Hearing harmony**: naming chords by their role in a major key, by ear. A
+I–IV–V–I cadence sets the key, then one chord plays, voiced as a pianist would (root in the
+bass, the rest close above). The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
+adding ii; then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the
+'50s progression, the pop I–V–vi–IV, ii–V–I and others), naming chords 2 to 4. The
+explanations point to the bass line (do, fa, sol, la, re), which gives the chord away. The
+voicings and progressions are in `src/practice/drills/harmony.ts`.
 
 **Interval trainer** (free practice): choose any intervals and how they're played (up,
 down, together, or melodic then together). Answering moves straight to the next interval

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
 import { EAR_INTERVALS, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
+import { NUMERAL_NAME, NUMERALS, type Numeral } from "./drills/harmony";
 import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vfKey } from "./drills/theory";
 
 /** Shared by the drills and flashcards: a small staff, and the answer button pads. */
@@ -75,6 +76,8 @@ export function answerLabel(type: AnswerType, value: string): string {
       return Object.values(EAR_INTERVALS).find((e) => e.code === value)?.label ?? value;
     case "semitones":
       return `${value} semitone${value === "1" ? "" : "s"}`;
+    case "numeral":
+      return `${value} (${NUMERAL_NAME[value as Numeral]})`;
   }
 }
 
@@ -172,6 +175,14 @@ export function AnswerPad(props: PadProps) {
         <div className="drill-grid" style={{ gridTemplateColumns: `repeat(${Math.min(6, step.options?.length ?? 6)}, minmax(0, 1fr))` }}>
           {(step.options ?? []).map((code) => (
             <Choice key={code} {...props} value={code} label={answerLabel("earInterval", code)} wide />
+          ))}
+        </div>
+      );
+    case "numeral":
+      return (
+        <div className="drill-row">
+          {(step.options ?? NUMERALS).map((n) => (
+            <Choice key={n} {...props} value={n} label={n} wide />
           ))}
         </div>
       );

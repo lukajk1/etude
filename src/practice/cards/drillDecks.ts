@@ -22,6 +22,7 @@ import {
   triadOk,
   type Question,
 } from "../drills/catalog";
+import { chordInKeyQuestion, NUMERAL_NAME, NUMERALS, PROGRESSIONS, progressionLabel, progressionQuestion, progressionsUsing, type Numeral } from "../drills/harmony";
 import { intervalLabel, nameOf, prettyCode, randInt, type ScaleKind, type TriadQuality } from "../drills/theory";
 import type { Card, DeckDef } from "./types";
 
@@ -291,4 +292,50 @@ export const HEAR_DEGREES_DECK = factDeck({
   label: (_t, d) => `degree ${d} (${SOLFEGE[Number(d) - 1]})`,
   cell: (_t, d) => `${d} ${SOLFEGE[Number(d) - 1]}`,
   question: (_t, d) => degreeQuestion(Number(d)),
+});
+
+/** Each chord is its own type, so any set can be checked, like the interval deck. */
+export const CHORDS_IN_KEY_DECK = factDeck({
+  id: "chords-in-key",
+  title: "Chords in a key",
+  summary: "I, ii, IV, V and vi by ear after a cadence; pick any set to drill.",
+  brief: "A cadence sets the key, then one chord plays: name it by its role. Check the chords to drill; the answer buttons are just those. Listen to the bass note.",
+  tag: "2.1",
+  drills: ["h-chords-1-5", "h-chords-1-4-5", "h-chords-vi", "h-chords-all"],
+  ear: true,
+  pools: [{ value: "full", label: "Chosen chords" }],
+  types: NUMERALS.map((n) => ({ id: n, label: `${n} (${NUMERAL_NAME[n]})`, hint: NUMERAL_NAME[n] })),
+  defaults: { pool: "full", types: ["I", "V"] },
+  presets: [
+    { label: "I and V", types: ["I", "V"] },
+    { label: "I, IV, V", types: ["I", "IV", "V"] },
+    { label: "Add vi", types: ["I", "IV", "V", "vi"] },
+    { label: "All five", types: [...NUMERALS] },
+  ],
+  minTypes: 2,
+  cardId: (n) => `chords-in-key:${n}`,
+  oneRow: "Chords",
+  facts: (n) => [n],
+  label: (n) => `${n} (${NUMERAL_NAME[n as Numeral]})`,
+  cell: (n) => n,
+  question: (n, _f, _pool, types) => chordInKeyQuestion(n as Numeral, NUMERALS.filter((x) => types.includes(x))),
+});
+
+const progressionSet = (pool: string): Numeral[] => (pool === "full" ? [...NUMERALS] : ["I", "IV", "V"]);
+
+export const PROGRESSIONS_DECK = factDeck({
+  id: "progressions",
+  title: "Progressions",
+  summary: "Common four-chord progressions by ear; each progression is a card.",
+  brief: "Four chords play, starting on I: name the other three. Each common progression is a card, in a different key each time. Start with I, IV and V.",
+  tag: "2.2",
+  drills: ["h-prog-basic", "h-prog-all"],
+  ear: true,
+  pools: corePool("I, IV and V", "With vi and ii"),
+  types: one("Progressions"),
+  defaults: { pool: "core", types: ["all"] },
+  facts: (_t, pool) => progressionsUsing(progressionSet(pool)).map((p) => progressionLabel(p.chords)),
+  label: (_t, f) => f,
+  cell: (_t, f) => f,
+  question: (_t, f, pool) => progressionQuestion(PROGRESSIONS.find((p) => progressionLabel(p.chords) === f)!.chords, progressionSet(pool)),
 });

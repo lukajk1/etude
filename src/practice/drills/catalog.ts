@@ -24,8 +24,9 @@ import {
   type Spelled,
   type TriadQuality,
 } from "./theory";
+import { HARMONY_DRILLS } from "./harmony";
 
-export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones";
+export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones" | "numeral";
 
 export interface Step {
   type: AnswerType;
@@ -67,6 +68,8 @@ export interface Drill {
   summary: string;
   brief: string;
   ear: boolean;
+  /** Drills outside the foundations get their own unit on the home page. */
+  unit?: "harmony";
   /** Pass marks from the foundations checklist. */
   pass: { accuracy: number; medianSec?: number };
   generate: () => Question;
@@ -600,6 +603,7 @@ export const DRILLS: Drill[] = [
   hearDoMiSol,
   hearDoToSol,
   hearDegrees,
+  ...HARMONY_DRILLS,
 ];
 
 export function getDrill(id: string | null): Drill | null {

@@ -161,7 +161,9 @@ export default function DrillView({ id }: { id: string }) {
     <section className="drill" aria-label={`Drill ${drill.number}: ${drill.title}`}>
       <div className="drill-head">
         <div>
-          <div className="drill-number">Foundations, drill {drill.number}</div>
+          <div className="drill-number">
+            {drill.unit === "harmony" ? "Hearing harmony" : "Foundations"}, drill {drill.number}
+          </div>
           <h2 className="drill-title">{drill.title}</h2>
         </div>
         <button className="btn" onClick={() => go({ kind: "home" })}>
