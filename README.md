@@ -120,6 +120,12 @@ speed targets:
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 
+The home page also suggests an order across topics: each stage lists what's worth passing
+first (for example scales after major key signatures, intervals after scales, I-or-V after
+do-mi-sol), and stages within a topic go a, b, c. Stages that aren't ready yet are faded and
+say what comes first, but stay open; Up next only suggests stages that are ready. The order
+is `PREREQS` in `src/practice/Home.tsx`.
+
 Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,
 with spelling handled properly (A♯ and B♭ are different answers).

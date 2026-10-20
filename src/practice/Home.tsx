@@ -109,6 +109,49 @@ const UNITS: Unit[] = [
 const routeId = (r: Route) => (r.kind === "home" ? "" : r.id);
 const unitItems = (u: Unit) => u.topics.flatMap((t) => t.items);
 
+/**
+ * The recommended order: what's worth passing before a stage, by number. Stages within a
+ * topic also go in order (a before b). Nothing is locked; stages that aren't ready yet are
+ * just dimmed and say what comes first.
+ */
+const PREREQS: Record<string, string[]> = {
+  "0.3a": ["0.2a"], // a scale is its key signature, written out
+  "0.3b": ["0.2b"],
+  "0.4a": ["0.1c", "0.3a"], // read the notes; the major scale gives each interval's quality
+  "0.5a": ["0.4a"],
+  "0.6a": ["0.4a"], // triads are stacked 3rds
+  "0.7a": ["0.5a", "0.6a"],
+  "0.9a": ["0.8a"],
+  "0.9b": ["0.8b"],
+  "0.9c": ["0.8c"],
+  "0.9d": ["0.8d"],
+  "0.10a": ["0.8a"], // major and minor chords differ by their 3rd
+  "2.1a": ["0.11a"], // a chord's bass note is a scale degree
+  "2.2a": ["2.1b"],
+  "2.2b": ["2.1d"],
+  T1: ["0.8a"],
+  "1.1": ["0.4a"],
+  "1.3": ["1.1"],
+  "1.6": ["1.3"],
+};
+
+const ALL_ITEMS = new Map(UNITS.flatMap(unitItems).map((it) => [it.number, it]));
+
+/** Numbers of the stages to pass before this one: listed ones, plus the one before it in its topic. */
+function prereqsOf(it: Item): string[] {
+  const topic = UNITS.flatMap((u) => u.topics).find((t) => t.items.includes(it))!;
+  const i = topic.items.indexOf(it);
+  return [...(PREREQS[it.number] ?? []), ...(i > 0 ? [topic.items[i - 1].number] : [])];
+}
+
+const unmetPrereqs = (it: Item, prog: Record<string, Progress>) =>
+  prereqsOf(it).filter((n) => {
+    const p = ALL_ITEMS.get(n);
+    return p && !prog[routeId(p.route)]?.passed;
+  });
+
+const prereqText = (nums: string[]) => nums.map((n) => `${n} ${ALL_ITEMS.get(n)?.title ?? ""}`.trim()).join(", ");
+
 function statusText(p?: Progress) {
   return !p ? "not started" : p.passed ? "passed" : `best ${p.best}%`;
 }
@@ -133,6 +176,15 @@ function TopicRow({ topic, prog, open, onToggle }: { topic: Topic; prog: Record<
   const next = topic.items.find((it) => !prog[routeId(it.route)]?.passed);
   // Mark the next checkpoint only in topics already underway, so untouched ones stay quiet.
   const started = topic.items.some((it) => prog[routeId(it.route)]);
+  const nextUnmet = next ? unmetPrereqs(next, prog) : [];
+  /** A stage's status class: passed, tried, the next one up, or not ready yet. */
+  const chipClass = (it: Item, markNext: boolean) => {
+    const p = prog[routeId(it.route)];
+    if (p?.passed) return " is-pass";
+    if (p) return " is-tried";
+    if (unmetPrereqs(it, prog).length) return " is-later";
+    return markNext && it === next ? " is-next" : "";
+  };
   return (
     <li className={`pr-topic${open ? " is-open" : ""}`}>
       <button className="pr-topic-main" onClick={onToggle} aria-expanded={open} title={open ? "Hide the stages" : "Show the stages"}>
@@ -141,15 +193,18 @@ function TopicRow({ topic, prog, open, onToggle }: { topic: Topic; prog: Record<
           <span className="pr-row-title">
             {topic.title} <span className="pr-caret">{open ? "▾" : "▸"}</span>
           </span>
-          <span className="pr-row-summary">{next ? `Next: ${next.detail}` : "All passed"}</span>
+          <span className="pr-row-summary">
+            {!next ? "All passed" : nextUnmet.length ? `Next: ${next.detail}, after ${nextUnmet.join(" and ")}` : `Next: ${next.detail}`}
+          </span>
         </span>
       </button>
       <span className="pr-chips">
         {topic.items.map((it) => {
           const p = prog[routeId(it.route)];
-          const cls = p?.passed ? " is-pass" : p ? " is-tried" : started && it === next ? " is-next" : "";
+          const unmet = unmetPrereqs(it, prog);
+          const title = `${it.number} ${it.title}: ${statusText(p)}${!p && unmet.length ? `; first: ${unmet.join(", ")}` : ""}`;
           return (
-            <button key={it.number} className={`pr-chip${cls}`} title={`${it.number} ${it.title}: ${statusText(p)}`} onClick={() => go(it.route)}>
+            <button key={it.number} className={`pr-chip${chipClass(it, started)}`} title={title} onClick={() => go(it.route)}>
               {chipLabel(topic, it)}
             </button>
           );
@@ -160,17 +215,18 @@ function TopicRow({ topic, prog, open, onToggle }: { topic: Topic; prog: Record<
         <ol className="pr-stages">
           {topic.items.map((it) => {
             const p = prog[routeId(it.route)];
-            const cls = p?.passed ? " is-pass" : p ? " is-tried" : it === next ? " is-next" : "";
+            const unmet = p ? [] : unmetPrereqs(it, prog);
             return (
               <li key={it.number}>
-                <button className="pr-stage" onClick={() => go(it.route)}>
-                  <span className={`pr-chip${cls}`}>{chipLabel(topic, it)}</span>
+                <button className={`pr-stage${unmet.length ? " is-later" : ""}`} onClick={() => go(it.route)}>
+                  <span className={`pr-chip${chipClass(it, true)}`}>{chipLabel(topic, it)}</span>
                   <span className="pr-stage-text">
                     <span className="pr-stage-title">{capital(it.detail)}</span>
                     <span className="pr-row-summary">{it.summary}</span>
                     <span className="pr-stage-pass">To pass: {it.pass}.</span>
+                    {unmet.length > 0 && <span className="pr-stage-first">Best after: {prereqText(unmet)}.</span>}
                   </span>
-                  <span className={`pr-stage-status${p?.passed ? " is-pass" : ""}`}>{p ? (p.passed ? "Passed" : `Best ${p.best}%`) : it === next ? "Next" : ""}</span>
+                  <span className={`pr-stage-status${p?.passed ? " is-pass" : ""}`}>{p ? (p.passed ? "Passed" : `Best ${p.best}%`) : it === next && !unmet.length ? "Next" : ""}</span>
                 </button>
               </li>
             );
@@ -205,13 +261,28 @@ export function Home() {
     saveExpanded(next);
   };
 
-  // Up next: the first unpassed item in each of the first four units.
-  const upNext = UNITS.slice(0, 4)
-    .map((u) => {
-      const it = unitItems(u).find((x) => !prog[routeId(x.route)]?.passed);
-      return it && { ...it, kind: u.kind };
-    })
-    .filter((x): x is Item & { kind: string } => !!x);
+  // Up next: stages that are ready (prerequisites passed). The first in each unit, then
+  // ones from other topics, up to four.
+  const ready = (it: Item) => !prog[routeId(it.route)]?.passed && unmetPrereqs(it, prog).length === 0;
+  const upNext: (Item & { kind: string })[] = [];
+  const pickedTopics = new Set<Topic>();
+  for (const u of UNITS) {
+    const t = u.topics.find((t) => t.items.some(ready));
+    if (t && upNext.length < 4) {
+      upNext.push({ ...t.items.find(ready)!, kind: u.kind });
+      pickedTopics.add(t);
+    }
+  }
+  for (const u of UNITS) {
+    for (const t of u.topics) {
+      if (upNext.length >= 4 || pickedTopics.has(t)) continue;
+      const it = t.items.find(ready);
+      if (it) {
+        upNext.push({ ...it, kind: u.kind });
+        pickedTopics.add(t);
+      }
+    }
+  }
 
   const all = UNITS.flatMap(unitItems);
   const passed = all.filter((it) => prog[routeId(it.route)]?.passed).length;
@@ -284,7 +355,10 @@ export function Home() {
             {allOpen ? "Collapse all" : "Expand all"}
           </button>
         </div>
-        <p className="pr-blurb">Each topic is split into stages, narrow first. Click a topic to see its stages and what each one asks, or a chip to go straight to one.</p>
+        <p className="pr-blurb">
+          Each topic is split into stages, narrow first. Click a topic to see its stages and what each one asks, or a chip to go straight to one. Faded stages
+          build on something you haven't passed yet; you can still open them.
+        </p>
         <div className="pr-units">
           {UNITS.map((u) => {
             const items = unitItems(u);
@@ -315,6 +389,9 @@ export function Home() {
           </span>
           <span>
             <i className="pr-chip is-next" /> next
+          </span>
+          <span>
+            <i className="pr-chip is-later" /> after something else
           </span>
         </div>
       </section>

@@ -1580,7 +1580,12 @@ a.btn {
 }
 .pr-chip.is-tried {
   border-color: var(--loop);
+  background: rgba(143, 107, 38, 0.16);
   color: var(--text);
+}
+.pr-chip.is-later {
+  opacity: 0.45;
+  border-style: dashed;
 }
 .pr-chip.is-pass {
   border-color: var(--loop);
@@ -1653,6 +1658,16 @@ a.btn {
   display: block;
   font-weight: 600;
   font-size: 13px;
+}
+.pr-stage.is-later .pr-stage-title,
+.pr-stage.is-later .pr-row-summary {
+  opacity: 0.6;
+}
+.pr-stage-first {
+  display: block;
+  margin-top: 1px;
+  color: var(--warn);
+  font-size: 11.5px;
 }
 .pr-stage-pass {
   display: block;
