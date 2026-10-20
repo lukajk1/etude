@@ -149,6 +149,9 @@ repeating:
 | 0.10–0.11 Hear chord quality, scale degrees | each quality, each degree | |
 | 2.1 Chords in a key | I, ii, IV, V, vi by ear; check any set | presets: I and V, I IV V, add vi, all five |
 | 2.2 Progressions | each common four-chord progression | I, IV and V only |
+| 3.1 Note values | each note and rest value | plain values first |
+| 3.2 Hear the meter | 2, 3 or 4 beats by ear; check any set | 2 or 3 |
+| 4.1 Cadences | authentic, half, plagal, deceptive by ear; check any set | authentic or half |
 
 Each deck lets you choose which directions or groups to study. A drill's intro screen links
 to its deck. Under
@@ -190,6 +193,19 @@ adding ii; then 2.2a four-chord progressions with I, IV and V, and b with vi and
 '50s progression, the pop I–V–vi–IV, ii–V–I and others), naming chords 2 to 4. The
 explanations point to the bass line (do, fa, sol, la, re), which gives the chord away. The
 voicings and progressions are in `src/practice/drills/harmony.ts`.
+
+**Unit 3, Rhythm and meter**, with the standard exercises from aural-skills courses:
+3.1 note values (beats per note, dots and rests, completing a bar), 3.2 hearing the meter
+(2, 3 or 4 beats, from an accompaniment's strong beat), 3.3 rhythmic dictation (hear a bar
+after a count-in, pick its notation from three near-misses) and 3.4 tapping a rhythm in
+time (Space or the pad, after a bar of clicks). Each goes from quarters and halves, to
+eighths, to dotted rhythms, sixteenths and syncopation. Tapping is graded against the
+beat within about ±90 ms, after removing a steady delay from speakers or Bluetooth when
+most taps agree on it; explanations use the usual counting, "1 e & a", with held beats in
+brackets. The rhythms and counting are in `src/practice/drills/rhythm.ts`.
+
+**Unit 4, Cadences**: four chords play from I and you name how the phrase ends, from
+authentic or half, to adding plagal, to adding deceptive (`src/practice/drills/cadences.ts`).
 
 **Interval trainer** (free practice): choose any intervals and how they're played (up,
 down, together, or melodic then together). Answering moves straight to the next interval

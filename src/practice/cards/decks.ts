@@ -2,12 +2,15 @@ import { Signal } from "../../model/ui";
 import {
   BUILD_INTERVALS_DECK,
   BUILD_TRIADS_DECK,
+  CADENCES_DECK,
   CHORDS_IN_KEY_DECK,
   HEAR_CHORDS_DECK,
   HEAR_DEGREES_DECK,
   HEAR_INTERVALS_DECK,
+  METER_DECK,
   NAME_INTERVALS_DECK,
   NAME_TRIADS_DECK,
+  NOTE_VALUES_DECK,
   NOTES_DECK,
   PROGRESSIONS_DECK,
   SCALES_DECK,
@@ -29,8 +32,11 @@ export const DECKS: DeckDef[] = [
   HEAR_INTERVALS_DECK,
   HEAR_CHORDS_DECK,
   HEAR_DEGREES_DECK,
+  NOTE_VALUES_DECK,
+  METER_DECK,
   CHORDS_IN_KEY_DECK,
   PROGRESSIONS_DECK,
+  CADENCES_DECK,
 ];
 /** The deck that practices a drill, if any. */
 export const deckForDrill = (drillId: string) => DECKS.find((d) => d.drills?.includes(drillId));

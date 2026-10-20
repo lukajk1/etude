@@ -24,9 +24,11 @@ import {
   type Spelled,
   type TriadQuality,
 } from "./theory";
+import { CADENCE_DRILLS } from "./cadences";
 import { HARMONY_DRILLS } from "./harmony";
+import { RHYTHM_DRILLS } from "./rhythm";
 
-export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones" | "numeral";
+export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence";
 
 export interface Step {
   type: AnswerType;
@@ -35,6 +37,8 @@ export interface Step {
   correct: string;
   /** Limit the choices (ear intervals). */
   options?: string[];
+  /** Extra input for pads that need it (the rhythm to tap). */
+  data?: string;
 }
 
 export interface StaffSpec {
@@ -50,11 +54,15 @@ export interface AudioEvent {
   /** Seconds after the start. */
   at: number;
   dur: number;
+  /** Loudness 0–1 (default 0.7). */
+  vel?: number;
 }
 
 export interface Question {
   prompt: string;
   staff?: StaffSpec;
+  /** A rhythm to show (rhythm drills), as "beats:durations". */
+  rhythm?: string;
   audio?: AudioEvent[];
   steps: Step[];
   /** Shown after a wrong answer: the reasoning, not just the answer. */
@@ -69,7 +77,7 @@ export interface Drill {
   brief: string;
   ear: boolean;
   /** Drills outside the foundations get their own unit on the home page. */
-  unit?: "harmony";
+  unit?: "harmony" | "rhythm" | "cadences";
   /** Pass marks from the foundations checklist. */
   pass: { accuracy: number; medianSec?: number };
   generate: () => Question;
@@ -605,6 +613,8 @@ export const DRILLS: Drill[] = [
   hearDoToSol,
   hearDegrees,
   ...HARMONY_DRILLS,
+  ...RHYTHM_DRILLS,
+  ...CADENCE_DRILLS,
 ];
 
 export function getDrill(id: string | null): Drill | null {

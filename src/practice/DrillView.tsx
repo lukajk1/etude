@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, preparePiano } from "../audio/live";
-import { AnswerPad, answerLabel, LETTERS, Staff } from "./Answers";
+import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
 import { DRILLS, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
 import { go } from "./route";
@@ -212,6 +212,11 @@ export default function DrillView({ id }: { id: string }) {
           {question.staff && (
             <div className="drill-paper">
               <Staff spec={question.staff} />
+            </div>
+          )}
+          {question.rhythm && (
+            <div className="drill-paper">
+              <RhythmStaff spec={question.rhythm} />
             </div>
           )}
           {question.audio && (

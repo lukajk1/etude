@@ -23,6 +23,8 @@ import {
   type Question,
 } from "../drills/catalog";
 import { chordInKeyQuestion, NUMERAL_NAME, NUMERALS, PROGRESSIONS, progressionLabel, progressionQuestion, progressionsUsing, type Numeral } from "../drills/harmony";
+import { CADENCE_INFO, CADENCES, cadenceQuestion, type Cadence } from "../drills/cadences";
+import { BASIC_VALUES, DOTTED_AND_RESTS, meterQuestion, noteValueQuestion, VALUES } from "../drills/rhythm";
 import { intervalLabel, nameOf, prettyCode, randInt, type ScaleKind, type TriadQuality } from "../drills/theory";
 import type { Card, DeckDef } from "./types";
 
@@ -348,4 +350,75 @@ export const PROGRESSIONS_DECK = factDeck({
   label: (_t, f) => f,
   cell: (_t, f) => f,
   question: (_t, f, pool) => progressionQuestion(PROGRESSIONS.find((p) => progressionLabel(p.chords) === f)!.chords, progressionSet(pool)),
+});
+
+export const NOTE_VALUES_DECK = factDeck({
+  id: "note-values",
+  title: "Note values",
+  summary: "How many beats each note and rest lasts; each value is a card.",
+  brief: "Say how many beats a note or rest lasts, with a quarter-note beat. Start with the plain values, then add dots and rests.",
+  tag: "3.1",
+  drills: ["r-values-basic", "r-values-dotted"],
+  fastMs: 3000,
+  pools: [{ value: "full", label: "All" }],
+  types: [
+    { id: "basic", label: "Whole to sixteenth", hint: "Plain note values" },
+    { id: "dotted", label: "Dots and rests", hint: "Dotted notes and rests" },
+  ],
+  defaults: { pool: "full", types: ["basic"] },
+  facts: (type) => (type === "basic" ? BASIC_VALUES : DOTTED_AND_RESTS),
+  label: (_t, id) => VALUES.find((v) => v.id === id)!.name,
+  cell: (_t, id) => VALUES.find((v) => v.id === id)!.name.replace(/ note$/, "").replace("dotted ", "dot. "),
+  question: (_t, id) => noteValueQuestion(id),
+});
+
+const METERS = ["2", "3", "4"];
+
+export const METER_DECK = factDeck({
+  id: "meter",
+  title: "Hear the meter",
+  summary: "2, 3 or 4 beats per bar, by ear; pick any set.",
+  brief: "An accompaniment plays; count the beats from one strong bass note to the next. Check the meters to drill; the answer buttons are just those.",
+  tag: "3.2",
+  drills: ["r-meter-23", "r-meter-234"],
+  ear: true,
+  pools: [{ value: "full", label: "Chosen meters" }],
+  types: METERS.map((m) => ({ id: m, label: `${m} beats (${m}/4)`, hint: `${m}/4` })),
+  defaults: { pool: "full", types: ["2", "3"] },
+  presets: [
+    { label: "2 or 3", types: ["2", "3"] },
+    { label: "2, 3 or 4", types: ["2", "3", "4"] },
+  ],
+  minTypes: 2,
+  cardId: (m) => `meter:${m}`,
+  oneRow: "Meters",
+  facts: (m) => [m],
+  label: (m) => `${m} beats per bar`,
+  cell: (m) => `${m}/4`,
+  question: (m, _f, _pool, types) => meterQuestion(Number(m), METERS.filter((x) => types.includes(x))),
+});
+
+export const CADENCES_DECK = factDeck({
+  id: "cadences",
+  title: "Cadences",
+  summary: "Authentic, half, plagal and deceptive by ear; pick any set.",
+  brief: "Four chords play, starting on I: name how the phrase ends. Check the cadences to drill; the answer buttons are just those.",
+  tag: "4.1",
+  drills: ["c-cad-ah", "c-cad-ahp", "c-cad-all"],
+  ear: true,
+  pools: [{ value: "full", label: "Chosen cadences" }],
+  types: CADENCES.map((c) => ({ id: c, label: `${CADENCE_INFO[c].label} (${CADENCE_INFO[c].chords})`, hint: CADENCE_INFO[c].sound })),
+  defaults: { pool: "full", types: ["authentic", "half"] },
+  presets: [
+    { label: "Authentic or half", types: ["authentic", "half"] },
+    { label: "Add plagal", types: ["authentic", "half", "plagal"] },
+    { label: "All four", types: [...CADENCES] },
+  ],
+  minTypes: 2,
+  cardId: (c) => `cadence:${c}`,
+  oneRow: "Cadences",
+  facts: (c) => [c],
+  label: (c) => `${CADENCE_INFO[c as Cadence].label} cadence`,
+  cell: (c) => CADENCE_INFO[c as Cadence].label,
+  question: (c, _f, _pool, types) => cadenceQuestion(c as Cadence, CADENCES.filter((x) => types.includes(x))),
 });

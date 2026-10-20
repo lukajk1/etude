@@ -1796,6 +1796,90 @@ a.btn {
   }
 }
 
+/* ---- Rhythm pads ---------------------------------------------------------------- */
+
+.rhythm-choices {
+  display: grid;
+  gap: 8px;
+}
+.rhythm-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 14px;
+  overflow-x: auto;
+  background: #fffcf4;
+}
+.rhythm-choice .drill-staff svg {
+  display: block;
+}
+.rhythm-choice-letter {
+  flex: none;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+.tap-pad {
+  display: flex;
+  justify-content: center;
+  min-height: 110px;
+}
+.tap-start {
+  flex: 0 1 260px;
+  align-self: center;
+}
+.tap-target {
+  width: 100%;
+  min-height: 110px;
+  border: 2px solid var(--loop);
+  border-radius: 10px;
+  background: rgba(143, 107, 38, 0.1);
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  animation: tap-flash 0.18s ease-out;
+  user-select: none;
+  touch-action: manipulation;
+}
+@keyframes tap-flash {
+  from {
+    background: rgba(143, 107, 38, 0.35);
+  }
+}
+.tap-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.tap-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tap-mark {
+  min-width: 34px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  text-align: center;
+  font-size: 12px;
+}
+.tap-mark.is-hit {
+  border-color: var(--loop);
+  background: rgba(143, 107, 38, 0.2);
+}
+.tap-mark.is-early,
+.tap-mark.is-late {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.tap-mark.is-missed {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
 /* ---- Flashcards --------------------------------------------------------------- */
 
 .cards-options {

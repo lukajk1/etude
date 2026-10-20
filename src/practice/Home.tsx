@@ -82,6 +82,7 @@ function counterpointTopics(): Topic[] {
 const UNITS: Unit[] = [
   { title: "Foundations: reading and theory", kind: "Reading drill", topics: drillTopics((d) => !d.ear && !d.unit) },
   { title: "Foundations: ear training", kind: "Ear drill", topics: drillTopics((d) => d.ear && !d.unit) },
+  { title: "Rhythm and meter", kind: "Rhythm", topics: drillTopics((d) => d.unit === "rhythm") },
   {
     title: "Transcription",
     kind: "Transcription",
@@ -103,6 +104,7 @@ const UNITS: Unit[] = [
     ],
   },
   { title: "Hearing harmony", kind: "Harmony by ear", topics: drillTopics((d) => d.unit === "harmony") },
+  { title: "Cadences", kind: "Cadences by ear", topics: drillTopics((d) => d.unit === "cadences") },
   { title: "Counterpoint essentials", kind: "Counterpoint", topics: counterpointTopics() },
 ];
 
@@ -129,6 +131,9 @@ const PREREQS: Record<string, string[]> = {
   "2.1a": ["0.11a"], // a chord's bass note is a scale degree
   "2.2a": ["2.1b"],
   "2.2b": ["2.1d"],
+  "3.3a": ["3.1a"], // read the values before hearing them
+  "3.4a": ["3.1a"],
+  "4.1a": ["2.1b"], // a cadence is chords: I, IV and V by ear first
   T1: ["0.8a"],
   "1.1": ["0.4a"],
   "1.3": ["1.1"],

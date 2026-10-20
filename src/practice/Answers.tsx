@@ -1,7 +1,10 @@
-import { useEffect, useRef } from "react";
-import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
+import { useEffect, useRef, useState } from "react";
+import { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
+import { engine, ensureAudio, playNotes } from "../audio/live";
+import { CADENCE_INFO, type Cadence } from "./drills/cadences";
 import { EAR_INTERVALS, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
 import { NUMERAL_NAME, NUMERALS, type Numeral } from "./drills/harmony";
+import { BPM, beatsLabel, countText, fromSpec, onsets, rhythmAudio, VALUES } from "./drills/rhythm";
 import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vfKey } from "./drills/theory";
 
 /** Shared by the drills and flashcards: a small staff, and the answer button pads. */
@@ -44,6 +47,45 @@ export function Staff({ spec }: { spec: StaffSpec }) {
   return <div className="drill-staff" ref={ref} />;
 }
 
+// ---- Rhythm notation ------------------------------------------------------------------
+
+/** VexFlow durations by length in sixteenths ("d" for dotted). */
+const VF_DUR: Record<number, string> = { 16: "w", 12: "hd", 8: "h", 6: "qd", 4: "q", 3: "8d", 2: "8", 1: "16" };
+
+/** A rhythm on a staff without clef or pitch, as "beats:durations" (beats 0: no time signature). */
+export function RhythmStaff({ spec, scale = 1.35 }: { spec: string; scale?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.innerHTML = "";
+    const { beats, notes } = fromSpec(spec);
+    const width = 40 + (beats ? 34 : 0) + notes.reduce((w, x) => w + (x.dur >= 8 ? 46 : 34), 0);
+    const renderer = new Renderer(el, Renderer.Backends.SVG);
+    // Tall enough for stems and beams below the middle line.
+    renderer.resize(width * scale, 122 * scale);
+    const ctx = renderer.getContext();
+    ctx.scale(scale, scale);
+    const stave = new Stave(4, 2, width - 8);
+    if (beats) stave.addTimeSignature(`${beats}/4`);
+    stave.setContext(ctx).draw();
+    const vfNotes = notes.map((x) => {
+      const base = VF_DUR[x.dur] ?? "q";
+      const dotted = base.endsWith("d");
+      const note = new StaveNote({ keys: ["b/4"], duration: (dotted ? base.slice(0, -1) : base) + (x.rest ? "r" : ""), dots: dotted ? 1 : 0 });
+      if (dotted) Dot.buildAndAttach([note], { all: true });
+      return note;
+    });
+    const beams = Beam.generateBeams(vfNotes.filter((v) => !v.isRest()));
+    const total = notes.reduce((t, x) => t + x.dur, 0);
+    const voice = new Voice({ num_beats: Math.max(1, total / 4), beat_value: 4 }).setMode(Voice.Mode.SOFT).addTickables(vfNotes);
+    new Formatter().joinVoices([voice]).format([voice], Math.max(30, width - stave.getNoteStartX() - 14));
+    voice.draw(ctx, stave);
+    beams.forEach((b) => b.setContext(ctx).draw());
+  }, [spec, scale]);
+  return <div className="drill-staff" ref={ref} />;
+}
+
 // ---- Answer pads -------------------------------------------------------------------
 
 export const LETTERS = ["C", "D", "E", "F", "G", "A", "B"];
@@ -78,6 +120,18 @@ export function answerLabel(type: AnswerType, value: string): string {
       return `${value} semitone${value === "1" ? "" : "s"}`;
     case "numeral":
       return `${value} (${NUMERAL_NAME[value as Numeral]})`;
+    case "beats":
+      return `${beatsLabel(value)} beat${value === "1" ? "" : "s"}`;
+    case "noteValue":
+      return VALUES.find((v) => v.id === value)?.name ?? value;
+    case "meter":
+      return `${value} beats per bar`;
+    case "rhythm":
+      return `the rhythm counted ${countText(fromSpec(value).notes)}`;
+    case "tap":
+      return value === "ok" ? "every note in time" : "some notes off the beat";
+    case "cadence":
+      return `${CADENCE_INFO[value as Cadence].label} (${CADENCE_INFO[value as Cadence].chords})`;
   }
 }
 
@@ -191,6 +245,43 @@ export function AnswerPad(props: PadProps) {
           ))}
         </div>
       );
+    case "beats":
+      return (
+        <div className="drill-grid" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))" }}>
+          {(step.options ?? []).map((v) => (
+            <Choice key={v} {...props} value={v} label={beatsLabel(v)} />
+          ))}
+        </div>
+      );
+    case "noteValue":
+      return (
+        <div className="drill-row">
+          {(step.options ?? []).map((v) => {
+            const name = VALUES.find((x) => x.id === v)?.name.replace(/ note$/, "") ?? v;
+            return <Choice key={v} {...props} value={v} label={name.charAt(0).toUpperCase() + name.slice(1)} wide />;
+          })}
+        </div>
+      );
+    case "meter":
+      return (
+        <div className="drill-row">
+          {(step.options ?? []).map((v) => (
+            <Choice key={v} {...props} value={v} label={`${v} beats`} wide />
+          ))}
+        </div>
+      );
+    case "cadence":
+      return (
+        <div className="drill-row">
+          {(step.options ?? []).map((v) => (
+            <Choice key={v} {...props} value={v} label={CADENCE_INFO[v as Cadence].label} wide />
+          ))}
+        </div>
+      );
+    case "rhythm":
+      return <RhythmChoices {...props} />;
+    case "tap":
+      return <TapPad key={step.data} {...props} />;
     case "semitones":
       return (
         <div className="drill-grid" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
@@ -202,3 +293,143 @@ export function AnswerPad(props: PadProps) {
   }
 }
 
+
+/** Rhythmic dictation: each choice is a bar of notation. */
+function RhythmChoices({ step, chosen, reveal, onPick }: PadProps) {
+  return (
+    <div className="rhythm-choices">
+      {(step.options ?? []).map((v, i) => {
+        let cls = "drill-choice rhythm-choice";
+        if (reveal && v === step.correct) cls += " is-right";
+        else if (reveal && v === chosen) cls += " is-wrong";
+        return (
+          <button key={v} className={cls} disabled={reveal} onClick={() => onPick(v)} aria-label={answerLabel("rhythm", v)}>
+            <span className="rhythm-choice-letter">{"ABC"[i]}</span>
+            <RhythmStaff spec={v} scale={1.1} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+type TapMark = "hit" | "early" | "late" | "missed";
+
+/**
+ * Tap a rhythm in time. Start plays a bar of clicks, then soft clicks on each beat while
+ * you tap. Taps are matched to the notes' start times, after removing any steady delay
+ * (speakers, Bluetooth, reaction), so only the rhythm itself is graded.
+ */
+function TapPad({ step, reveal, onPick }: PadProps) {
+  const spec = (step.data ?? "").split("#")[0];
+  const { beats, notes } = fromSpec(spec);
+  const [phase, setPhase] = useState<"ready" | "playing" | "done">("ready");
+  const [marks, setMarks] = useState<TapMark[]>([]);
+  const [summary, setSummary] = useState("");
+  const [flash, setFlash] = useState(0);
+  const taps = useRef<number[]>([]);
+  const t0 = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const beat = 60 / BPM;
+  const expected = onsets(beats, notes);
+
+  const grade = () => {
+    // About ±90 ms at 80 bpm: tight enough that a misplaced note counts as wrong.
+    const tol = Math.max(0.07, 0.12 * beat);
+    const t = taps.current;
+    // A steady delay (speakers, Bluetooth, reaction) makes every tap late by about the same
+    // amount. Correct for it only when most taps agree on it, so sloppy timing isn't hidden.
+    const near = expected.map((e) => t.reduce((best, x) => (Math.abs(x - e) < Math.abs(best - e) ? x : best), Infinity) - e).filter((d) => Math.abs(d) < beat / 2);
+    const sorted = [...near].sort((a, b) => a - b);
+    const median = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0;
+    const agreeing = near.filter((d) => Math.abs(d - median) <= tol / 2).length;
+    const offset = agreeing >= Math.max(2, Math.ceil(0.6 * expected.length)) ? Math.max(-0.25, Math.min(0.25, median)) : 0;
+    const used = new Set<number>();
+    const result: TapMark[] = expected.map((e) => {
+      let bestI = -1;
+      let bestD = Infinity;
+      t.forEach((x, i) => {
+        const d = x - offset - e;
+        if (!used.has(i) && Math.abs(d) < Math.abs(bestD)) [bestI, bestD] = [i, d];
+      });
+      if (bestI >= 0 && Math.abs(bestD) <= tol) {
+        used.add(bestI);
+        return "hit";
+      }
+      if (bestI >= 0 && Math.abs(bestD) < beat / 2) {
+        used.add(bestI);
+        return bestD < 0 ? "early" : "late";
+      }
+      return "missed";
+    });
+    const extra = t.length - used.size;
+    const hits = result.filter((m) => m === "hit").length;
+    const score = (hits - 0.5 * extra) / expected.length;
+    setMarks(result);
+    setSummary(
+      `${hits} of ${expected.length} notes in time${extra ? `, ${extra} extra tap${extra === 1 ? "" : "s"}` : ""}.` +
+        (Math.abs(offset) > 0.03 ? ` Your taps ran ${Math.round(Math.abs(offset) * 1000)} ms ${offset > 0 ? "late" : "early"} overall, which is allowed for.` : ""),
+    );
+    setPhase("done");
+    onPick(score >= 0.85 ? "ok" : "off");
+  };
+
+  const start = async () => {
+    if (phase !== "ready") return;
+    taps.current = [];
+    setPhase("playing");
+    await ensureAudio();
+    const raw = engine.ctx.rawContext as unknown as AudioContext;
+    const latency = (raw.outputLatency || raw.baseLatency || 0) * 1000;
+    // The engine schedules previews 50 ms ahead.
+    t0.current = performance.now() + 50 + latency;
+    void playNotes(rhythmAudio(beats, notes, true));
+    timer.current = setTimeout(grade, (2 * beats * beat + 0.5) * 1000);
+  };
+
+  const tap = () => {
+    if (phase !== "playing") return;
+    taps.current.push((performance.now() - t0.current) / 1000);
+    setFlash((f) => f + 1);
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== " " || e.repeat || reveal) return;
+      e.preventDefault();
+      if (phase === "ready") void start();
+      else tap();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  return (
+    <div className="tap-pad">
+      {phase === "ready" && (
+        <button className="ex-check tap-start" onClick={() => void start()}>
+          Start (Space)
+        </button>
+      )}
+      {phase === "playing" && (
+        <button key={flash} className="tap-target" onPointerDown={tap}>
+          Tap (Space)
+        </button>
+      )}
+      {phase === "done" && (
+        <div className="tap-result">
+          <div className="tap-marks">
+            {marks.map((m, i) => (
+              <span key={i} className={`tap-mark is-${m}`} title={m}>
+                {m === "hit" ? "✓" : m === "missed" ? "·" : m === "early" ? "early" : "late"}
+              </span>
+            ))}
+          </div>
+          <div className="pr-dim">{summary}</div>
+        </div>
+      )}
+    </div>
+  );
+}

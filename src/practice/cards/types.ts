@@ -12,6 +12,8 @@ export interface Shown {
   prompt: string;
   /** A staff to read, or else `display`, a big line of text. */
   staff?: StaffSpec;
+  /** A rhythm to show, as "beats:durations". */
+  rhythm?: string;
   display?: string;
   /** Notes to play when the card appears (ear cards). */
   audio?: AudioEvent[];

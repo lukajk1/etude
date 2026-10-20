@@ -64,7 +64,7 @@ window.addEventListener("pointerdown", () => void ensureAudio(), { capture: true
 window.addEventListener("keydown", () => void ensureAudio(), { capture: true });
 
 /** Play notes outside the project (ear training), on piano. */
-export async function playNotes(events: { pitches: number[]; at: number; dur: number }[]) {
+export async function playNotes(events: { pitches: number[]; at: number; dur: number; vel?: number }[]) {
   await ensureAudio();
   if (ui.state.playing) stop();
   engine.preview("piano", events);

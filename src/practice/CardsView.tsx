@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, preparePiano } from "../audio/live";
-import { AnswerPad, answerLabel, LETTERS, Staff } from "./Answers";
+import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import type { Step } from "./drills/catalog";
 import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
 import type { Card, DeckDef, Shown } from "./cards/types";
@@ -368,6 +368,10 @@ export default function CardsView({ def }: { def: DeckDef }) {
           {showing.shown.staff ? (
             <div className="drill-paper">
               <Staff spec={showing.shown.staff} />
+            </div>
+          ) : showing.shown.rhythm ? (
+            <div className="drill-paper">
+              <RhythmStaff spec={showing.shown.rhythm} />
             </div>
           ) : showing.shown.display ? (
             <div className="cards-key">{showing.shown.display}</div>
