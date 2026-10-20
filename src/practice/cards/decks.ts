@@ -70,7 +70,7 @@ export function settingsFor(deck: DeckDef, all = saved.value): DeckSettings {
   const s: DeckSettings = { clef: "treble", order: "smart", answer: "choose", length: 20, ...deck.defaults, ...all[deck.id] };
   // Saved choices from an older version of a deck may no longer exist.
   if (!deck.pools.some((p) => p.value === s.pool)) s.pool = deck.defaults.pool;
-  const types = s.types.filter((t) => deck.types.some((d) => d.id === t));
+  const types = [...new Set(s.types.flatMap((t) => deck.renamedTypes?.[t] ?? [t]))].filter((t) => deck.types.some((d) => d.id === t));
   s.types = types.length >= (deck.minTypes ?? 1) ? types : deck.defaults.types;
   return s;
 }

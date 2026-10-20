@@ -57,6 +57,8 @@ export interface DeckDef {
   presets?: { label: string; types: string[] }[];
   /** The fewest card types that can be selected (default 1). */
   minTypes?: number;
+  /** Card types that were split or renamed, so saved choices map onto the new ones. */
+  renamedTypes?: Record<string, string[]>;
   build(pool: string, types: string[]): Card[];
   /** The mastery grid: column headings, then a row of cards per direction. */
   grid(pool: string, cards: Card[]): { cols: string[]; rows: { label: string; cards: Card[] }[] };
