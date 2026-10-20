@@ -28,6 +28,8 @@ export interface Card {
   label: string;
   /** Short text for the mastery grid. */
   cell: string;
+  /** Introduction order for new cards, lowest first (default: deck order). */
+  rank?: number;
   /** `types` is what's selected in the deck, for decks whose answer choices follow it. */
   show(pool: string, clef: Clef, types: string[]): Shown;
 }

@@ -160,9 +160,11 @@ to its deck. Under
   right answer counts. No timer is shown.
 - A right but slow answer keeps it at its level, since it isn't automatic yet.
 - A miss sends it back to level 0, where it comes back within a few cards.
-- The next card is a weighted draw that favors low levels and cards that are due. New cards
-  come in a few at a time (no more than five still being learned), and the same card never
-  shows twice in a row.
+- The next card is a weighted draw that favors low levels and cards that are due, and the
+  same card never shows twice in a row.
+- New cards come in batches of five, easiest first (for key signatures, fewest accidentals
+  first). The next batch opens only once the current one is nearly learned, and while a
+  batch is being learned, cards you already know come up only when they're due.
 
 A grid shows every card shaded by level, so you can see which ones to drill. **Random** order
 skips the scheduling.

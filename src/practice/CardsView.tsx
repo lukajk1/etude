@@ -4,7 +4,7 @@ import { AnswerPad, answerLabel, LETTERS, Staff } from "./Answers";
 import type { Step } from "./drills/catalog";
 import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
 import type { Card, DeckDef, Shown } from "./cards/types";
-import { cardStates, FAST_MS, MAX_BOX, pickNext, resetCards, review, stageOf, summarize, type CardState } from "./cards/srs";
+import { cardStates, FAST_MS, MAX_BOX, pickNext, resetCards, review, stageOf, summarize, type CardState, type Session } from "./cards/srs";
 import { go } from "./route";
 import { useSignal } from "../model/ui";
 
@@ -102,6 +102,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const [revealMs, setRevealMs] = useState<number | null>(null);
   const shownAt = useRef(0);
   const recent = useRef<string[]>([]);
+  const batch = useRef<Session>({ batchOpen: true });
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const summary = summarize(deck);
@@ -112,7 +113,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
   }, [def]);
 
   const deal = useCallback(() => {
-    const card = pickNext(deck, recent.current, settings.order);
+    const card = pickNext(deck, recent.current, settings.order, Date.now(), Math.random, batch.current);
     recent.current = [...recent.current.slice(-4), card.id];
     const clef = settings.clef === "both" ? (Math.random() < 0.5 ? "treble" : "bass") : settings.clef;
     setShowing({ card, shown: card.show(settings.pool, clef, settings.types) });
@@ -125,6 +126,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const start = () => {
     if (!deck.length) return;
     recent.current = [];
+    batch.current = { batchOpen: true };
     setAnswered([]);
     setPhase("run");
     deal();
@@ -251,7 +253,8 @@ export default function CardsView({ def }: { def: DeckDef }) {
         <div className="drill-card">
           <p className="drill-brief">
             {def.brief} With intelligent review on, cards you miss come back within a few cards, and ones you answer quickly are
-            spaced further apart each time: minutes, then a day, then days, then weeks.
+            spaced further apart each time: minutes, then a day, then days, then weeks. New cards come in five at a time, easiest first; the next five
+            join once those are learned.
           </p>
           <div className="cards-options">
             {def.pools.length > 1 && (

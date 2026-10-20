@@ -9,8 +9,10 @@ import type { Card } from "./types";
  * minute later, so a new card has to be right twice, a minute apart, before it's
  * spaced out by days.
  *
- * Picking is a weighted draw that favors low boxes and cards that are due, brings new
- * cards in a few at a time, and never shows the same card twice in a row.
+ * Picking is a weighted draw that favors low boxes and cards that are due, and never
+ * shows the same card twice in a row. New cards come in batches: up to five, easiest
+ * first, and the next batch only once those are nearly learned. While a batch is being
+ * learned, cards already known come up only when they're due.
  */
 
 export interface CardState {
@@ -32,8 +34,16 @@ export const INTERVALS = [0, MINUTE, DAY, 3 * DAY, 7 * DAY, 16 * DAY, 35 * DAY];
 export const FAST_MS = 3000;
 /** How strongly each box is favored when due. */
 const BOX_WEIGHT = [8, 6, 4, 2.5, 1.6, 1.1, 0.8];
-/** Cards still being learned (box 0–1) allowed at once before new cards wait. */
-const LEARNING_LIMIT = 5;
+/** How many new cards are learned together before the next ones come in. */
+export const BATCH = 5;
+
+/** Whether a batch of new cards is still being filled, kept by the caller across a session. */
+export interface Session {
+  batchOpen: boolean;
+}
+
+/** Cards a deck marks as easier come in first; otherwise deck order. */
+const introOrder = (deck: Card[]) => deck.map((c, i) => ({ c, i })).sort((a, b) => (a.c.rank ?? a.i) - (b.c.rank ?? b.i) || a.i - b.i).map((x) => x.c);
 
 const KEY = "etude.cards.v1";
 
@@ -89,20 +99,27 @@ export function resetCards(ids: string[]) {
  * Choose the next card. `recent` holds ids shown most recently (newest last), so the
  * same card doesn't come straight back.
  */
-export function pickNext(deck: Card[], recent: string[], mode: "smart" | "random", now = Date.now(), rand = Math.random): Card {
+export function pickNext(deck: Card[], recent: string[], mode: "smart" | "random", now = Date.now(), rand = Math.random, session: Session = { batchOpen: true }): Card {
   const avoid = new Set(recent.slice(-(deck.length > 4 ? 2 : deck.length > 1 ? 1 : 0)));
   const candidates = deck.filter((c) => !avoid.has(c.id));
   if (mode === "random") return candidates[Math.floor(rand() * candidates.length)];
 
   const states = cardStates.value;
   const learning = deck.filter((c) => states[c.id] && states[c.id].box <= 1).length;
-  const allowNew = learning < LEARNING_LIMIT;
+  const unseen = introOrder(deck.filter((c) => !states[c.id]));
+  // A batch opens when the last one is nearly learned (one straggler at most) and closes
+  // once it holds a full batch, so new cards arrive five at a time, not one per graduation.
+  if (learning <= 1 && unseen.length) session.batchOpen = true;
+  if (learning >= BATCH || !unseen.length) session.batchOpen = false;
+  // Only the next card in order may come in, so the easiest go first.
+  const entering = session.batchOpen ? unseen[0]?.id : undefined;
   const weights = candidates.map((c) => {
     const s = states[c.id];
-    if (!s) return allowNew ? 3 : 0;
+    if (!s) return c.id === entering ? 8 : 0;
     const overdue = s.due <= now;
-    // Not-yet-due cards still appear now and then, mostly to keep a session going.
-    return BOX_WEIGHT[s.box] * (overdue ? 3 : 0.25);
+    if (s.box <= 1) return BOX_WEIGHT[s.box] * (overdue ? 3 : 0.6);
+    // Known cards come up when due; otherwise only when there's nothing else to practice.
+    return BOX_WEIGHT[s.box] * (overdue ? 3 : 0.02);
   });
   const total = weights.reduce((a, b) => a + b, 0);
   if (total <= 0) return candidates[Math.floor(rand() * candidates.length)];

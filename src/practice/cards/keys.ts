@@ -53,6 +53,8 @@ function keyCard(type: KeyCardType, index: number, minor: boolean): Card {
     type,
     label,
     cell: prettyCode(key.code) + (minor ? "m" : ""),
+    // Fewest accidentals first, sharps before flats: C, G, F, D, B♭, A, E♭…
+    rank: Math.abs(acc) * 2 + (acc < 0 ? 1 : 0),
     show(pool, clef): Shown {
       const idx = poolIndexes(pool);
       if (type === "sig-major" || type === "sig-minor") {
