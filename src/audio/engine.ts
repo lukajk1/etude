@@ -30,6 +30,17 @@ function makeImpulse(ctx: BaseAudioContext, seconds: number): AudioBuffer {
 }
 
 /**
+ * The last safety net on the output: straight through below -2 dBFS, then a smooth
+ * curve that approaches but never reaches full scale, so peaks round off instead of
+ * clipping.
+ */
+function softClip(x: number): number {
+  const knee = 0.8;
+  const a = Math.abs(x);
+  return a <= knee ? x : Math.sign(x) * (knee + (1 - knee) * Math.tanh((a - knee) / (1 - knee)));
+}
+
+/**
  * Turns a Project into sound. Works in the live context or inside Tone.Offline
  * (every node is created in whichever context is current when it is constructed).
  */
@@ -37,8 +48,11 @@ export class Engine {
   readonly ctx = Tone.getContext();
   private lanes = new Map<string, Lane>();
   private bus = new Tone.Gain(1);
-  private limiter = new Tone.Limiter(-1);
+  /** Room above one note's level: chords and full scores add up to much more. */
+  private headroom = new Tone.Gain(Tone.dbToGain(-4));
+  private limiter = new Tone.Compressor({ threshold: -6, ratio: 12, knee: 4, attack: 0.002, release: 0.12 });
   private master = new Tone.Gain(1);
+  private clipper = new Tone.WaveShaper(softClip, 4096);
   private tempos: TempoChange[] = [{ tick: 0, bpm: 120 }];
   private tempoKey = "";
   private tempoEvents: number[] = [];
@@ -51,9 +65,10 @@ export class Engine {
     const raw = this.ctx.rawContext as unknown as BaseAudioContext;
     const reverb = new Tone.Convolver(makeImpulse(raw, 2.6));
     const reverbReturn = new Tone.Gain(0.28);
-    this.bus.connect(this.limiter);
-    this.bus.chain(reverb, reverbReturn, this.limiter);
-    this.limiter.chain(this.master, this.ctx.destination);
+    this.clipper.oversample = "4x";
+    this.bus.connect(this.headroom);
+    this.bus.chain(reverb, reverbReturn, this.headroom);
+    this.headroom.chain(this.limiter, this.master, this.clipper, this.ctx.destination);
     this.ctx.transport.PPQ = PPQ;
     // Coming back round a loop, restore the tempo in force at the loop's start.
     this.ctx.transport.on("loop", (time) => {
