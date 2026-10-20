@@ -51,6 +51,8 @@ interface FactDeck {
   cardId?(type: string, fact: string): string;
   /** One grid row for all cards, instead of a row per type. */
   oneRow?: string;
+  /** Order new cards are introduced in, lowest first (default: list order). */
+  rank?(type: string, fact: string): number;
   facts(type: string, pool: string): string[];
   label(type: string, fact: string): string;
   cell(type: string, fact: string): string;
@@ -63,6 +65,7 @@ function factDeck(o: FactDeck): DeckDef {
     type,
     label: o.label(type, fact),
     cell: o.cell(type, fact),
+    rank: o.rank?.(type, fact),
     show: (pool, _clef, types) => o.question(type, fact, pool, types),
   });
   return {
@@ -144,6 +147,11 @@ export const SCALES_DECK = factDeck({
     scaleKeys(kindOf(type))
       .filter((k) => pool === "full" || Math.abs(k.accidentals) <= 4)
       .map((k) => k.code),
+  rank: (type, code) => {
+    // Fewest accidentals first, sharps before flats, as in the key-signature deck.
+    const acc = scaleKeys(kindOf(type)).find((k) => k.code === code)?.accidentals ?? 7;
+    return SCALE_TYPES.findIndex((t) => t.id === type) * 100 + Math.abs(acc) * 2 + (acc < 0 ? 1 : 0);
+  },
   label: (type, code) => `${prettyCode(code)} ${kindOf(type)}`,
   cell: (type, code) => prettyCode(code) + (type === "major" ? "" : "m"),
   question: (type, code) => {
@@ -289,6 +297,7 @@ export const HEAR_DEGREES_DECK = factDeck({
   types: one("Degrees"),
   defaults: { pool: "full", types: ["all"] },
   facts: () => range(1, 7),
+  rank: (_t, d) => [1, 5, 3, 4, 2, 6, 7].indexOf(Number(d)),
   label: (_t, d) => `degree ${d} (${SOLFEGE[Number(d) - 1]})`,
   cell: (_t, d) => `${d} ${SOLFEGE[Number(d) - 1]}`,
   question: (_t, d) => degreeQuestion(Number(d)),
@@ -314,6 +323,7 @@ export const CHORDS_IN_KEY_DECK = factDeck({
   ],
   minTypes: 2,
   cardId: (n) => `chords-in-key:${n}`,
+  rank: (n) => ["I", "V", "IV", "vi", "ii"].indexOf(n),
   oneRow: "Chords",
   facts: (n) => [n],
   label: (n) => `${n} (${NUMERAL_NAME[n as Numeral]})`,
