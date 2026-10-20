@@ -26,7 +26,7 @@ import { chordInKeyQuestion, NUMERAL_NAME, NUMERALS, PROGRESSIONS, progressionLa
 import { CADENCE_INFO, CADENCES, cadenceQuestion, type Cadence } from "../drills/cadences";
 import { FITS, fitQuestion, HARM_CHORDS } from "../drills/harmonize";
 import { NCT_INFO, nctQuestion, NCTS, type Nct } from "../drills/nct";
-import { BASIC_VALUES, DOTTED_AND_RESTS, meterQuestion, noteValueQuestion, VALUES } from "../drills/rhythm";
+import { BASIC_VALUES, DOTTED_AND_RESTS, METER_LABEL, meterQuestion, noteValueQuestion, VALUES, type MeterId, type MeterStyle } from "../drills/rhythm";
 import { intervalLabel, nameOf, prettyCode, randInt, type ScaleKind, type TriadQuality } from "../drills/theory";
 import type { Card, DeckDef } from "./types";
 
@@ -374,30 +374,36 @@ export const NOTE_VALUES_DECK = factDeck({
   question: (_t, id) => noteValueQuestion(id),
 });
 
-const METERS = ["2", "3", "4"];
+const METER_IDS: MeterId[] = ["2", "3", "4", "6/8"];
 
 export const METER_DECK = factDeck({
   id: "meter",
   title: "Hear the meter",
-  summary: "2, 3 or 4 beats per bar, by ear; pick any set.",
-  brief: "An accompaniment plays; count the beats from one strong bass note to the next. Check the meters to drill; the answer buttons are just those.",
+  summary: "2/4, 3/4, 4/4 or 6/8 by ear, from an accompaniment, a melody with bass, or a melody alone.",
+  brief: "Count the beats from one strong beat to the next. Check the meters to drill; the answer buttons are just those. The pool sets how much help the music gives.",
   tag: "3.2",
-  drills: ["r-meter-23", "r-meter-234"],
+  drills: ["r-meter-23", "r-meter-234", "r-meter-bass", "r-meter-melody", "r-meter-compound"],
   ear: true,
-  pools: [{ value: "full", label: "Chosen meters" }],
-  types: METERS.map((m) => ({ id: m, label: `${m} beats (${m}/4)`, hint: `${m}/4` })),
-  defaults: { pool: "full", types: ["2", "3"] },
+  pools: [
+    { value: "oompah", label: "With accompaniment" },
+    { value: "bass", label: "Melody and bass" },
+    { value: "melody", label: "Melody alone" },
+  ],
+  types: METER_IDS.map((m) => ({ id: m, label: m === "6/8" ? "6/8" : `${m} beats (${METER_LABEL[m]})`, hint: METER_LABEL[m] })),
+  defaults: { pool: "oompah", types: ["2", "3"] },
   presets: [
     { label: "2 or 3", types: ["2", "3"] },
     { label: "2, 3 or 4", types: ["2", "3", "4"] },
+    { label: "3/4 or 6/8", types: ["3", "6/8"] },
+    { label: "All four", types: [...METER_IDS] },
   ],
   minTypes: 2,
   cardId: (m) => `meter:${m}`,
   oneRow: "Meters",
   facts: (m) => [m],
-  label: (m) => `${m} beats per bar`,
-  cell: (m) => `${m}/4`,
-  question: (m, _f, _pool, types) => meterQuestion(Number(m), METERS.filter((x) => types.includes(x))),
+  label: (m) => METER_LABEL[m as MeterId],
+  cell: (m) => METER_LABEL[m as MeterId],
+  question: (m, _f, pool, types) => meterQuestion(m as MeterId, METER_IDS.filter((x) => types.includes(x)), pool as MeterStyle),
 });
 
 export const CADENCES_DECK = factDeck({

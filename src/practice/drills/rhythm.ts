@@ -207,25 +207,82 @@ export function completeBarQuestion(): Question {
   };
 }
 
-/** Meter by ear: an oom-pah accompaniment in 2, 3 or 4. */
-export function meterQuestion(beats: number, options: string[]): Question {
-  const b = 60 / 100;
-  const root = pick([48, 50, 52, 53, 55]);
-  const chord = [root + 12, root + 16, root + 19];
+/** Meters by ear: "2", "3", "4" (simple, quarter-note beat) and "6/8" (two beats, each split in three). */
+export type MeterId = "2" | "3" | "4" | "6/8";
+export type MeterStyle = "oompah" | "bass" | "melody";
+
+export const METER_LABEL: Record<MeterId, string> = { "2": "2/4", "3": "3/4", "4": "4/4", "6/8": "6/8" };
+
+/**
+ * Each meter in eighth notes: where its strong and medium accents fall, and bar rhythms
+ * (in eighths) that group the way the meter does. The eighth note is the same speed in
+ * every meter, so 3/4 and 6/8 differ only in how the six eighths are grouped.
+ */
+const METERS: Record<MeterId, { eighths: number; strong: number[]; medium: number[]; patterns: number[][]; name: string }> = {
+  "2": { eighths: 4, strong: [0], medium: [2], patterns: [[2, 2], [1, 1, 2], [2, 1, 1], [1, 1, 1, 1], [4], [3, 1]], name: "2/4, two beats: a march" },
+  "3": { eighths: 6, strong: [0], medium: [], patterns: [[2, 2, 2], [1, 1, 2, 2], [2, 1, 1, 2], [4, 2], [2, 4], [1, 1, 1, 1, 2], [6]], name: "3/4, three beats: a waltz or minuet" },
+  "4": { eighths: 8, strong: [0], medium: [4], patterns: [[2, 2, 2, 2], [4, 2, 2], [2, 2, 4], [4, 4], [1, 1, 2, 4], [2, 1, 1, 2, 2], [6, 2], [8]], name: "4/4, four beats, with beat three a little stronger" },
+  "6/8": { eighths: 6, strong: [0], medium: [3], patterns: [[3, 3], [1, 1, 1, 3], [2, 1, 3], [3, 1, 1, 1], [1, 1, 1, 1, 1, 1], [2, 1, 2, 1], [3, 2, 1]], name: "6/8, two beats each split in three: ONE-two-three FOUR-five-six" },
+};
+
+const EIGHTH = 0.3125; // seconds: a quarter at 96 bpm, a dotted quarter at 64
+const MAJOR = [0, 2, 4, 5, 7, 9, 11];
+const deg = (t: number, d: number) => t + 12 * Math.floor(d / 7) + MAJOR[((d % 7) + 7) % 7];
+const HARMONY = [0, 3, 4, 0]; // I IV V I, one chord a bar
+
+/**
+ * Meter by ear. "oompah": a bass note on the strong beat, chords on the rest. "bass": a
+ * melody with one bass note per bar. "melody": the melody alone, with only gentle accents.
+ */
+export function meterQuestion(meter: MeterId, options: MeterId[], style: MeterStyle = "oompah"): Question {
+  const m = METERS[meter];
+  const t = pick([60, 62, 65, 67]);
   const events: AudioEvent[] = [];
   for (let bar = 0; bar < 4; bar++) {
-    for (let i = 0; i < beats; i++) {
-      const at = (bar * beats + i) * b;
-      if (i === 0) events.push({ pitches: [bar % 2 ? root + 7 - 12 : root - 12], at, dur: b * 0.9, vel: 0.95 });
-      else events.push({ pitches: chord, at, dur: b * 0.5, vel: i === 2 && beats === 4 ? 0.55 : 0.42 });
+    const barStart = bar * m.eighths * EIGHTH;
+    const rootDeg = HARMONY[bar];
+    const chordDegs = [rootDeg, rootDeg + 2, rootDeg + 4];
+    if (style === "oompah") {
+      // Bass on the strong beats (and the medium one in 6/8), chords on the rest of the beats.
+      const beatUnit = meter === "6/8" ? 1 : 2;
+      for (let e = 0; e < m.eighths; e += beatUnit) {
+        const at = barStart + e * EIGHTH;
+        if (m.strong.includes(e) || (meter === "6/8" && m.medium.includes(e))) {
+          events.push({ pitches: [deg(t - 24, rootDeg)], at, dur: EIGHTH * beatUnit * 0.95, vel: m.strong.includes(e) ? 0.95 : 0.7 });
+        } else {
+          events.push({ pitches: chordDegs.map((d) => deg(t - 12, d)), at, dur: EIGHTH * beatUnit * 0.5, vel: m.medium.includes(e) ? 0.55 : 0.42 });
+        }
+      }
+      continue;
+    }
+    if (style === "bass") events.push({ pitches: [deg(t - 24, rootDeg)], at: barStart, dur: m.eighths * EIGHTH * 0.92, vel: 0.62 });
+    // Melody: a rhythm that groups like the meter, stepwise, with a chord tone on each strong or medium beat.
+    const accentStrong = style === "melody" ? 0.72 : 0.8;
+    const accentMedium = style === "melody" ? 0.67 : 0.7;
+    const plain = style === "melody" ? 0.62 : 0.6;
+    let pos = 0;
+    let d = chordDegs[randInt(0, 2)] + 7;
+    for (const len of pick(m.patterns)) {
+      const accented = m.strong.includes(pos) || m.medium.includes(pos);
+      if (accented && !chordDegs.some((c) => (((d - c) % 7) + 7) % 7 === 0)) d = chordDegs.reduce((best, c) => (Math.abs(c + 7 - d) < Math.abs(best + 7 - d) ? c : best)) + 7;
+      events.push({ pitches: [deg(t, d)], at: barStart + pos * EIGHTH, dur: len * EIGHTH * 0.9, vel: m.strong.includes(pos) ? accentStrong : m.medium.includes(pos) ? accentMedium : plain });
+      pos += len;
+      d = Math.max(4, Math.min(11, d + pick([-1, 1, -1, 1, 2, -2])));
     }
   }
-  const name = { 2: "2/4, a march", 3: "3/4, a waltz or minuet", 4: "4/4, common time" }[beats];
+  const hint =
+    style === "oompah"
+      ? "Find the strong beat (the low bass note) and count until it comes back."
+      : meter === "6/8" || (meter === "3" && options.includes("6/8"))
+        ? "3/4 and 6/8 both have six eighths in a bar: 3/4 groups them in twos (three beats), 6/8 in threes (two beats)."
+        : style === "bass"
+          ? "Count from one bass note to the next; the chord changes there too."
+          : "Feel where the melody leans: longer notes and slight accents fall on beat one.";
   return {
-    prompt: "How many beats are in each bar?",
+    prompt: meter === "6/8" || options.includes("6/8") ? "Which meter is this in?" : "How many beats are in each bar?",
     audio: events,
-    steps: [{ type: "meter", correct: String(beats), options }],
-    explain: `That was in ${beats}: ${name}. Find the strong beat (the low bass note) and count until it comes back.`,
+    steps: [{ type: "meter", correct: meter, options }],
+    explain: `That was ${m.name}. ${hint}`,
   };
 }
 
@@ -298,7 +355,7 @@ export const RHYTHM_DRILLS: Drill[] = [
     brief: "An accompaniment plays: a low bass note on the strong first beat, chords on the others. Count from one bass note to the next: two beats is a march, three a waltz or minuet.",
     ear: true,
     pass: { accuracy: 0.9 },
-    generate: () => meterQuestion(pick([2, 3]), ["2", "3"]),
+    generate: () => meterQuestion(pick<MeterId>(["2", "3"]), ["2", "3"]),
   }),
   drill({
     id: "r-meter-234",
@@ -308,7 +365,37 @@ export const RHYTHM_DRILLS: Drill[] = [
     brief: "The same, with 4/4 added. In four, beat three is a little stronger than two and four, which helps tell it from two.",
     ear: true,
     pass: { accuracy: 0.85 },
-    generate: () => meterQuestion(pick([2, 3, 4]), ["2", "3", "4"]),
+    generate: () => meterQuestion(pick<MeterId>(["2", "3", "4"]), ["2", "3", "4"]),
+  }),
+  drill({
+    id: "r-meter-bass",
+    number: "3.2c",
+    title: "Hear the meter: melody and bass",
+    summary: "A melody over one bass note per bar.",
+    brief: "Now a melody plays over a single bass note per bar, with only mild accents. Count from one bass note to the next; the harmony changes there too.",
+    ear: true,
+    pass: { accuracy: 0.85 },
+    generate: () => meterQuestion(pick<MeterId>(["2", "3", "4"]), ["2", "3", "4"], "bass"),
+  }),
+  drill({
+    id: "r-meter-melody",
+    number: "3.2d",
+    title: "Hear the meter: melody alone",
+    summary: "No accompaniment, only the melody.",
+    brief: "Just a melody, with gentle accents. Feel where it leans: longer notes and slightly stronger notes fall on beat one. Tap along and count until beat one comes back.",
+    ear: true,
+    pass: { accuracy: 0.8 },
+    generate: () => meterQuestion(pick<MeterId>(["2", "3", "4"]), ["2", "3", "4"], "melody"),
+  }),
+  drill({
+    id: "r-meter-compound",
+    number: "3.2e",
+    title: "Simple or compound: 2/4, 3/4 or 6/8",
+    summary: "Is the beat split in two or in three?",
+    brief: "The eighth notes run at the same speed in all three. 2/4 has two beats split in two; 3/4 three beats split in two; 6/8 two beats split in three (ONE-two-three FOUR-five-six). 3/4 against 6/8 is the classic hard pair: same six eighths, grouped differently.",
+    ear: true,
+    pass: { accuracy: 0.8 },
+    generate: () => meterQuestion(pick<MeterId>(["2", "3", "6/8"]), ["2", "3", "6/8"], "bass"),
   }),
   drill({
     id: "r-dictation-1",

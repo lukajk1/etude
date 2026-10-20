@@ -5,7 +5,7 @@ import { CADENCE_INFO, type Cadence } from "./drills/cadences";
 import { EAR_INTERVALS, isRight, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
 import { NCT_INFO, type Nct } from "./drills/nct";
 import { NUMERAL_NAME, NUMERALS, type Numeral } from "./drills/harmony";
-import { BPM, beatsLabel, countText, fromSpec, onsets, rhythmAudio, VALUES } from "./drills/rhythm";
+import { BPM, beatsLabel, countText, fromSpec, METER_LABEL, onsets, rhythmAudio, VALUES, type MeterId } from "./drills/rhythm";
 import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vfKey } from "./drills/theory";
 
 /** Shared by the drills and flashcards: a small staff, and the answer button pads. */
@@ -126,7 +126,7 @@ export function answerLabel(type: AnswerType, value: string): string {
     case "noteValue":
       return VALUES.find((v) => v.id === value)?.name ?? value;
     case "meter":
-      return `${value} beats per bar`;
+      return value === "6/8" ? "6/8 (two beats, each in three)" : `${METER_LABEL[value as MeterId]} (${value} beats)`;
     case "rhythm":
       return `the rhythm counted ${countText(fromSpec(value).notes)}`;
     case "tap":
@@ -269,7 +269,7 @@ export function AnswerPad(props: PadProps) {
       return (
         <div className="drill-row">
           {(step.options ?? []).map((v) => (
-            <Choice key={v} {...props} value={v} label={`${v} beats`} wide />
+            <Choice key={v} {...props} value={v} label={v === "6/8" ? "6/8" : `${v} beats (${METER_LABEL[v as MeterId]})`} wide />
           ))}
         </div>
       );

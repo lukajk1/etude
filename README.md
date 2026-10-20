@@ -150,7 +150,7 @@ repeating:
 | 2.1 Chords in a key | I, ii, IV, V, vi by ear; check any set | presets: I and V, I IV V, add vi, all five |
 | 2.2 Progressions | each common four-chord progression | I, IV and V only |
 | 3.1 Note values | each note and rest value | plain values first |
-| 3.2 Hear the meter | 2, 3 or 4 beats by ear; check any set | 2 or 3 |
+| 3.2 Hear the meter | 2/4, 3/4, 4/4 or 6/8 by ear; check any set; pools for accompaniment, melody and bass, melody alone | 2 or 3, with accompaniment |
 | 4.1 Cadences | authentic, half, plagal, deceptive by ear; check any set | authentic or half |
 | 5.1 Non-chord tones | each kind; check any set | passing or neighbor |
 | 6.1 Which chord fits? | which of I, IV and V contain each scale degree | I and V |
@@ -198,7 +198,9 @@ voicings and progressions are in `src/practice/drills/harmony.ts`.
 
 **Unit 3, Rhythm and meter**, with the standard exercises from aural-skills courses:
 3.1 note values (beats per note, dots and rests, completing a bar), 3.2 hearing the meter
-(2, 3 or 4 beats, from an accompaniment's strong beat), 3.3 rhythmic dictation (hear a bar
+(2, 3 or 4 beats: first over an oom-pah accompaniment, then a melody over one bass note a
+bar, then a melody alone with only gentle accents, then simple against compound, 2/4, 3/4
+or 6/8, with the eighths at the same speed so only their grouping differs), 3.3 rhythmic dictation (hear a bar
 after a count-in, pick its notation from three near-misses) and 3.4 tapping a rhythm in
 time (Space or the pad, after a bar of clicks). Each goes from quarters and halves, to
 eighths, to dotted rhythms, sixteenths and syncopation. Tapping is graded against the
