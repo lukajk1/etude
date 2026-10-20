@@ -19,7 +19,7 @@ type Drag =
   | { kind: "erase" }
   | { kind: "velocity" };
 
-const MARK_COLOR = { error: "#ef6b5a", warning: "#e8b04a" } as const;
+const MARK_COLOR = { error: "#a8382f", warning: "#b5682c" } as const;
 
 function noteRect(n: Note, top: number) {
   const x0 = tickToX(n.start);
@@ -126,7 +126,7 @@ export function PianoRoll() {
     if (t) {
       const flats = usesFlats(p.key, p.scale);
       const sel = st.selectedNoteIds;
-      g.font = `600 9.5px ${cssVar("--font")}`;
+      g.font = `600 9.5px ${cssVar("--font-ui")}`;
       g.textBaseline = "middle";
       for (const n of t.notes) {
         if (n.pitch < lo || n.pitch > hi) continue;
@@ -172,7 +172,7 @@ export function PianoRoll() {
     if (d?.kind === "marquee") {
       const x = Math.min(d.x0, d.x1);
       const y = Math.min(d.y0, d.y1);
-      g.fillStyle = "rgba(255, 255, 255, 0.05)";
+      g.fillStyle = cssVar("--wash");
       g.fillRect(x, y, Math.abs(d.x1 - d.x0), Math.abs(d.y1 - d.y0));
       g.strokeStyle = cssVar("--text-dim");
       g.strokeRect(x + 0.5, y + 0.5, Math.abs(d.x1 - d.x0), Math.abs(d.y1 - d.y0));
@@ -190,7 +190,7 @@ export function PianoRoll() {
     const color = t ? TIMBRES[t.timbre].color : "#888888";
     const flats = usesFlats(p.key, p.scale);
     const hp = hover.value?.pitch ?? -1;
-    g.font = `500 9.5px ${cssVar("--font")}`;
+    g.font = `500 9.5px ${cssVar("--font-ui")}`;
     g.textBaseline = "middle";
 
     for (let pitch = lo; pitch <= hi; pitch++) {
@@ -215,11 +215,11 @@ export function PianoRoll() {
         const deg = scaleDegree(pitch, p.key, p.scale);
         if (deg > 0) {
           g.fillStyle = deg === 1 ? color : withAlpha(color, 0.6);
-          g.font = `${deg === 1 ? 700 : 500} 9px ${cssVar("--font")}`;
+          g.font = `${deg === 1 ? 700 : 500} 9px ${cssVar("--font-ui")}`;
           g.textAlign = "right";
           g.fillText(String(deg), w - 4, y + ROW_H / 2 + 0.5);
           g.textAlign = "left";
-          g.font = `500 9.5px ${cssVar("--font")}`;
+          g.font = `500 9.5px ${cssVar("--font-ui")}`;
         }
       }
     }

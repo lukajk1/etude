@@ -34,7 +34,7 @@ export const TIMBRES: Record<TimbreId, TimbreInfo> = {
     id: "brass",
     name: "Brass",
     role: "Horns, trumpets, trombones: bright attack that opens up",
-    color: "#e3b341", // brass
+    color: "#c4922a", // brass
     gmProgram: 61,
     range: [34, 82],
   },
@@ -42,7 +42,7 @@ export const TIMBRES: Record<TimbreId, TimbreInfo> = {
     id: "choir",
     name: "Choir",
     role: "Voices singing “ah”: soprano to bass, slow to bloom",
-    color: "#d68fa8", // breath, warmth
+    color: "#c06a8a", // breath, warmth
     gmProgram: 52,
     range: [40, 81],
   },
@@ -50,7 +50,7 @@ export const TIMBRES: Record<TimbreId, TimbreInfo> = {
     id: "piano",
     name: "Piano",
     role: "Struck strings: bright attack, long ring, damped when you let go",
-    color: "#ddd0b0", // ivory keys
+    color: "#a3895a", // ivory keys, aged
     gmProgram: 0,
     range: [21, 108],
   },
@@ -58,7 +58,7 @@ export const TIMBRES: Record<TimbreId, TimbreInfo> = {
     id: "harp",
     name: "Harp",
     role: "Harp, guitar, celesta: plucked, then rings out",
-    color: "#7fa6d8", // steel string
+    color: "#5a84bd", // steel string
     gmProgram: 46,
     range: [24, 100],
   },
@@ -74,7 +74,7 @@ export const TIMBRES: Record<TimbreId, TimbreInfo> = {
     id: "pure",
     name: "Pure tone",
     role: "A plain sine wave, so you hear the pitch and nothing else",
-    color: "#b9b2d6", // tuning fork
+    color: "#8479b4", // tuning fork
     gmProgram: 79,
     range: [36, 96],
   },

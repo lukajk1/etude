@@ -65,7 +65,7 @@ export function Overview() {
     // Bar lines, thinned out so they never crowd.
     const barPx = x(bar);
     const every = Math.max(1, Math.ceil(48 / barPx));
-    g.font = `500 10px ${cssVar("--font")}`;
+    g.font = `500 10px ${cssVar("--font-ui")}`;
     g.textBaseline = "top";
     for (let b = 0; b * bar < len; b += every) {
       const bx = Math.round(x(b * bar)) + 0.5;
@@ -98,7 +98,7 @@ export function Overview() {
       const r = visibleRange();
       const x0 = x(r.start);
       const x1 = Math.min(w, x(r.end));
-      g.fillStyle = "rgba(255, 255, 255, 0.06)";
+      g.fillStyle = cssVar("--wash");
       g.fillRect(x0, 0, x1 - x0, h);
       g.strokeStyle = cssVar("--text-dim");
       g.lineWidth = 1;

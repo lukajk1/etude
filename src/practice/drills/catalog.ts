@@ -146,7 +146,8 @@ export function scaleQuestion(kind: ScaleKind, keyCode: string, degree = randInt
 export const COMMON_INTERVALS = ["m2", "M2", "m3", "M3", "P4", "P5", "m6", "M6", "m7", "M7", "P8"];
 export const RARE_INTERVALS = ["A4", "d5", "A2", "A5", "A6", "d7"];
 
-export function nameIntervalQuestion(code: string): Question {
+/** An interval to name on the staff; `options` limits the answer buttons. */
+export function nameIntervalQuestion(code: string, options?: string[]): Question {
   const { q, num } = parseInterval(code);
   for (;;) {
     const low = parseCode(pick(LOWERS), Math.random() < 0.7 ? 4 : 3);
@@ -156,7 +157,7 @@ export function nameIntervalQuestion(code: string): Question {
     return {
       prompt: "Name this interval.",
       staff: { clef: clefFor([low]), groups: harmonic ? [[low, high]] : [[low], [high]] },
-      steps: [{ type: "interval", correct: intervalCode(q, num) }],
+      steps: [{ type: "interval", correct: intervalCode(q, num), options }],
       explain: explainInterval(low, high),
     };
   }
@@ -351,7 +352,7 @@ const nameIntervalsCommon = checkpoint(nameIntervals, {
   number: "0.4a",
   title: "Name intervals: major, minor and perfect",
   summary: "Number and quality of intervals on the staff, no augmented or diminished.",
-  generate: () => nameIntervalQuestion(pick(COMMON_WEIGHTED)),
+  generate: () => nameIntervalQuestion(pick(COMMON_WEIGHTED), COMMON_INTERVALS),
 });
 
 const buildIntervals: Drill = {

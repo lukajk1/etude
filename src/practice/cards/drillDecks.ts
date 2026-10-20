@@ -169,7 +169,7 @@ export const NAME_INTERVALS_DECK = factDeck({
   facts: (_t, pool) => intervalFacts(pool),
   label: (_t, code) => intervalLabel(code),
   cell: (_t, code) => code,
-  question: (_t, code) => nameIntervalQuestion(code),
+  question: (_t, code, pool) => nameIntervalQuestion(code, pool === "full" ? undefined : COMMON_INTERVALS),
 });
 
 export const BUILD_INTERVALS_DECK = factDeck({

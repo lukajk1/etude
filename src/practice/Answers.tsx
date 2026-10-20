@@ -126,12 +126,17 @@ export function AnswerPad(props: PadProps) {
               {c}
             </span>
           ))}
-          {INTERVAL_ROWS.map((row) => [
-            <span key={row.label} className="drill-axis is-row">
-              {row.label}
-            </span>,
-            ...row.cells.map((cell, i) => (cell ? <Choice key={cell} {...props} value={cell} label={cell} /> : <span key={row.label + i} />)),
-          ])}
+          {INTERVAL_ROWS.map((row) => {
+            // Only the intervals this question allows, and only rows that still have any.
+            const cells = row.cells.map((c) => (c && (!step.options || step.options.includes(c)) ? c : null));
+            if (!cells.some(Boolean)) return null;
+            return [
+              <span key={row.label} className="drill-axis is-row">
+                {row.label}
+              </span>,
+              ...cells.map((cell, i) => (cell ? <Choice key={cell} {...props} value={cell} label={cell} /> : <span key={row.label + i} />)),
+            ];
+          })}
         </div>
       );
     case "majorKey":

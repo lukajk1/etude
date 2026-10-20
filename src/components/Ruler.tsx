@@ -32,7 +32,7 @@ export function Ruler() {
     const lastTick = xToTick(w);
     const barPx = (bar / PPQ) * s.pxPerBeat;
     const labelEvery = barPx < 28 ? Math.ceil(28 / barPx) : 1;
-    g.font = `500 11px ${cssVar("--font")}`;
+    g.font = `500 11px ${cssVar("--font-ui")}`;
     g.textBaseline = "top";
     for (let b = firstBar; b * bar <= lastTick; b++) {
       const x = Math.round(tickToX(b * bar)) + 0.5;

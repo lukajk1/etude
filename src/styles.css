@@ -1,32 +1,46 @@
 :root {
-  --font: "Instrument Sans", system-ui, sans-serif;
+  /* A book serif for text, like a concert programme; the sans stays for tiny canvas labels. */
+  --font: "Palatino Linotype", "Book Antiqua", Palatino, "URW Palladio L", P052, Georgia, serif;
+  --font-ui: "Instrument Sans", system-ui, sans-serif;
 
-  /* A darkened concert hall: blue-black wood, warm stage light for text. */
-  --ink-0: #141a25;
-  --ink-1: #1a212e;
-  --ink-2: #222b3b;
-  --ink-3: #2d384c;
-  --row-in: #1d2533;
-  --row-out: #161c27;
-  --row-hover: rgba(255, 255, 255, 0.045);
-  --line-faint: rgba(255, 255, 255, 0.035);
-  --line: rgba(255, 255, 255, 0.075);
-  --line-strong: rgba(255, 255, 255, 0.15);
-  --text: #ece6d9;
-  --text-dim: #8e98ab;
-  --playhead: #f4ead2;
-  --loop: #5fbfae;
-  --loop-off: rgba(95, 191, 174, 0.3);
-  --loop-wash: rgba(95, 191, 174, 0.06);
-  --note-text: #141a25;
-  --key-white: #d8d3c6;
-  --key-black: #252e3d;
-  --key-gap: rgba(0, 0, 0, 0.28);
-  --key-label: #3e4555;
-  --focus: #9cc4ff;
+  /* Warm white paper and printer's ink, like an engraved score or a concert programme:
+     bronze as the accent, copper for things waiting on you, crimson for mistakes, and a
+     red playhead like a pencil mark. */
+  --ink-0: #f3ecdc;
+  --ink-1: #faf6ec;
+  --ink-2: #ede4d1;
+  --ink-3: #e2d6bf;
+  --row-in: #f8f2e5;
+  --row-out: #ede5d4;
+  --row-hover: rgba(60, 40, 10, 0.05);
+  --line-faint: rgba(60, 40, 10, 0.05);
+  --line: rgba(60, 40, 10, 0.12);
+  --line-strong: rgba(60, 40, 10, 0.24);
+  --text: #2b241c;
+  --text-dim: #77695a;
+  /* The playhead and position marks on the canvases. */
+  --playhead: #a3352b;
+  /* Filled controls (play, solo) and the text on them. */
+  --strong: #2b241c;
+  --on-strong: #faf6ec;
+  /* The accent (historically named for the loop region, which it also colors). */
+  --loop: #8f6b26;
+  --loop-off: rgba(143, 107, 38, 0.35);
+  --loop-wash: rgba(143, 107, 38, 0.08);
+  --on-accent: #fbf7ee;
+  --warn: #a85a22;
+  --bad: #a8382f;
+  --note-text: #2b241c;
+  --key-white: #fdfaf2;
+  --key-black: #2f2820;
+  --key-gap: rgba(60, 40, 10, 0.25);
+  --key-label: #8a7c66;
+  --focus: #8f6b26;
+  /* A faint ink wash for highlighting regions on the canvases. */
+  --wash: rgba(60, 40, 10, 0.06);
   --radius: 6px;
 
-  color-scheme: dark;
+  color-scheme: light;
   font-family: var(--font);
   font-size: 13px;
   color: var(--text);
@@ -89,9 +103,9 @@ canvas {
   align-items: center;
   gap: 8px;
   white-space: nowrap;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.03em;
 }
 
 .title-input {
@@ -153,7 +167,7 @@ canvas {
 .icon-btn[aria-pressed="true"] {
   color: var(--loop);
   border-color: var(--loop);
-  background: rgba(95, 191, 174, 0.12);
+  background: rgba(143, 107, 38, 0.12);
 }
 
 .play-btn {
@@ -162,9 +176,9 @@ canvas {
   width: 40px;
   height: 32px;
   border-radius: var(--radius);
-  border: 1px solid var(--playhead);
-  background: var(--playhead);
-  color: var(--ink-0);
+  border: 1px solid var(--strong);
+  background: var(--strong);
+  color: var(--on-strong);
   cursor: pointer;
 }
 .play-btn:hover {
@@ -172,7 +186,7 @@ canvas {
 }
 .play-btn.is-playing {
   background: transparent;
-  color: var(--playhead);
+  color: var(--strong);
 }
 
 .mini-field {
@@ -200,7 +214,7 @@ canvas {
 
 .master-volume input[type="range"] {
   width: 96px;
-  accent-color: var(--playhead);
+  accent-color: var(--strong);
 }
 .volume-pct {
   width: 34px;
@@ -218,8 +232,8 @@ canvas {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #c9604f;
-  color: var(--ink-0);
+  background: var(--bad);
+  color: var(--on-strong);
   font-weight: 700;
   font-size: 12px;
 }
@@ -404,13 +418,13 @@ canvas {
   color: var(--text-dim);
 }
 .toggle[aria-pressed="true"] {
-  background: #c9604f;
-  border-color: #c9604f;
-  color: var(--ink-0);
+  background: var(--bad);
+  border-color: var(--bad);
+  color: var(--on-strong);
 }
 .toggle-solo[aria-pressed="true"] {
-  background: var(--playhead);
-  border-color: var(--playhead);
+  background: var(--strong);
+  border-color: var(--strong);
 }
 .lane-delete {
   width: 22px;
@@ -568,7 +582,7 @@ canvas {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 400;
   font-size: 0.92em;
-  color: var(--playhead);
+  color: var(--strong);
   opacity: 0.85;
 }
 .hint {
@@ -656,7 +670,7 @@ canvas {
 /* ---- Score -------------------------------------------------------------- */
 
 .score {
-  --paper: #ebe6da;
+  --paper: #fffcf4;
   --paper-ink: #22262e;
   overflow: auto;
   min-height: 0;
@@ -724,7 +738,7 @@ canvas {
 }
 .score-playhead {
   display: none;
-  background: rgba(201, 96, 79, 0.75);
+  background: rgba(168, 56, 47, 0.75);
 }
 
 /* ---- Exercises ------------------------------------------------------------ */
@@ -801,10 +815,11 @@ canvas {
   flex: 1;
   padding: 7px 12px;
   border-radius: var(--radius);
-  border: 1px solid var(--playhead);
-  background: var(--playhead);
-  color: var(--ink-0);
+  border: 1px solid #9a7a35;
+  background: linear-gradient(#cfae66, #ab8840);
+  color: var(--note-text);
   font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
 }
 .ex-check:hover {
@@ -818,8 +833,8 @@ canvas {
   margin-top: 12px;
   padding: 10px 12px;
   border-radius: var(--radius);
-  border: 1px solid rgba(232, 176, 74, 0.5);
-  background: rgba(232, 176, 74, 0.08);
+  border: 1px solid rgba(168, 90, 34, 0.5);
+  background: rgba(168, 90, 34, 0.08);
 }
 .ex-result {
   margin-top: 14px;
@@ -849,12 +864,12 @@ canvas {
   font-weight: 700;
 }
 .ex-badge.is-pass {
-  background: rgba(95, 191, 174, 0.18);
+  background: rgba(143, 107, 38, 0.18);
   color: var(--loop);
 }
 .ex-badge.is-fail {
-  background: rgba(239, 107, 90, 0.15);
-  color: #ef6b5a;
+  background: rgba(168, 56, 47, 0.15);
+  color: var(--bad);
 }
 .ex-summary {
   margin: 6px 0;
@@ -863,7 +878,7 @@ canvas {
 .ex-stale {
   margin-bottom: 6px;
   font-size: 12px;
-  color: #e8b04a;
+  color: var(--warn);
 }
 .ex-issues {
   list-style: none;
@@ -899,10 +914,10 @@ canvas {
   border-radius: 50%;
 }
 .ex-issue.is-error .ex-issue-dot {
-  background: #ef6b5a;
+  background: var(--bad);
 }
 .ex-issue.is-warning .ex-issue-dot {
-  background: #e8b04a;
+  background: var(--warn);
 }
 .ex-issue-body {
   min-width: 0;
@@ -972,7 +987,7 @@ canvas {
 .insp-locked {
   margin-top: 5px;
   font-size: 11px;
-  color: #e8b04a;
+  color: var(--warn);
 }
 
 /* ---- Drills ----------------------------------------------------------------- */
@@ -992,13 +1007,16 @@ canvas {
   margin: 0 auto 16px;
 }
 .drill-number {
-  color: var(--text-dim);
-  font-size: 12px;
+  color: var(--loop);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 .drill-title {
-  margin: 2px 0 0;
-  font-size: 22px;
-  font-weight: 700;
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 .drill-card {
   max-width: 760px;
@@ -1054,8 +1072,9 @@ canvas {
   justify-content: center;
   margin: 0 0 16px;
   padding: 6px 0;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ebe6da;
+  background: #fffcf4;
 }
 .drill-staff svg {
   display: block;
@@ -1130,12 +1149,14 @@ canvas {
 .drill-choice.is-right {
   opacity: 1;
   border-color: var(--loop);
-  background: rgba(95, 191, 174, 0.2);
+  background: rgba(143, 107, 38, 0.3);
+  box-shadow: inset 0 0 0 1px var(--loop);
 }
 .drill-choice.is-wrong {
   opacity: 1;
-  border-color: #ef6b5a;
-  background: rgba(239, 107, 90, 0.18);
+  border-color: var(--bad);
+  background: rgba(168, 56, 47, 0.18);
+  box-shadow: inset 0 0 0 1px var(--bad);
 }
 .drill-feedback {
   margin-top: 14px;
@@ -1148,8 +1169,8 @@ canvas {
   font-weight: 600;
 }
 .drill-feedback.is-wrong {
-  border: 1px solid rgba(239, 107, 90, 0.45);
-  background: rgba(239, 107, 90, 0.08);
+  border: 1px solid rgba(168, 56, 47, 0.45);
+  background: rgba(168, 56, 47, 0.08);
 }
 /* Interval trainer: answers in two columns, minor on the left, major and perfect on the right. */
 .it-grid {
@@ -1231,7 +1252,7 @@ canvas {
 }
 .drill-criteria .is-unmet::before {
   content: "✗";
-  color: #ef6b5a;
+  color: var(--bad);
 }
 .drill-missed-title {
   margin: 18px 0 6px;
@@ -1287,10 +1308,15 @@ a.btn {
   margin: 0 auto;
   padding: 28px 24px 56px;
 }
+.pr-hero {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
 .pr-hero h1 {
   margin: 0 0 6px;
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 .pr-hero p {
   margin: 0;
@@ -1318,10 +1344,14 @@ a.btn {
   height: 100%;
   background: var(--loop);
 }
+/* Section headings in the manner of a concert programme: spaced capitals in gold. */
 .pr-h2 {
-  margin: 30px 0 6px;
-  font-size: 16px;
-  font-weight: 700;
+  margin: 32px 0 8px;
+  color: var(--loop);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 .pr-blurb {
   margin: 0 0 10px;
@@ -1351,9 +1381,11 @@ a.btn {
   background: var(--ink-2);
 }
 .pr-kind {
-  font-size: 12px;
+  font-size: 10.5px;
   color: var(--loop);
   font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 .pr-next-title {
   font-size: 15px;
@@ -1404,7 +1436,7 @@ a.btn {
   flex: 1 1 100%;
 }
 .pr-error {
-  color: #e08a8a;
+  color: var(--bad);
 }
 
 /* ---- Practice Room home --------------------------------------------------- */
@@ -1441,14 +1473,14 @@ a.btn {
 }
 .pr-due {
   padding: 5px 10px;
-  border: 1px solid rgba(232, 176, 74, 0.5);
+  border: 1px solid rgba(168, 90, 34, 0.5);
   border-radius: 999px;
-  background: rgba(232, 176, 74, 0.08);
+  background: rgba(168, 90, 34, 0.08);
   font-size: 12.5px;
   cursor: pointer;
 }
 .pr-due strong {
-  color: #e8b04a;
+  color: var(--warn);
   margin-left: 4px;
 }
 .pr-trainer {
@@ -1478,8 +1510,9 @@ a.btn {
 }
 .pr-unit-head h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 .pr-topics {
   list-style: none;
@@ -1552,7 +1585,7 @@ a.btn {
 .pr-chip.is-pass {
   border-color: var(--loop);
   background: var(--loop);
-  color: var(--note-text);
+  color: var(--on-accent);
 }
 .pr-chip.is-next {
   border-color: var(--text);
@@ -1695,7 +1728,7 @@ a.btn {
   font-size: 12px;
 }
 .pr-deck-status.is-due {
-  color: #e8b04a;
+  color: var(--warn);
   font-weight: 600;
 }
 .pr-deck-status.is-pass {
@@ -1872,10 +1905,10 @@ a.btn {
   color: var(--text-dim);
 }
 .cards-again {
-  border-color: rgba(224, 92, 92, 0.55);
+  border-color: rgba(168, 56, 47, 0.55);
 }
 .cards-pass {
-  border-color: rgba(90, 200, 120, 0.6);
+  border-color: rgba(143, 107, 38, 0.6);
 }
 .cards-answer {
   margin: 0 0 14px;
@@ -1931,20 +1964,20 @@ a.btn {
 }
 .is-learning.cards-cell,
 .cards-swatch.is-learning {
-  background: rgba(224, 92, 92, 0.32);
+  background: rgba(168, 56, 47, 0.32);
 }
 .is-familiar.cards-cell,
 .cards-swatch.is-familiar {
-  background: rgba(232, 176, 74, 0.34);
+  background: rgba(168, 90, 34, 0.34);
 }
 .is-strong.cards-cell,
 .cards-swatch.is-strong {
-  background: rgba(120, 190, 120, 0.34);
+  background: rgba(143, 107, 38, 0.3);
 }
 .is-mastered.cards-cell,
 .cards-swatch.is-mastered {
-  background: rgba(90, 200, 120, 0.7);
-  color: #0d1a10;
+  background: rgba(143, 107, 38, 0.82);
+  color: var(--on-accent);
 }
 .cards-legend {
   display: flex;
