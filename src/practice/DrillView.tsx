@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, preparePiano } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
-import { DRILLS, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
+import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
 import { go } from "./route";
 import { progress, recordProgress } from "./exercises/state";
 import { useSignal } from "../model/ui";
@@ -26,6 +26,14 @@ const median = (xs: number[]) => {
 function passMarks(d: Drill) {
   return `${Math.round(d.pass.accuracy * 100)}% correct${d.pass.medianSec ? `, answering in ${d.pass.medianSec} s or less (median)` : ""}`;
 }
+
+const UNIT_NAMES: Record<string, string> = {
+  harmony: "Hearing harmony",
+  rhythm: "Rhythm and meter",
+  cadences: "Cadences",
+  nct: "Non-chord tones",
+  harmonize: "Harmonizing a melody",
+};
 
 export default function DrillView({ id }: { id: string }) {
   const drill = DRILLS.find((d) => d.id === id)!;
@@ -96,7 +104,7 @@ export default function DrillView({ id }: { id: string }) {
         setStepIndex(stepIndex + 1);
         return;
       }
-      const ok = question.steps.every((s, i) => s.correct === all[i]);
+      const ok = question.steps.every((s, i) => isRight(s, all[i]));
       setGiven(all);
       setAnswered((a) => [...a, { question, given: all, ok, ms: performance.now() - shownAt.current }]);
       setReveal(true);
@@ -162,7 +170,7 @@ export default function DrillView({ id }: { id: string }) {
       <div className="drill-head">
         <div>
           <div className="drill-number">
-            {drill.unit === "harmony" ? "Hearing harmony" : "Foundations"}, drill {drill.number}
+            {UNIT_NAMES[drill.unit ?? ""] ?? "Foundations"}, drill {drill.number}
           </div>
           <h2 className="drill-title">{drill.title}</h2>
         </div>

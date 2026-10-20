@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, preparePiano } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
-import type { Step } from "./drills/catalog";
+import { isRight, type Step } from "./drills/catalog";
 import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
 import type { Card, DeckDef, Shown } from "./cards/types";
 import { cardStates, FAST_MS, MAX_BOX, pickNext, resetCards, review, stageOf, summarize, type CardState, type Session } from "./cards/srs";
@@ -151,7 +151,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
       setGiven(all);
       if (all.length < steps.length) return;
       const ms = performance.now() - shownAt.current;
-      const ok = steps.every((s, i) => s.correct === all[i]);
+      const ok = steps.every((s, i) => isRight(s, all[i]));
       review(showing.card.id, ok, ms, Date.now(), fast);
       setChosen(value);
       setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: all, ok, ms }]);

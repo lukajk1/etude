@@ -24,6 +24,8 @@ import {
 } from "../drills/catalog";
 import { chordInKeyQuestion, NUMERAL_NAME, NUMERALS, PROGRESSIONS, progressionLabel, progressionQuestion, progressionsUsing, type Numeral } from "../drills/harmony";
 import { CADENCE_INFO, CADENCES, cadenceQuestion, type Cadence } from "../drills/cadences";
+import { FITS, fitQuestion, HARM_CHORDS } from "../drills/harmonize";
+import { NCT_INFO, nctQuestion, NCTS, type Nct } from "../drills/nct";
 import { BASIC_VALUES, DOTTED_AND_RESTS, meterQuestion, noteValueQuestion, VALUES } from "../drills/rhythm";
 import { intervalLabel, nameOf, prettyCode, randInt, type ScaleKind, type TriadQuality } from "../drills/theory";
 import type { Card, DeckDef } from "./types";
@@ -421,4 +423,50 @@ export const CADENCES_DECK = factDeck({
   label: (c) => `${CADENCE_INFO[c as Cadence].label} cadence`,
   cell: (c) => CADENCE_INFO[c as Cadence].label,
   question: (c, _f, _pool, types) => cadenceQuestion(c as Cadence, CADENCES.filter((x) => types.includes(x))),
+});
+
+export const NCT_DECK = factDeck({
+  id: "nct",
+  title: "Non-chord tones",
+  summary: "Passing, neighbor, appoggiatura, suspension, escape, anticipation; pick any set.",
+  brief: "Three chords with a melody on top: name the second melody note by how it moves. Check the kinds to drill; the answer buttons are just those.",
+  tag: "5.1",
+  drills: ["n-nct-pn", "n-nct-as", "n-nct-all"],
+  fastMs: 6000,
+  pools: [{ value: "full", label: "Chosen kinds" }],
+  types: NCTS.map((k) => ({ id: k, label: NCT_INFO[k].label, hint: NCT_INFO[k].how })),
+  defaults: { pool: "full", types: ["passing", "neighbor"] },
+  presets: [
+    { label: "Passing or neighbor", types: ["passing", "neighbor"] },
+    { label: "Add appoggiatura, suspension", types: ["passing", "neighbor", "appoggiatura", "suspension"] },
+    { label: "All six", types: [...NCTS] },
+  ],
+  minTypes: 2,
+  cardId: (k) => `nct:${k}`,
+  oneRow: "Non-chord tones",
+  facts: (k) => [k],
+  label: (k) => NCT_INFO[k as Nct].label,
+  cell: (k) => NCT_INFO[k as Nct].label.replace(" tone", ""),
+  question: (k, _f, _pool, types) => nctQuestion(k as Nct, NCTS.filter((x) => types.includes(x))),
+});
+
+const SOLF = ["do", "re", "mi", "fa", "sol", "la", "ti"];
+const fitChords = (pool: string) => (pool === "full" ? HARM_CHORDS : HARM_CHORDS.filter((c) => c !== "IV"));
+
+export const CHORD_FIT_DECK = factDeck({
+  id: "chord-fit",
+  title: "Which chord fits?",
+  summary: "Which of I, IV and V contain each scale degree; each degree is a card.",
+  brief: "A note appears in a major key: say which chord contains it. I has do, mi, sol; IV has fa, la, do; V has sol, ti, re. Where two fit, either is right. This is the fact behind harmonizing a melody.",
+  tag: "6.1",
+  drills: ["m-harm-iv", "m-harm-ivv", "m-harm-long"],
+  fastMs: 4000,
+  pools: corePool("I and V", "I, IV and V"),
+  types: one("Scale degrees"),
+  defaults: { pool: "core", types: ["all"] },
+  facts: (_t, pool) => ["1", "2", "3", "4", "5", "6", "7"].filter((d) => FITS[Number(d)].some((c) => fitChords(pool).includes(c))),
+  label: (_t, d) => `${SOLF[Number(d) - 1]} (degree ${d})`,
+  cell: (_t, d) => `${d} ${SOLF[Number(d) - 1]}`,
+  rank: (_t, d) => [1, 5, 3, 2, 7, 4, 6].indexOf(Number(d)),
+  question: (_t, d, pool) => fitQuestion(Number(d), fitChords(pool)),
 });

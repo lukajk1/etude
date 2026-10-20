@@ -152,6 +152,8 @@ repeating:
 | 3.1 Note values | each note and rest value | plain values first |
 | 3.2 Hear the meter | 2, 3 or 4 beats by ear; check any set | 2 or 3 |
 | 4.1 Cadences | authentic, half, plagal, deceptive by ear; check any set | authentic or half |
+| 5.1 Non-chord tones | each kind; check any set | passing or neighbor |
+| 6.1 Which chord fits? | which of I, IV and V contain each scale degree | I and V |
 
 Each deck lets you choose which directions or groups to study. A drill's intro screen links
 to its deck. Under
@@ -206,6 +208,17 @@ brackets. The rhythms and counting are in `src/practice/drills/rhythm.ts`.
 
 **Unit 4, Cadences**: four chords play from I and you name how the phrase ends, from
 authentic or half, to adding plagal, to adding deceptive (`src/practice/drills/cadences.ts`).
+
+**Unit 5, Non-chord tones**: three chords with a melody on top (shown and played); name
+the second melody note by how it moves. 5.1a passing or neighbor, 5.1b adds appoggiatura
+and suspension, 5.1c adds escape tone and anticipation. Examples are built from the
+textbook definitions in scale degrees, over keyboard voicings of I, IV and V, and checked
+so the note really is outside its chord (`src/practice/drills/nct.ts`).
+
+**Unit 6, Harmonizing a melody**: choose I, IV or V for each note of a short melody; each
+chord must contain its note, the first is I and the last two make the V–I cadence. Any
+chord that fits is accepted, and the explanation lists them. 6.1a I and V, 6.1b I, IV and
+V, 6.1c six-note melodies (`src/practice/drills/harmonize.ts`).
 
 **Interval trainer** (free practice): choose any intervals and how they're played (up,
 down, together, or melodic then together). Answering moves straight to the next interval

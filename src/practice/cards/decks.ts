@@ -3,6 +3,7 @@ import {
   BUILD_INTERVALS_DECK,
   BUILD_TRIADS_DECK,
   CADENCES_DECK,
+  CHORD_FIT_DECK,
   CHORDS_IN_KEY_DECK,
   HEAR_CHORDS_DECK,
   HEAR_DEGREES_DECK,
@@ -10,6 +11,7 @@ import {
   METER_DECK,
   NAME_INTERVALS_DECK,
   NAME_TRIADS_DECK,
+  NCT_DECK,
   NOTE_VALUES_DECK,
   NOTES_DECK,
   PROGRESSIONS_DECK,
@@ -37,6 +39,8 @@ export const DECKS: DeckDef[] = [
   CHORDS_IN_KEY_DECK,
   PROGRESSIONS_DECK,
   CADENCES_DECK,
+  NCT_DECK,
+  CHORD_FIT_DECK,
 ];
 /** The deck that practices a drill, if any. */
 export const deckForDrill = (drillId: string) => DECKS.find((d) => d.drills?.includes(drillId));

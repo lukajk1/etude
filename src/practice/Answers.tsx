@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
 import { engine, ensureAudio, playNotes } from "../audio/live";
 import { CADENCE_INFO, type Cadence } from "./drills/cadences";
-import { EAR_INTERVALS, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
+import { EAR_INTERVALS, isRight, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
+import { NCT_INFO, type Nct } from "./drills/nct";
 import { NUMERAL_NAME, NUMERALS, type Numeral } from "./drills/harmony";
 import { BPM, beatsLabel, countText, fromSpec, onsets, rhythmAudio, VALUES } from "./drills/rhythm";
 import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vfKey } from "./drills/theory";
@@ -132,6 +133,8 @@ export function answerLabel(type: AnswerType, value: string): string {
       return value === "ok" ? "every note in time" : "some notes off the beat";
     case "cadence":
       return `${CADENCE_INFO[value as Cadence].label} (${CADENCE_INFO[value as Cadence].chords})`;
+    case "nct":
+      return NCT_INFO[value as Nct].label.toLowerCase();
   }
 }
 
@@ -145,7 +148,7 @@ export interface PadProps {
 function Choice({ value, label, step, chosen, reveal, onPick, wide }: PadProps & { value: string; label: string; wide?: boolean }) {
   let cls = "drill-choice";
   if (wide) cls += " is-wide";
-  if (reveal && value === step.correct) cls += " is-right";
+  if (reveal && (value === step.correct || (value === chosen && isRight(step, value)))) cls += " is-right";
   else if (reveal && value === chosen) cls += " is-wrong";
   return (
     <button className={cls} disabled={reveal} onClick={() => onPick(value)} title={answerLabel(step.type, value)}>
@@ -275,6 +278,14 @@ export function AnswerPad(props: PadProps) {
         <div className="drill-row">
           {(step.options ?? []).map((v) => (
             <Choice key={v} {...props} value={v} label={CADENCE_INFO[v as Cadence].label} wide />
+          ))}
+        </div>
+      );
+    case "nct":
+      return (
+        <div className="drill-grid" style={{ gridTemplateColumns: `repeat(${Math.min(3, step.options?.length ?? 3)}, minmax(0, 1fr))` }}>
+          {(step.options ?? []).map((v) => (
+            <Choice key={v} {...props} value={v} label={NCT_INFO[v as Nct].label} wide />
           ))}
         </div>
       );

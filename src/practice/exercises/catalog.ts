@@ -188,8 +188,6 @@ export const EXERCISES: Exercise[] = [
 
 /** Later units, shown in the menu as a roadmap. */
 export const ROADMAP: { unit: string; topics: string }[] = [
-  { unit: "Non-chord tones", topics: "Passing tones, neighbors, appoggiaturas and suspensions: the melody notes outside the chord." },
-  { unit: "Harmonizing a melody", topics: "Choosing I, IV or V under each note of a melody, ending with a cadence." },
   { unit: "Suspensions (fourth species)", topics: "Tied notes that clash and resolve down: the Romantic ache." },
   { unit: "Four-part harmony", topics: "Chorales: I, IV, V, cadences, doubling, voice leading in four voices." },
   { unit: "Romantic harmony", topics: "Secondary dominants, borrowed chords, diminished sevenths, the Neapolitan." },

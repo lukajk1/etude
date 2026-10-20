@@ -25,10 +25,12 @@ import {
   type TriadQuality,
 } from "./theory";
 import { CADENCE_DRILLS } from "./cadences";
+import { HARMONIZE_DRILLS } from "./harmonize";
+import { NCT_DRILLS } from "./nct";
 import { HARMONY_DRILLS } from "./harmony";
 import { RHYTHM_DRILLS } from "./rhythm";
 
-export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence";
+export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct";
 
 export interface Step {
   type: AnswerType;
@@ -39,6 +41,8 @@ export interface Step {
   options?: string[];
   /** Extra input for pads that need it (the rhythm to tap). */
   data?: string;
+  /** Other answers that also count as right (a note several chords fit). Includes `correct`. */
+  accept?: string[];
 }
 
 export interface StaffSpec {
@@ -77,7 +81,7 @@ export interface Drill {
   brief: string;
   ear: boolean;
   /** Drills outside the foundations get their own unit on the home page. */
-  unit?: "harmony" | "rhythm" | "cadences";
+  unit?: "harmony" | "rhythm" | "cadences" | "nct" | "harmonize";
   /** Pass marks from the foundations checklist. */
   pass: { accuracy: number; medianSec?: number };
   generate: () => Question;
@@ -615,8 +619,13 @@ export const DRILLS: Drill[] = [
   ...HARMONY_DRILLS,
   ...RHYTHM_DRILLS,
   ...CADENCE_DRILLS,
+  ...NCT_DRILLS,
+  ...HARMONIZE_DRILLS,
 ];
 
 export function getDrill(id: string | null): Drill | null {
   return DRILLS.find((d) => d.id === id) ?? null;
 }
+
+/** Whether an answer is right for a step: its answer, or one of the others it accepts. */
+export const isRight = (step: Step, value: string | undefined) => value === step.correct || (!!value && !!step.accept?.includes(value));

@@ -105,6 +105,8 @@ const UNITS: Unit[] = [
   },
   { title: "Hearing harmony", kind: "Harmony by ear", topics: drillTopics((d) => d.unit === "harmony") },
   { title: "Cadences", kind: "Cadences by ear", topics: drillTopics((d) => d.unit === "cadences") },
+  { title: "Non-chord tones", kind: "Non-chord tones", topics: drillTopics((d) => d.unit === "nct") },
+  { title: "Harmonizing a melody", kind: "Harmonizing", topics: drillTopics((d) => d.unit === "harmonize") },
   { title: "Counterpoint essentials", kind: "Counterpoint", topics: counterpointTopics() },
 ];
 
@@ -134,6 +136,8 @@ const PREREQS: Record<string, string[]> = {
   "3.3a": ["3.1a"], // read the values before hearing them
   "3.4a": ["3.1a"],
   "4.1a": ["2.1b"], // a cadence is chords: I, IV and V by ear first
+  "5.1a": ["0.6a"], // spotting the note outside a chord means reading the chord
+  "6.1a": ["0.7a"], // choosing a chord means knowing what's in each one
   T1: ["0.8a"],
   "1.1": ["0.4a"],
   "1.3": ["1.1"],
