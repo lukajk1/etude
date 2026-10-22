@@ -302,7 +302,8 @@ export function Home() {
     const prefs = settingsFor(deck, cardPrefs);
     return { deck, sum: summarize(deck.build(prefs.pool, prefs.types)) };
   });
-  const due = decks.filter((d) => d.sum.due > 0);
+  // Decks you've started, to jump back into on your own schedule.
+  const started = decks.filter((d) => d.sum.fresh < d.sum.total);
 
   return (
     <main className="pr-home">
@@ -338,14 +339,14 @@ export function Home() {
         )}
         <div className="pr-today-row">
           <span className="pr-today-label">Flashcards</span>
-          {due.length ? (
-            due.map(({ deck, sum }) => (
+          {started.length ? (
+            started.map(({ deck }) => (
               <button key={deck.id} className="pr-due" onClick={() => go({ kind: "cards", id: deck.id })}>
-                {deck.title} <strong>{sum.due} due</strong>
+                {deck.title}
               </button>
             ))
           ) : (
-            <span className="pr-dim">Nothing due right now.</span>
+            <span className="pr-dim">Pick a deck below to start.</span>
           )}
           <button className="btn pr-trainer" onClick={() => go({ kind: "train", id: "intervals" })}>
             ♪ Interval trainer
@@ -417,8 +418,8 @@ export function Home() {
                 <span className="pr-deck-tag">{deck.tag ?? deck.icon}</span>
                 <span className="pr-deck-title">{deck.title}</span>
               </span>
-              <span className={`pr-deck-status${sum.due ? " is-due" : sum.mastered === sum.total ? " is-pass" : ""}`}>
-                {sum.fresh === sum.total ? "Not started" : sum.due ? `${sum.due} due` : `${sum.mastered} of ${sum.total} mastered`}
+              <span className={`pr-deck-status${sum.mastered === sum.total ? " is-pass" : ""}`}>
+                {sum.fresh === sum.total ? "Not started" : `${sum.mastered} of ${sum.total} mastered`}
               </span>
             </button>
           ))}

@@ -41,8 +41,7 @@ const STAGE_LABEL: Record<string, string> = { new: "New", learning: "Learning", 
 
 function cellTitle(card: Card, s: CardState | undefined) {
   if (!s) return `${card.label}: not seen yet`;
-  const due = s.due <= Date.now() ? "due now" : `due ${new Date(s.due).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
-  return `${card.label}: level ${s.box} of ${MAX_BOX}, ${s.correct} of ${s.seen} right, ${due}`;
+  return `${card.label}: level ${s.box} of ${MAX_BOX}, ${s.correct} of ${s.seen} right`;
 }
 
 /** Every card in the deck, shaded by how well it's known. */
@@ -252,9 +251,8 @@ export default function CardsView({ def }: { def: DeckDef }) {
       {phase === "setup" && (
         <div className="drill-card">
           <p className="drill-brief">
-            {def.brief} With intelligent review on, cards you miss come back within a few cards, and ones you answer quickly are
-            spaced further apart each time: minutes, then a day, then days, then weeks. New cards come in five at a time, easiest first; the next five
-            join once those are learned.
+            {def.brief} With intelligent review on, cards you miss come back within a few cards, and the ones you know well come up less and less, so
+            each session goes to what you're weakest on. New cards come in five at a time, easiest first; the next five join once those are learned.
           </p>
           <div className="cards-options">
             {def.pools.length > 1 && (
@@ -334,7 +332,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
             />
           </div>
           <p className="drill-pass">
-            {summary.total} cards: {summary.fresh} new, {summary.due} due, {summary.mastered} mastered.
+            {summary.total} cards: {summary.fresh} new, {summary.learning + summary.familiar + summary.strong} in progress, {summary.mastered} mastered.
           </p>
           <div className="ex-actions">
             <button className="ex-check drill-start" onClick={start}>
@@ -473,7 +471,7 @@ function SessionSummary({ def, fast, answered, settings, onAgain, onSetup }: { d
         </span>
       </div>
       <p className="drill-pass">
-        Cards are due again on their own schedule, so coming back tomorrow does more than a longer session today.
+        Short sessions spread over several days make cards stick better than one long one.
       </p>
       {weak.length > 0 && (
         <>
