@@ -38,25 +38,38 @@ function buildTrick(acc: number, major: Key): string {
   return ` Trick: add flats (B E A D G C F) until you've written ${keyName(major)}, then add one more.`;
 }
 
-type KeyCardType = "sig-major" | "sig-minor" | "key-sig-major" | "key-sig-minor";
+type KeyCardType = "sig-major" | "sig-minor" | "sig-both" | "key-sig-major" | "key-sig-minor";
 
 function keyCard(type: KeyCardType, index: number, minor: boolean): Card {
   const major = MAJOR_KEYS[index];
   const rel = MINOR_KEYS[index];
   const key = minor ? rel : major;
   const acc = major.accidentals;
-  const label = `${keyName(key)} ${minor ? "minor" : "major"}`;
+  const both = type === "sig-both";
+  const label = both ? `${keyName(major)} major / ${keyName(rel)} minor` : `${keyName(key)} ${minor ? "minor" : "major"}`;
   // Ids predate the major/minor split of "key → signature"; they stay as they were so progress carries over.
   const id = type.startsWith("key-sig") ? `key-sig:${key.code}-${minor ? "minor" : "major"}` : `${type}:${key.code}`;
   return {
     id,
     type,
     label,
-    cell: prettyCode(key.code) + (minor ? "m" : ""),
+    cell: both ? `${prettyCode(major.code)}/${prettyCode(rel.code)}m` : prettyCode(key.code) + (minor ? "m" : ""),
     // Fewest accidentals first, sharps before flats: C, G, F, D, B♭, A, E♭…
     rank: Math.abs(acc) * 2 + (acc < 0 ? 1 : 0),
     show(pool, clef): Shown {
       const idx = poolIndexes(pool);
+      if (both) {
+        // One signature, both keys it can mean: the major, then its relative minor.
+        return {
+          prompt: "Which major key and which minor key have this signature?",
+          staff: { clef, keySig: major.code, groups: [] },
+          steps: [
+            { type: "majorKey", label: "Major", correct: major.code, options: idx.map((k) => MAJOR_KEYS[k].code) },
+            { type: "minorKey", label: "Minor", correct: rel.code, options: idx.map((k) => MINOR_KEYS[k].code) },
+          ],
+          explain: `${countText(acc)}: ${keyName(major)} major or ${keyName(rel)} minor, a minor 3rd below.${readTrick(acc, major)}`,
+        };
+      }
       if (type === "sig-major" || type === "sig-minor") {
         return {
           prompt: `Which ${minor ? "minor" : "major"} key has this signature?`,
@@ -96,6 +109,7 @@ export const KEYS_DECK: DeckDef = {
   types: [
     { id: "sig-major", label: "Signature → major key", hint: "See a signature, name its major key" },
     { id: "sig-minor", label: "Signature → minor key", hint: "See a signature, name its relative minor" },
+    { id: "sig-both", label: "Signature → major and minor", hint: "See a signature, name both keys it can mean" },
     { id: "key-sig-major", label: "Major key → signature", hint: "See a major key, say how many sharps or flats" },
     { id: "key-sig-minor", label: "Minor key → signature", hint: "See a minor key, say how many sharps or flats" },
   ],
@@ -103,6 +117,7 @@ export const KEYS_DECK: DeckDef = {
     { label: "Majors", types: ["sig-major", "key-sig-major"] },
     { label: "Minors", types: ["sig-minor", "key-sig-minor"] },
     { label: "Signature → key", types: ["sig-major", "sig-minor"] },
+    { label: "Both keys", types: ["sig-both"] },
     { label: "All", types: ["sig-major", "sig-minor", "key-sig-major", "key-sig-minor"] },
   ],
   renamedTypes: { "key-sig": ["key-sig-major", "key-sig-minor"] },
@@ -116,6 +131,7 @@ export const KEYS_DECK: DeckDef = {
       for (const i of poolIndexes(pool)) {
         if (type === "sig-major") cards.push(keyCard(type, i, false));
         if (type === "sig-minor") cards.push(keyCard(type, i, true));
+        if (type === "sig-both") cards.push(keyCard(type, i, false));
         if (type === "key-sig-major") cards.push(keyCard(type, i, false));
         if (type === "key-sig-minor") cards.push(keyCard(type, i, true));
       }
@@ -126,6 +142,7 @@ export const KEYS_DECK: DeckDef = {
     const rows = [
       { label: "Signature → major key", cards: cards.filter((c) => c.type === "sig-major") },
       { label: "Signature → minor key", cards: cards.filter((c) => c.type === "sig-minor") },
+      { label: "Signature → major and minor", cards: cards.filter((c) => c.type === "sig-both") },
       { label: "Major key → signature", cards: cards.filter((c) => c.type === "key-sig-major") },
       { label: "Minor key → signature", cards: cards.filter((c) => c.type === "key-sig-minor") },
     ];

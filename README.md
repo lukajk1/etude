@@ -139,7 +139,7 @@ repeating:
 | Deck | Cards | Smaller pool to start |
 |---|---|---|
 | 0.1 Read notes | each staff position, treble and bass | on the staff, no ledger lines |
-| 0.2 Key signatures | signature → major or minor key, key → signature | up to 4 ♯ or ♭ |
+| 0.2 Key signatures | signature → major key, minor key, or both at once; key → signature | up to 4 ♯ or ♭ |
 | 0.3 Scales | each scale, a different degree each time | core keys, major first |
 | 0.4–0.5 Name and build intervals | each interval, from different notes | major, minor and perfect |
 | Intervals in semitones | interval ↔ number of semitones | 3rds, 4th, tritone, 5th, octave |
