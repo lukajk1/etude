@@ -25,6 +25,7 @@ import {
   type TriadQuality,
 } from "./theory";
 import { CADENCE_DRILLS } from "./cadences";
+import { FRAGMENT_DRILLS } from "./fragments";
 import { HARMONIZE_DRILLS } from "./harmonize";
 import { NCT_DRILLS } from "./nct";
 import { HARMONY_DRILLS } from "./harmony";
@@ -616,6 +617,7 @@ export const DRILLS: Drill[] = [
   hearDoMiSol,
   hearDoToSol,
   hearDegrees,
+  ...FRAGMENT_DRILLS,
   ...HARMONY_DRILLS,
   ...RHYTHM_DRILLS,
   ...CADENCE_DRILLS,

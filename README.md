@@ -117,6 +117,8 @@ speed targets:
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
 | 0.10 | Hear chord quality: a major or minor, b all four | 90% |
 | 0.11 | Hear scale degrees after a cadence: a do mi sol, b do to sol, c all seven | 85% |
+| 0.12 | Hear melodic fragments by scale degree: a common 3-note patterns, b common 4-note patterns with la and ti, c random 5-note fragments, faster | 85% / 80% / 75% |
+| 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 
@@ -147,6 +149,7 @@ repeating:
 | 0.7 Build triads | each root and quality | natural roots |
 | 0.8 Hear intervals | each interval by ear; check any set, and the answer buttons are just those | presets: 3rds, 4th and 5th, essentials, all 12 |
 | 0.10–0.11 Hear chord quality, scale degrees | each quality, each degree | |
+| 0.12 Melodic fragments | each common 3- and 4-note pattern, by scale degree | three-note patterns |
 | 2.1 Chords in a key | I, ii, IV, V, vi by ear; check any set | presets: I and V, I IV V, add vi, all five |
 | 2.2 Progressions | each common four-chord progression | I, IV and V only |
 | 3.1 Note values | each note and rest value | plain values first |

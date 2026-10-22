@@ -24,6 +24,7 @@ import {
 } from "../drills/catalog";
 import { chordInKeyQuestion, NUMERAL_NAME, NUMERALS, PROGRESSIONS, progressionLabel, progressionQuestion, progressionsUsing, type Numeral } from "../drills/harmony";
 import { CADENCE_INFO, CADENCES, cadenceQuestion, type Cadence } from "../drills/cadences";
+import { fragmentQuestion, PATTERNS_3, PATTERNS_4, patternFromId, patternId, solfa } from "../drills/fragments";
 import { FITS, fitQuestion, HARM_CHORDS } from "../drills/harmonize";
 import { NCT_INFO, nctQuestion, NCTS, type Nct } from "../drills/nct";
 import { BASIC_VALUES, DOTTED_AND_RESTS, METER_LABEL, meterQuestion, noteValueQuestion, VALUES, type MeterId, type MeterStyle } from "../drills/rhythm";
@@ -475,4 +476,24 @@ export const CHORD_FIT_DECK = factDeck({
   cell: (_t, d) => `${d} ${SOLF[Number(d) - 1]}`,
   rank: (_t, d) => [1, 5, 3, 2, 7, 4, 6].indexOf(Number(d)),
   question: (_t, d, pool) => fitQuestion(Number(d), fitChords(pool)),
+});
+
+export const FRAGMENTS_DECK = factDeck({
+  id: "fragments",
+  title: "Melodic fragments",
+  summary: "Common three- and four-note patterns by scale degree, after a cadence.",
+  brief: "A cadence sets the key, then a short fragment plays: name each note's scale degree (keys 1–7). Each common pattern is a card, in a different key each time.",
+  tag: "0.12",
+  drills: ["d-frag-3", "d-frag-4", "d-frag-5"],
+  ear: true,
+  pools: [{ value: "full", label: "All" }],
+  types: [
+    { id: "three", label: "Three notes, do to sol", hint: "do-re-mi, sol-fa-mi, do-mi-sol…" },
+    { id: "four", label: "Four notes, with la and ti", hint: "sol-la-ti-do, mi-re-do-ti…" },
+  ],
+  defaults: { pool: "full", types: ["three"] },
+  facts: (type) => (type === "three" ? PATTERNS_3 : PATTERNS_4).map(patternId),
+  label: (_t, id) => solfa(patternFromId(id)),
+  cell: (_t, id) => solfa(patternFromId(id)).replace(/ /g, "-"),
+  question: (type, id) => fragmentQuestion(patternFromId(id), type === "three" ? 0.6 : 0.5, type === "three" ? ["1", "2", "3", "4", "5"] : undefined),
 });
