@@ -72,6 +72,8 @@ export interface Question {
   audio?: AudioEvent[];
   /** Played after a wrong answer (or on reveal in recall mode): the note resolving to do. */
   resolve?: AudioEvent[];
+  /** A shorter replay offered beside "Play again" (key N): just the note, without the cadence. */
+  again?: { label: string; audio: AudioEvent[] };
   steps: Step[];
   /** Shown after a wrong answer: the reasoning, not just the answer. */
   explain: string;
@@ -581,6 +583,7 @@ export function degreeQuestion(degree: number, options?: string[]): Question {
     prompt: "Which scale degree is the last note?",
     audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), { pitches: [target], at: 3.6, dur: 1.4 }],
     resolve: resolveToDo(target, degree),
+    again: { label: "Play note again", audio: [{ pitches: [target], at: 0, dur: 1.4 }] },
     steps: [{ type: "degree", correct: String(degree), options }],
     explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}). Listen to it walk home to do.`,
   };

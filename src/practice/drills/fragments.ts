@@ -45,6 +45,7 @@ export function fragmentQuestion(pattern: number[], noteSec: number, options = [
     prompt: `A cadence sets the key, then ${pattern.length} notes play. Name each one's scale degree (keys 1–7 work).`,
     audio: [...cadence(t), ...pattern.map((d, i) => ({ pitches: [pitchAt(t, d)], at: start + i * noteSec, dur: noteSec * 0.92 }))],
     resolve: resolveToDo(pitchAt(t, pattern[pattern.length - 1]), sd(pattern[pattern.length - 1])),
+    again: { label: "Play notes again", audio: pattern.map((d, i) => ({ pitches: [pitchAt(t, d)], at: i * noteSec, dur: noteSec * 0.92 })) },
     steps: pattern.map((d, i) => ({ type: "degree" as const, label: `Note ${i + 1}`, correct: String(sd(d)), options })),
     explain: `That was ${solfa(pattern)} (${pattern.map(sd).join(" ")}). Sing it back, then keep going to do: the way it resolves tells you where each note sits.`,
   };

@@ -19,6 +19,8 @@ export interface Shown {
   audio?: AudioEvent[];
   /** Played after a wrong answer, or on reveal in recall mode: the note resolving to do. */
   resolve?: AudioEvent[];
+  /** A shorter replay (key N): just the note, without the cadence. */
+  again?: { label: string; audio: AudioEvent[] };
   /** One answer, or several in order (a triad's root, then its quality). */
   steps: Step[];
   explain: string;

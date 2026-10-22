@@ -202,6 +202,10 @@ export default function CardsView({ def }: { def: DeckDef }) {
         replay();
         return;
       }
+      if (phase === "run" && (e.key === "n" || e.key === "N") && showing?.shown.again) {
+        void playNotes(showing.shown.again.audio);
+        return;
+      }
       if (phase === "run" && settings.answer === "recall") {
         if (revealMs === null && (e.key === " " || e.key === "Enter")) {
           e.preventDefault();
@@ -381,6 +385,11 @@ export default function CardsView({ def }: { def: DeckDef }) {
           {showing.shown.audio && (
             <button className="btn drill-replay" onClick={replay}>
               Play again (R)
+            </button>
+          )}
+          {showing.shown.again && (
+            <button className="btn drill-replay" onClick={() => void playNotes(showing.shown.again!.audio)}>
+              {showing.shown.again.label} (N)
             </button>
           )}
           {settings.answer === "choose" && showing.shown.steps.length > 1 && (
