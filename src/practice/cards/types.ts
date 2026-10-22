@@ -17,6 +17,8 @@ export interface Shown {
   display?: string;
   /** Notes to play when the card appears (ear cards). */
   audio?: AudioEvent[];
+  /** Played after a wrong answer, or on reveal in recall mode: the note resolving to do. */
+  resolve?: AudioEvent[];
   /** One answer, or several in order (a triad's root, then its quality). */
   steps: Step[];
   explain: string;

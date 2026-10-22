@@ -116,7 +116,7 @@ speed targets:
 | 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, c together, d mixed | 90% |
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
 | 0.10 | Hear chord quality: a major or minor, b all four | 90% |
-| 0.11 | Hear scale degrees after a cadence: a do mi sol, b do to sol, c all seven | 85% |
+| 0.11 | Hear scale degrees after a cadence: a do mi sol, b do to sol, c all seven; after a wrong answer the note walks home to do by step | 85% |
 | 0.12 | Hear melodic fragments by scale degree: a common 3-note patterns, b common 4-note patterns with la and ti, c random 5-note fragments, faster | 85% / 80% / 75% |
 | 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
 

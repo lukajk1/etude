@@ -25,6 +25,7 @@ import {
   type TriadQuality,
 } from "./theory";
 import { CADENCE_DRILLS } from "./cadences";
+import { resolveToDo } from "./resolve";
 import { FRAGMENT_DRILLS } from "./fragments";
 import { HARMONIZE_DRILLS } from "./harmonize";
 import { NCT_DRILLS } from "./nct";
@@ -69,6 +70,8 @@ export interface Question {
   /** A rhythm to show (rhythm drills), as "beats:durations". */
   rhythm?: string;
   audio?: AudioEvent[];
+  /** Played after a wrong answer (or on reveal in recall mode): the note resolving to do. */
+  resolve?: AudioEvent[];
   steps: Step[];
   /** Shown after a wrong answer: the reasoning, not just the answer. */
   explain: string;
@@ -577,8 +580,9 @@ export function degreeQuestion(degree: number, options?: string[]): Question {
   return {
     prompt: "Which scale degree is the last note?",
     audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), { pitches: [target], at: 3.6, dur: 1.4 }],
+    resolve: resolveToDo(target, degree),
     steps: [{ type: "degree", correct: String(degree), options }],
-    explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}).`,
+    explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}). Listen to it walk home to do.`,
   };
 }
 

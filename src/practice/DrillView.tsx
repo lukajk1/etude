@@ -109,6 +109,8 @@ export default function DrillView({ id }: { id: string }) {
       setAnswered((a) => [...a, { question, given: all, ok, ms: performance.now() - shownAt.current }]);
       setReveal(true);
       if (ok) setTimeout(next, 650);
+      // After a wrong scale-degree answer, hear the note walk home to do.
+      else if (question.resolve) setTimeout(() => void playNotes(question.resolve!), 250);
     },
     [question, reveal, given, stepIndex, next],
   );

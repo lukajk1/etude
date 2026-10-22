@@ -152,6 +152,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
       const ms = performance.now() - shownAt.current;
       const ok = steps.every((s, i) => isRight(s, all[i]));
       review(showing.card.id, ok, ms, Date.now(), fast);
+      if (!ok && showing.shown.resolve) setTimeout(() => void playNotes(showing.shown.resolve!), 250);
       setChosen(value);
       setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: all, ok, ms }]);
     },
@@ -159,7 +160,10 @@ export default function CardsView({ def }: { def: DeckDef }) {
   );
 
   const reveal = useCallback(() => {
-    if (showing && revealMs === null) setRevealMs(performance.now() - shownAt.current);
+    if (!showing || revealMs !== null) return;
+    setRevealMs(performance.now() - shownAt.current);
+    // In recall mode, the answer's resolution plays as it's revealed.
+    if (showing.shown.resolve) void playNotes(showing.shown.resolve);
   }, [showing, revealMs]);
 
   /** Recall mode: grade yourself once the answer is showing. Timed to when you revealed it. */
