@@ -20,6 +20,7 @@ import {
   TRIAD_KINDS,
   TRIAD_ROOTS,
   triadOk,
+  type EarMode,
   type Question,
 } from "../drills/catalog";
 import { chordInKeyQuestion, NUMERAL_NAME, NUMERALS, PROGRESSIONS, progressionLabel, progressionQuestion, progressionsUsing, type Numeral } from "../drills/harmony";
@@ -247,13 +248,19 @@ export const HEAR_INTERVALS_DECK = factDeck({
   id: "hear-intervals",
   title: "Hear intervals",
   summary: "Intervals by ear; pick any set to drill, like just the two 3rds.",
-  brief: "Listen to two notes and name the interval. Check the intervals to drill: the answer buttons are just those, so checking two (say, the minor and major 3rd) drills that pair. Each interval is a card, played from a different note each time.",
+  brief: "Listen to two notes and name the interval. Choose how they're played (rising, falling, together as a chord, or mixed) and check the intervals to drill: the answer buttons are just those, so checking two (say, the minor and major 3rd) drills that pair. Each interval is a card, played from a different note each time.",
   tag: "0.8",
   drills: ["d-ear-ess-up", "d-ear-ess-down", "d-ear-ess-together", "d-ear-intervals-basic", "d-ear-all-up", "d-ear-all-down", "d-ear-all-together", "d-ear-intervals-all"],
   ear: true,
-  pools: [{ value: "full", label: "Chosen intervals" }],
+  // How the two notes are played; the pool value is the drills' EarMode.
+  pools: [
+    { value: "mixed", label: "Mixed" },
+    { value: "up", label: "Rising" },
+    { value: "down", label: "Falling" },
+    { value: "together", label: "Together" },
+  ],
   types: ALL_SEMIS.map((s) => ({ id: s, label: EAR_INTERVALS[Number(s)].label, hint: `${s} semitones` })),
-  defaults: { pool: "full", types: ["3", "4", "5", "7", "12"] },
+  defaults: { pool: "mixed", types: ["3", "4", "5", "7", "12"] },
   presets: [
     { label: "3rds", types: ["3", "4"] },
     { label: "4th and 5th", types: ["5", "7"] },
@@ -266,10 +273,11 @@ export const HEAR_INTERVALS_DECK = factDeck({
   facts: (s) => [s],
   label: (s) => EAR_INTERVALS[Number(s)].label,
   cell: (s) => EAR_INTERVALS[Number(s)].code,
-  question: (s, _f, _pool, types) =>
+  question: (s, _f, pool, types) =>
     earIntervalQuestion(
       Number(s),
       ALL_SEMIS.filter((x) => types.includes(x)).map((x) => EAR_INTERVALS[Number(x)].code),
+      pool as EarMode,
     ),
 });
 
