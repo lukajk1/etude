@@ -267,7 +267,7 @@ export default function DrillView({ id }: { id: string }) {
             </div>
           )}
           {question.audio && (
-            <button className="btn drill-replay" onClick={togglePlay}>
+            <button className="btn drill-replay drill-play" onClick={togglePlay}>
               {playing ? "Stop (R)" : "Play again (R)"}
             </button>
           )}

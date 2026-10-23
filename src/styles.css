@@ -1107,7 +1107,12 @@ canvas {
   display: block;
 }
 .drill-replay {
-  margin: 0 0 16px;
+  margin: 0 10px 16px 0;
+}
+/* The play/stop toggle keeps its width as its label changes. */
+.drill-play {
+  width: 9.5em;
+  text-align: center;
 }
 .drill-steps {
   display: flex;

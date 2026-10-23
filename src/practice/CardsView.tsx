@@ -386,7 +386,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
             <div className="cards-key">{showing.shown.display}</div>
           ) : null}
           {showing.shown.audio && (
-            <button className="btn drill-replay" onClick={togglePlay}>
+            <button className="btn drill-replay drill-play" onClick={togglePlay}>
               {playing ? "Stop (R)" : "Play again (R)"}
             </button>
           )}
