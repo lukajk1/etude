@@ -69,6 +69,10 @@ type PreviewEvent = { pitches: number[]; at: number; dur: number; vel?: number }
 let generation = 0;
 const pending = new Set<ReturnType<typeof setTimeout>>();
 
+/** Whether ear-training notes are sounding now, for play/stop buttons. */
+export const previewPlaying = new Signal<boolean>(false);
+let previewTimer: ReturnType<typeof setTimeout> | undefined;
+
 /** Play notes outside the project (ear training), on piano. */
 export async function playNotes(events: PreviewEvent[]) {
   const gen = generation;
@@ -76,6 +80,10 @@ export async function playNotes(events: PreviewEvent[]) {
   if (gen !== generation) return;
   if (ui.state.playing) stop();
   engine.preview("piano", events);
+  const end = events.reduce((m, e) => Math.max(m, e.at + e.dur), 0);
+  previewPlaying.set(true);
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => previewPlaying.set(false), (end + 0.15) * 1000);
 }
 
 /** Play notes after a delay, unless `stopAll` comes first. */
@@ -93,6 +101,8 @@ export function stopAll() {
   for (const t of pending) clearTimeout(t);
   pending.clear();
   engine.stopPreview();
+  clearTimeout(previewTimer);
+  previewPlaying.set(false);
   if (ui.state.playing) stop();
 }
 window.addEventListener("pagehide", stopAll);

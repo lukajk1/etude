@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { playNotes, playNotesLater, preparePiano } from "../audio/live";
+import { playNotes, playNotesLater, preparePiano, previewPlaying, stopAll } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { isRight, type Step } from "./drills/catalog";
 import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
@@ -183,6 +183,9 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const replay = useCallback(() => {
     if (showing?.shown.audio) void playNotes(showing.shown.audio);
   }, [showing]);
+  // Play again is a play/stop toggle: Stop silences it, and playing again starts from the beginning.
+  const playing = useSignal(previewPlaying);
+  const togglePlay = () => (previewPlaying.value ? stopAll() : replay());
   useEffect(() => {
     if (phase === "run") replay();
   }, [phase, replay]);
@@ -199,7 +202,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (phase === "run" && (e.key === "r" || e.key === "R") && showing?.shown.audio) {
-        replay();
+        togglePlay();
         return;
       }
       if (phase === "run" && (e.key === "n" || e.key === "N") && showing?.shown.again) {
@@ -383,8 +386,8 @@ export default function CardsView({ def }: { def: DeckDef }) {
             <div className="cards-key">{showing.shown.display}</div>
           ) : null}
           {showing.shown.audio && (
-            <button className="btn drill-replay" onClick={replay}>
-              Play again (R)
+            <button className="btn drill-replay" onClick={togglePlay}>
+              {playing ? "Stop (R)" : "Play again (R)"}
             </button>
           )}
           {showing.shown.again && (

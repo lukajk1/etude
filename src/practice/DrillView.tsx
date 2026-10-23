@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { playNotes, playNotesLater, preparePiano, stopAll } from "../audio/live";
+import { playNotes, playNotesLater, preparePiano, previewPlaying, stopAll } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
 import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
@@ -62,6 +62,12 @@ export default function DrillView({ id }: { id: string }) {
   }, [drill]);
 
   const question = questions[index];
+  // Play again is a play/stop toggle: Stop silences it, and playing again starts from the beginning.
+  const playing = useSignal(previewPlaying);
+  const togglePlay = () => {
+    if (previewPlaying.value) stopAll();
+    else if (question?.audio) void playNotes(question.audio);
+  };
   const step = question?.steps[stepIndex];
 
   const start = () => {
@@ -143,7 +149,7 @@ export default function DrillView({ id }: { id: string }) {
         return;
       }
       if (k === "R" && question.audio) {
-        void playNotes(question.audio);
+        togglePlay();
       } else if (k === "N" && question.again) {
         void playNotes(question.again.audio);
       } else if ((step.type === "letter" || step.type === "note") && LETTERS.includes(k)) {
@@ -265,8 +271,8 @@ export default function DrillView({ id }: { id: string }) {
             </div>
           )}
           {question.audio && (
-            <button className="btn drill-replay" onClick={() => void playNotes(question.audio!)}>
-              Play again (R)
+            <button className="btn drill-replay" onClick={togglePlay}>
+              {playing ? "Stop (R)" : "Play again (R)"}
             </button>
           )}
           {question.again && (
