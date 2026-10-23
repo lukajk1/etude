@@ -254,14 +254,6 @@ export default function DrillView({ id }: { id: string }) {
           <div className={`drill-bar${missState}`}>
             <div style={{ width: `${(index / questions.length) * 100}%` }} />
           </div>
-          {outOfReach && (
-            <div className="drill-out">
-              This round can't pass now: more than {allowed} missed. Keep going for practice, or{" "}
-              <button className="btn" onClick={start}>
-                Restart drill
-              </button>
-            </div>
-          )}
           <p className="drill-prompt">{question.prompt}</p>
           {question.staff && (
             <div className="drill-paper">
