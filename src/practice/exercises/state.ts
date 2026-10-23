@@ -3,6 +3,7 @@ import { store } from "../../model/store";
 import type { Note, Project, Track } from "../../model/types";
 import { Signal, ui } from "../../model/ui";
 import { focusedNotes, marks } from "../../model/marks";
+import { celebrate } from "../celebrate";
 import { exerciseProject, getExercise, type Exercise } from "./catalog";
 import type { Issue, Result, Severity } from "./grade";
 
@@ -42,8 +43,9 @@ function record(id: string, r: Result) {
   recordProgress(id, r.score, r.passed);
 }
 
-/** Save a score (0–100) for an exercise or drill, keeping the best. */
+/** Save a score (0–100) for an exercise or drill, keeping the best. A pass gets confetti and a chime. */
 export function recordProgress(id: string, score: number, passed: boolean) {
+  if (passed) celebrate();
   const prev = progress.value[id] ?? { best: 0, passed: false, attempts: 0 };
   const next = {
     ...progress.value,
