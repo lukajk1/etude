@@ -134,7 +134,7 @@ Rhythm, Transcription, Harmony, Cadences). The numbers are computed from the lev
 `src/practice/course.ts`, so adding a stage renumbers the ones after it in its level. The
 numbers in the tables here (0.11c, 3.3a, T2) are the stages' internal ids, which don't change.
 
-The home page groups the course by level (`src/practice/levels.ts`): the Royal Conservatory
+The home page's **Exercises** section groups every stage by level (`src/practice/levels.ts`): the Royal Conservatory
 (RCM) theory levels set the ladder, and ear skills are placed on it by first-year college
 aural-skills pacing rather than RCM's ear tests, which are paced for children over a decade of
 piano exams (all intervals only around Level 8); each keeps its RCM level as a tag. College
@@ -143,9 +143,9 @@ unit. It also suggests an order: each stage lists what's worth passing first (fo
 example scales after major key signatures, intervals after scales, I-or-V after do-mi-sol),
 stages within a topic go a, b, c, and no stage is listed below what it builds on. Stages that
 aren't ready yet are faded and say what comes first, but stay open. The order is `PREREQS` in
-`src/practice/Home.tsx`.
+`src/practice/course.ts`.
 
-**Skill trees** (the Course header's button, or `#/skills/<skill>`) show each skill as a tree
+**Skill trees** (the Exercises header's button, or `#/skills/<skill>`) show each skill as a tree
 (`src/practice/SkillTrees.tsx`): stages laid out by level from top to bottom, a branch per
 topic, lines to what each builds on that light up in the skill's color once passed, and nodes
 filled, tinted, outlined or faded for passed, tried, ready or not yet. Each skill has its own
@@ -154,7 +154,7 @@ color, which its tags and deck tiles share.
 **Your plan**, at the top of the home page, lists the core stages still to pass before real
 pop songs are workable (scale degrees and I, IV, V, vi by ear; note values and simple rhythmic
 dictation; notes, core key signatures and triads), in that recommended order. The rest of the
-course is learned alongside songs. The stages are `GOAL_STAGES` in `src/practice/plan.ts`.
+exercises are learned alongside songs. The stages are `GOAL_STAGES` in `src/practice/plan.ts`.
 
 Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,

@@ -160,7 +160,7 @@ export function Home() {
 
       <section>
         <div className="pr-course-head">
-          <h2 className="pr-h2">Course</h2>
+          <h2 className="pr-h2">Exercises</h2>
           <span className="pr-dim pr-course-count">
             {passed} of {all.length} passed
           </span>
