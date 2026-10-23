@@ -296,16 +296,20 @@ export const HEAR_DEGREES_DECK = factDeck({
   summary: "Which degree of the key a note is, after a cadence; each degree is a card.",
   brief: "A cadence sets the key, then one note plays. Name its scale degree. Each degree is a card, in a different key each time.",
   tag: "0.11",
-  drills: ["d-ear-degrees-135", "d-ear-degrees-15", "d-ear-degrees"],
+  drills: ["d-ear-degrees-135-drone", "d-ear-degrees-135-c", "d-ear-degrees-135", "d-ear-degrees-15", "d-ear-degrees"],
   ear: true,
-  pools: [{ value: "full", label: "All seven" }],
+  pools: [
+    { value: "full", label: "Any key" },
+    { value: "c", label: "In C" },
+    { value: "drone", label: "In C, over a drone" },
+  ],
   types: one("Degrees"),
   defaults: { pool: "full", types: ["all"] },
   facts: () => range(1, 7),
   rank: (_t, d) => [1, 5, 3, 4, 2, 6, 7].indexOf(Number(d)),
   label: (_t, d) => `degree ${d} (${SOLFEGE[Number(d) - 1]})`,
   cell: (_t, d) => `${d} ${SOLFEGE[Number(d) - 1]}`,
-  question: (_t, d) => degreeQuestion(Number(d)),
+  question: (_t, d, pool) => degreeQuestion(Number(d), undefined, { inC: pool !== "full", drone: pool === "drone" }),
 });
 
 /** Each chord is its own type, so any set can be checked, like the interval deck. */

@@ -543,7 +543,7 @@ const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 
 const hearDegrees: Drill = {
   id: "d-ear-degrees",
-  number: "0.11c",
+  number: "0.11e",
   title: "Hear scale degrees: all seven",
   summary: "Which degree of the key a note is, after a cadence.",
   brief: "A cadence (I–IV–V–I) sets the key, then one note plays. Name its scale degree, 1 to 7. This is functional ear training: hearing each note's role in the key, not just its distance from the last note.",
@@ -554,25 +554,49 @@ const hearDegrees: Drill = {
   },
 };
 
+// The first steps stay in C, so do settles in memory, and the first of all holds do
+// underneath as a drone, which makes each note's color plainest.
+const hearDoMiSolDrone = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-135-drone",
+  number: "0.11a",
+  title: "Hear scale degrees: do, mi, sol in C, over a drone",
+  summary: "Degrees 1, 3 and 5 in C, with do held underneath.",
+  brief:
+    "A cadence sets C major, then low C holds as a drone while one note plays: do, mi or sol. Against the drone, do sounds at rest, mi sweet and bright, sol open and hollow. Every question is in C, so do stays in your ear.",
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { inC: true, drone: true }),
+});
+
+const hearDoMiSolC = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-135-c",
+  number: "0.11b",
+  title: "Hear scale degrees: do, mi, sol in C",
+  summary: "Degrees 1, 3 and 5, always in C, without the drone.",
+  brief: "The same three notes, still always in C, but with no drone: hold do in your ear from the cadence. Sing the note down to do if you're unsure.",
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { inC: true }),
+});
+
 const hearDoMiSol = checkpoint(hearDegrees, {
   id: "d-ear-degrees-135",
-  number: "0.11a",
+  number: "0.11c",
   title: "Hear scale degrees: do, mi, sol",
-  summary: "Degrees 1, 3 and 5, the notes of the home chord.",
+  summary: "Degrees 1, 3 and 5, the notes of the home chord, in any key.",
   generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"]),
 });
 
 const hearDoToSol = checkpoint(hearDegrees, {
   id: "d-ear-degrees-15",
-  number: "0.11b",
+  number: "0.11d",
   title: "Hear scale degrees: do to sol",
   summary: "Degrees 1 to 5.",
   generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"]),
 });
 
-/** A scale degree after a cadence; `options` limits the answer buttons. */
-export function degreeQuestion(degree: number, options?: string[]): Question {
-  const t = randInt(55, 66);
+/**
+ * A scale degree after a cadence; `options` limits the answer buttons. `inC` keeps the key
+ * at C instead of a random one; `drone` holds low do under the note (and its replays).
+ */
+export function degreeQuestion(degree: number, options?: string[], { inC = false, drone = false } = {}): Question {
+  const t = inC ? 60 : randInt(55, 66);
   const target = t + MAJOR_STEPS[degree - 1];
   const chords = [
     [t - 12, t, t + 4, t + 7],
@@ -580,11 +604,15 @@ export function degreeQuestion(degree: number, options?: string[]): Question {
     [t - 5, t - 1, t + 2, t + 7],
     [t - 12, t, t + 4, t + 7],
   ];
+  // Two octaves of do, quietly, from just before the note to past its end.
+  const droneUnder = (at: number, dur: number) => (drone ? [{ pitches: [t - 24, t - 12], at, dur, vel: 0.32 }] : []);
+  const resolve = resolveToDo(target, degree);
+  const resolveEnd = Math.max(...resolve.map((e) => e.at + e.dur));
   return {
-    prompt: "Which scale degree is the last note?",
-    audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), { pitches: [target], at: 3.6, dur: 1.4 }],
-    resolve: resolveToDo(target, degree),
-    again: { label: "Play note again", audio: [{ pitches: [target], at: 0, dur: 1.4 }] },
+    prompt: drone ? "Which scale degree is the note over the drone?" : "Which scale degree is the last note?",
+    audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), ...droneUnder(3.3, 2), { pitches: [target], at: 3.6, dur: 1.4 }],
+    resolve: [...droneUnder(0, resolveEnd), ...resolve],
+    again: { label: "Play note again", audio: [...droneUnder(0, 1.7), { pitches: [target], at: drone ? 0.25 : 0, dur: 1.4 }] },
     steps: [{ type: "degree", correct: String(degree), options }],
     explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}). Listen to it walk home to do.`,
   };
@@ -622,6 +650,8 @@ export const DRILLS: Drill[] = [
   earIntervalDrill("d-ear-intervals-all", "0.9d", "Hear all intervals: mixed", "Every interval within an octave, rising, falling or together.", ALL_12, 0.8, "mixed"),
   hearMajorMinor,
   hearChords,
+  hearDoMiSolDrone,
+  hearDoMiSolC,
   hearDoMiSol,
   hearDoToSol,
   hearDegrees,
