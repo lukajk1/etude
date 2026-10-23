@@ -8,11 +8,10 @@ import { EXERCISES, ROADMAP } from "./exercises/catalog";
 import { PASS_SCORE } from "./exercises/grade";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, gradeOf, levelLabel, levelRange, LEVELS } from "./levels";
-import { DAILY, MILESTONES, PLAN_GOAL, TUCKED_DECKS, TUCKED_UNITS, WEEKLY, type PlanBlock } from "./plan";
+import { GOAL_STAGES, PLAN_GOAL, TUCKED_DECKS, TUCKED_UNITS } from "./plan";
 import { go, type Route } from "./route";
 import { TR_PASS } from "./transcription/grade";
-import { intervalShort, intervalsUsed, MELODIES } from "./transcription/melodies";
-import { intervalStats, weakestIntervals } from "./transcription/state";
+import { STAGES } from "./transcription/melodies";
 
 /**
  * The Practice Room home: what to do today, then the course as compact topic rows with a
@@ -91,16 +90,16 @@ const UNITS: Unit[] = [
     topics: [
       {
         number: "T",
-        title: "Melodies by ear",
+        title: "Melodic dictation",
         about:
-          "A melody plays and you write it down in a piano roll, in C major with the first note given. Replay it as often as you like. Each melody adds only an interval or two over the last; checking accepts a version in another key and explains each wrong note.",
-        items: MELODIES.map((m) => ({
-          route: { kind: "transcribe", id: m.id },
-          number: m.number,
-          title: m.title,
-          summary: `${m.summary} Intervals: ${intervalsUsed(m).join(", ")}.`,
-          detail: m.title,
-          pass: `a score of ${TR_PASS} or more`,
+          "A new, unfamiliar melody plays and you write it down in a piano roll, with the key, meter and first note given. Each stage widens the range, leaps, keys and rhythms, and later stages limit the plays as a dictation exam does. Checking explains each wrong note and shows the melody in notation.",
+        items: STAGES.map((st) => ({
+          route: { kind: "transcribe", id: st.id },
+          number: st.number,
+          title: st.title,
+          summary: st.summary,
+          detail: st.title.replace(/^Melodic dictation: /, ""),
+          pass: `a score of ${TR_PASS} or more${Number.isFinite(st.plays) ? `, in ${st.plays} plays or fewer` : ""}`,
         })),
       },
     ],
@@ -143,7 +142,10 @@ const PREREQS: Record<string, string[]> = {
   "4.1a": ["2.1b"], // a cadence is chords: I, IV and V by ear first
   "5.1a": ["0.6a"], // spotting the note outside a chord means reading the chord
   "6.1a": ["0.7a"], // choosing a chord means knowing what's in each one
-  T1: ["0.8a"],
+  T2: ["0.11a"], // skips in the tonic chord: hear do, mi and sol first
+  T3: ["0.11b", "0.3a"],
+  T4: ["0.3b", "0.11c"], // minor: the natural minor scale, and every degree by ear
+  T5: ["0.13a"], // wide leaps in a melody
   "1.1": ["0.4a"],
   "1.3": ["1.1"],
   "1.6": ["1.3"],
@@ -334,8 +336,6 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
 
 export function Home() {
   const prog = useSignal(progress);
-  const stats = useSignal(intervalStats);
-  const weak = weakestIntervals(stats);
   const cardPrefs = useSignal(deckSettings);
   useSignal(cardStates);
   const [expanded, setExpanded] = useState(loadExpanded);
@@ -429,23 +429,17 @@ export function Home() {
       <section className="pr-hero">
         <div className="pr-hero-top">
           <h1>Practice Room</h1>
-          <div className="pr-overall" aria-label="Overall progress">
-            <div className="pr-overall-bar">
-              <div style={{ width: `${(passed / all.length) * 100}%` }} />
-            </div>
-            <span>
-              {passed} of {all.length} passed
-            </span>
-          </div>
         </div>
-        <p>Drills, ear training, transcription and graded exercises for the foundations of tonal music. Ten to twenty minutes a day goes a long way.</p>
       </section>
 
-      <PlanSection prog={prog} weak={weak.map((w) => `${w.semitones > 0 ? "up" : "down"} ${intervalShort(w.semitones)} (${Math.round(w.rate * 100)}%)`)} />
+      <PlanSection prog={prog} />
 
       <section>
         <div className="pr-course-head">
           <h2 className="pr-h2">Course</h2>
+          <span className="pr-dim pr-course-count">
+            {passed} of {all.length} passed
+          </span>
           <button className="btn pr-expand" onClick={() => saveLevels(allLevelsOpen ? new Set() : new Set(grades))}>
             {allLevelsOpen ? "Collapse all" : "Expand all"}
           </button>
@@ -510,112 +504,59 @@ export function Home() {
   );
 }
 
-const ITEM_BY_ID = new Map(UNITS.flatMap(unitItems).map((it) => [routeId(it.route), it]));
+/** Rows shown before "Show all"; the core plan fits without it. */
+const PLAN_PREVIEW = 16;
 
-/** One daily block: what it's for, its next stage, how far along it is, and its decks. */
-function PlanBlockCard({ block, prog }: { block: PlanBlock; prog: Record<string, Progress> }) {
-  const items = block.stages.map((id) => ITEM_BY_ID.get(id)).filter((x): x is Item => !!x);
-  const next = items.find((it) => !prog[routeId(it.route)]?.passed);
-  const done = items.filter((it) => prog[routeId(it.route)]?.passed).length;
-  const tried = next && prog[routeId(next.route)];
-  return (
-    <div className="pr-block">
-      <div className="pr-block-head">
-        <h3>{block.title}</h3>
-        <span className="pr-dim">~{block.minutes} min</span>
-      </div>
-      <p className="pr-block-why">{block.why}</p>
-      {next ? (
-        <button className="pr-block-next" onClick={() => go(next.route)}>
-          <span className="pr-kind">Next</span>
-          <span className="pr-block-next-title">
-            {next.number} {next.title}
-          </span>
-          {tried && <span className="pr-dim">Best {tried.best}% so far</span>}
-        </button>
-      ) : (
-        <div className="pr-block-done">All done in this block ✓</div>
-      )}
-      <div className="pr-block-progress" title={`${done} of ${items.length} passed`}>
-        {items.map((it) => (
-          <i key={it.number} className={prog[routeId(it.route)]?.passed ? "is-pass" : it === next ? "is-next" : ""} title={`${it.number} ${it.title}`} />
-        ))}
-      </div>
-      {block.tip && <p className="pr-block-tip">{block.tip}</p>}
-      {block.decks && (
-        <div className="pr-block-decks">
-          {block.decks
-            .map((id) => DECKS.find((d) => d.id === id))
-            .filter((d) => !!d)
-            .map((d) => (
-              <button key={d!.id} className="pr-due" onClick={() => go({ kind: "cards", id: d!.id })}>
-                {d!.title}
-              </button>
-            ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** The study plan: daily blocks, weekly items, and the next couple of weeks' milestones. */
-function PlanSection({ prog, weak }: { prog: Record<string, Progress>; weak: string[] }) {
-  const total = DAILY.reduce((m, b) => m + b.minutes, 0);
-  const milestones = MILESTONES.map((id) => ITEM_BY_ID.get(id)).filter((x): x is Item => !!x);
+/** The plan: the goal's stages not yet passed, in recommended order, ready ones first within a level. */
+function PlanSection({ prog }: { prog: Record<string, Progress> }) {
+  const [showAll, setShowAll] = useState(false);
+  const goal = GOAL_STAGES.map((n) => ALL_ITEMS.get(n)).filter((x): x is Item => !!x);
+  const order = (it: Item) => GOAL_STAGES.indexOf(it.number);
+  const unmet = new Map(goal.map((it) => [it.number, prog[routeId(it.route)] ? [] : unmetPrereqs(it, prog)]));
+  const left = goal
+    .filter((it) => !prog[routeId(it.route)]?.passed)
+    .sort((a, b) => stageGrade(a) - stageGrade(b) || unmet.get(a.number)!.length - unmet.get(b.number)!.length || order(a) - order(b));
+  const shown = showAll ? left : left.slice(0, PLAN_PREVIEW);
   return (
     <section className="pr-plan">
       <div className="pr-course-head">
         <h2 className="pr-h2">Your plan</h2>
-        <span className="pr-dim">about {total} minutes a day</span>
+        <span className="pr-dim">
+          {goal.length - left.length} of {goal.length} passed
+        </span>
       </div>
-      <p className="pr-blurb">{PLAN_GOAL} Short and daily beats long and occasional; on a short day, do rhythm and the ear block.</p>
-      <div className="pr-blocks">
-        {DAILY.map((b) => (
-          <PlanBlockCard key={b.id} block={b} prog={prog} />
-        ))}
-      </div>
-      <div className="pr-plan-lower">
-        <div className="pr-weekly">
-          <h3>Each week</h3>
-          {WEEKLY.map((w) => {
-            const next = w.stages?.map((id) => ITEM_BY_ID.get(id)).find((it) => it && !prog[routeId(it.route)]?.passed);
+      <p className="pr-blurb">{PLAN_GOAL} Still to pass, in order:</p>
+      {left.length === 0 ? (
+        <p className="pr-todo-done">All passed ✓</p>
+      ) : (
+        <ol className="pr-todo">
+          {shown.map((it) => {
+            const p = prog[routeId(it.route)];
+            const first = unmet.get(it.number)!;
             return (
-              <div key={w.title} className="pr-weekly-item">
-                <div>
-                  <strong>{w.title}</strong> <span className="pr-dim">{w.minutes}</span>
-                </div>
-                <p className="pr-dim">{w.text}</p>
-                {next && (
-                  <button className="pr-due" onClick={() => go(next.route)}>
-                    Next: {next.number} {next.title}
-                  </button>
-                )}
-              </div>
+              <li key={it.number}>
+                <button
+                  className={`pr-todo-row${first.length ? " is-later" : ""}`}
+                  onClick={() => go(it.route)}
+                  title={`${it.summary} To pass: ${it.pass}.${first.length ? ` Best after: ${prereqText(first)}.` : ""}`}
+                >
+                  <span className="pr-todo-num">{it.number}</span>
+                  <span className="pr-todo-title">{it.title}</span>
+                  <span className="pr-todo-meta">
+                    {gradeName(stageGrade(it))}
+                    {p ? ` · best ${p.best}%` : first.length ? ` · after ${first.join(", ")}` : ""}
+                  </span>
+                </button>
+              </li>
             );
           })}
-          <button className="btn pr-trainer-inline" onClick={() => go({ kind: "train", id: "intervals" })}>
-            ♪ Interval trainer
-          </button>
-        </div>
-        <div className="pr-milestones">
-          <h3>Next two weeks</h3>
-          <ul>
-            {milestones.map((it) => {
-              const p = prog[routeId(it.route)];
-              return (
-                <li key={it.number} className={p?.passed ? "is-pass" : ""}>
-                  <button onClick={() => go(it.route)}>
-                    <span className="pr-check">{p?.passed ? "✓" : ""}</span>
-                    {it.number} {it.title}
-                    {!p?.passed && p ? <span className="pr-dim"> · best {p.best}%</span> : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-      {weak.length > 0 && <p className="pr-dim pr-weak-line">Missed most when transcribing: {weak.join(", ")}.</p>}
+        </ol>
+      )}
+      {left.length > PLAN_PREVIEW && (
+        <button className="btn pr-todo-more" onClick={() => setShowAll(!showAll)}>
+          {showAll ? "Show fewer" : `Show all ${left.length}`}
+        </button>
+      )}
     </section>
   );
 }

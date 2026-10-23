@@ -12,7 +12,7 @@ import { currentExercise, openExercise } from "./exercises/state";
 import { ExercisePanel } from "./ExercisePanel";
 import { Home } from "./Home";
 import { go, useRoute } from "./route";
-import { getMelody } from "./transcription/melodies";
+import { getStage } from "./transcription/melodies";
 import { openTranscription } from "./transcription/state";
 import { TranscriptionPanel } from "./TranscriptionPanel";
 import { useProject } from "../model/store";
@@ -67,21 +67,21 @@ function ExerciseScreen({ id }: { id: string }) {
 
 function TranscriptionScreen({ id }: { id: string }) {
   useEditorShortcuts();
-  const melody = getMelody(id);
+  const stage = getStage(id);
   useEffect(() => {
-    if (melody) {
-      openTranscription(melody);
+    if (stage) {
+      openTranscription(stage);
       preparePiano();
     } else go({ kind: "home" });
-  }, [melody]);
+  }, [stage]);
   const project = useProject();
-  if (!melody || project.exercise?.id !== id) return null;
+  if (!stage || project.exercise?.id !== id) return null;
   return (
     <div className="app" style={{ gridTemplateRows: "auto 1fr auto" }}>
-      <Header title={`${melody.number} ${melody.title}`} editor />
+      <Header title={`${stage.number} ${stage.title}`} editor />
       <div className="main">
         <Editor lanesHeight={96} />
-        <TranscriptionPanel melody={melody} />
+        <TranscriptionPanel stage={stage} />
       </div>
       <StatusBar />
     </div>

@@ -1352,25 +1352,6 @@ a.btn {
   font-size: 14px;
   line-height: 1.55;
 }
-.pr-overall {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 14px;
-  color: var(--text-dim);
-  font-size: 12px;
-}
-.pr-overall-bar {
-  flex: 0 1 260px;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--ink-3);
-  overflow: hidden;
-}
-.pr-overall-bar > div {
-  height: 100%;
-  background: var(--loop);
-}
 /* Section headings in the manner of a concert programme: spaced capitals in gold. */
 .pr-h2 {
   margin: 32px 0 8px;
@@ -1439,25 +1420,44 @@ a.btn {
   font-size: 12.5px;
   color: var(--text-dim);
 }
-.tr-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0 0 10px;
-}
-.tr-chip {
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  font-size: 11px;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
 .tr-listen {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 4px 0 12px;
+  margin: 4px 0 6px;
+}
+.tr-plays {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin: 0 0 12px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.tr-plays .is-low {
+  color: var(--warn);
+  font-weight: 600;
+}
+.tr-practice {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.tr-answer {
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fffcf4;
+  overflow-x: auto;
+}
+.tr-answer-title {
+  margin-bottom: 4px;
+  color: var(--text-dim);
+  font-size: 12px;
 }
 .tr-listen .ex-check {
   flex: 1 1 100%;
@@ -1477,10 +1477,6 @@ a.btn {
 }
 .pr-hero-top h1 {
   margin: 0;
-}
-.pr-hero-top .pr-overall {
-  margin-top: 0;
-  flex: 1 1 240px;
 }
 .pr-dim {
   color: var(--text-dim);
@@ -1696,6 +1692,9 @@ a.btn {
   justify-content: space-between;
   gap: 12px;
 }
+.pr-course-count {
+  margin-right: auto;
+}
 .pr-expand {
   padding: 3px 10px;
   font-size: 12px;
@@ -1885,174 +1884,57 @@ a.btn {
 
 /* ---- Study plan ------------------------------------------------------------ */
 
-.pr-blocks {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 10px;
-}
-.pr-block {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
-  background: var(--ink-1);
-}
-.pr-block-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-.pr-block-head h3 {
-  margin: 0;
-  font-size: 14.5px;
-  font-weight: 600;
-}
-.pr-block-why,
-.pr-block-tip {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-.pr-block-tip {
-  font-style: italic;
-}
-.pr-block-next {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 8px 10px;
-  border: 1px solid var(--loop);
-  border-radius: 8px;
-  background: rgba(143, 107, 38, 0.08);
-  text-align: left;
-  cursor: pointer;
-}
-.pr-block-next:hover {
-  background: rgba(143, 107, 38, 0.16);
-}
-.pr-block-next-title {
-  font-weight: 600;
-  font-size: 13.5px;
-}
-.pr-block-done {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(143, 107, 38, 0.12);
-  color: var(--loop);
-  font-weight: 600;
-  font-size: 13px;
-}
-.pr-block-progress {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-}
-.pr-block-progress i {
-  width: 14px;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--ink-3);
-}
-.pr-block-progress i.is-pass {
-  background: var(--loop);
-}
-.pr-block-progress i.is-next {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--text);
-}
-.pr-block-decks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: auto;
-}
-.pr-block-decks .pr-due {
-  padding: 2px 8px;
-  font-size: 11.5px;
-}
-.pr-plan-lower {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 10px;
-  margin-top: 10px;
-}
-.pr-weekly,
-.pr-milestones {
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-}
-.pr-weekly h3,
-.pr-milestones h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-}
-.pr-weekly-item {
-  margin-bottom: 10px;
-}
-.pr-weekly-item p {
-  margin: 2px 0 6px;
-  line-height: 1.45;
-}
-.pr-trainer-inline {
-  padding: 3px 10px;
-  font-size: 12px;
-}
-.pr-milestones ul {
+.pr-todo {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-.pr-milestones li button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 4px 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  font-size: 13px;
-  cursor: pointer;
-}
-.pr-milestones li button:hover {
-  color: var(--loop);
-}
-.pr-milestones li.is-pass button {
-  color: var(--text-dim);
-}
-.pr-check {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 16px;
-  height: 16px;
   border: 1px solid var(--line-strong);
-  border-radius: 4px;
-  font-size: 11px;
-  color: var(--on-accent);
+  border-radius: 10px;
+  background: var(--ink-1);
+  overflow: hidden;
 }
-.pr-milestones li.is-pass .pr-check {
-  border-color: var(--loop);
-  background: var(--loop);
+.pr-todo li + li {
+  border-top: 1px solid var(--line);
 }
-.pr-tucked {
-  margin-top: 12px;
-}
-.pr-tucked > summary {
-  color: var(--text-dim);
-  font-size: 13px;
+.pr-todo-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 14px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
-.pr-tucked > .pr-units,
-.pr-tucked > .pr-decks {
-  margin-top: 10px;
+.pr-todo-row:hover {
+  background: var(--ink-2);
+}
+.pr-todo-num {
+  color: var(--loop);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.pr-todo-title {
+  overflow: hidden;
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pr-todo-meta {
+  color: var(--text-dim);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.pr-todo-row.is-later .pr-todo-title,
+.pr-todo-row.is-later .pr-todo-num {
+  opacity: 0.55;
+}
+.pr-todo-more {
+  margin-top: 8px;
 }
 
 /* ---- Confetti on a pass ------------------------------------------------------------ */

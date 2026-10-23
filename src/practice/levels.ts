@@ -97,13 +97,12 @@ export const LEVELS: Record<string, Level> = {
   "1.5": t(10),
   "1.6": t(10),
   "1.7": t(10),
+  // Melodic dictation: steps from do, then tonic skips, the whole scale, minor, longer with pickups.
   T1: c(2),
   T2: c(3),
-  T3: c(3),
-  T4: c(3),
-  T5: c(4),
-  T6: c(4),
-  T7: c(5),
+  T3: c(4),
+  T4: c(5),
+  T5: c(6),
 };
 
 const SCHEME_NAME: Record<Scheme, string> = { theory: "RCM Theory", ear: "RCM Ear", college: "College aural yr" };

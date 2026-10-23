@@ -123,11 +123,19 @@ speed targets:
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 
-The home page also suggests an order across topics: each stage lists what's worth passing
-first (for example scales after major key signatures, intervals after scales, I-or-V after
-do-mi-sol), and stages within a topic go a, b, c. Stages that aren't ready yet are faded and
-say what comes first, but stay open; Up next only suggests stages that are ready. The order
-is `PREREQS` in `src/practice/Home.tsx`.
+The home page groups the course by level (`src/practice/levels.ts`): rough matches to the
+Royal Conservatory (RCM) theory levels and practical ear tests, with first-year college aural
+skills that RCM doesn't test placed at the level they fit by difficulty. Each stage is tagged
+with its unit. It also suggests an order: each stage lists what's worth passing first (for
+example scales after major key signatures, intervals after scales, I-or-V after do-mi-sol),
+stages within a topic go a, b, c, and no stage is listed below what it builds on. Stages that
+aren't ready yet are faded and say what comes first, but stay open. The order is `PREREQS` in
+`src/practice/Home.tsx`.
+
+**Your plan**, at the top of the home page, lists the core stages still to pass before real
+pop songs are workable (scale degrees and I, IV, V, vi by ear; note values and simple rhythmic
+dictation; notes, core key signatures and triads), in that recommended order. The rest of the
+course is learned alongside songs. The stages are `GOAL_STAGES` in `src/practice/plan.ts`.
 
 Answer by clicking, or with the keyboard: letters for notes, 1–7 for scale degrees, Enter
 to continue, R to replay audio. Questions and answers are generated in `src/drills/`,
@@ -233,13 +241,18 @@ was. **Stats** shows your accuracy by register (where the two notes
 center: low, middle or high in the trainer's D3–D5 range), split into melodic and played
 together, and says whether a register's gap from the middle is likely more than chance.
 
-**Transcription** (melodic dictation): a melody plays, and you write it down by ear in a
-piano roll, in C major with the first note given. The seven melodies (Hot Cross Buns, Mary Had
-a Little Lamb, Ode to Joy, Twinkle, Jingle Bells, Frère Jacques, Amazing Grace) are ordered so
-each adds only an interval or two. Checking lines your notes up with the melody even if you
-skip or add one, accepts a version written in another key (it grades the intervals), and
-explains each wrong note in interval terms. It also tracks which intervals you miss most and
-shows them on the home page. You can reveal the answer in a locked lane to compare.
+**Melodic dictation** (transcription): a new, unfamiliar melody plays, and you write it down
+by ear in a piano roll, with the key, meter and first note given. Melodies are generated to
+each stage's rules (`src/practice/transcription/generate.ts`): T1 two bars by step from do to
+sol in C; T2 skips in the tonic chord, in C, G or F; T3 the whole major scale with dotted
+rhythms, up to 2 sharps or flats; T4 minor keys with the raised 7th; T5 six bars with pickups,
+syncopation and leaps up to an octave, major or minor up to 4 sharps or flats. Every melody
+implies I and V, puts chord tones on downbeats, recovers from leaps by step and ends on do
+from re or ti. From T2 the plays are limited (8, 6, 5, then 4, as in a dictation exam);
+practice mode lifts the limit, but its checks don't count. Checking lines your notes up with
+the melody even if you skip or add one, accepts a version written in another key (it grades
+the intervals), and explains each wrong note in interval terms. Once passed or revealed, the
+melody is shown in notation (`MelodyStaff.tsx`); revealing also puts it in a locked lane.
 
 **Unit 1** covers counterpoint essentials in the strict style of Fux's *Gradus ad
 Parnassum* (1725):

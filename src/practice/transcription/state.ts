@@ -5,14 +5,17 @@ import { store } from "../../model/store";
 import { newId, PPQ, type Note, type Project } from "../../model/types";
 import { Signal, ui } from "../../model/ui";
 import { recordProgress } from "../exercises/state";
+import { generateMelody } from "./generate";
 import { gradeTranscription, type TrIssue, type TrResult } from "./grade";
-import { melodyEnd, type Melody } from "./melodies";
+import { melodyEnd, type DictationStage, type Melody } from "./melodies";
 
 export interface TrChecked {
   id: string;
   result: TrResult;
   notes: Note[];
   revealed: boolean;
+  /** Checked in practice mode, so it didn't count. */
+  practiced: boolean;
 }
 
 export const lastTranscription = new Signal<TrChecked | null>(null);
@@ -49,20 +52,63 @@ function recordIntervals(list: { semitones: number; ok: boolean }[]) {
   }
 }
 
+// ---- The current melody for each stage, kept across visits -------------------
+
+/** A stage's melody in progress: how many times it's been played, and whether practice mode was on for it. */
+export interface Dictation {
+  melody: Melody;
+  plays: number;
+  /** Played or checked in practice mode (no play limit), so its check doesn't count. */
+  practiced: boolean;
+}
+
+const DICTATION_KEY = "etude.dictation.v1";
+
+function loadDictations(): Record<string, Dictation> {
+  try {
+    return JSON.parse(localStorage.getItem(DICTATION_KEY) ?? "{}") as Record<string, Dictation>;
+  } catch {
+    return {};
+  }
+}
+
+export const dictations = new Signal<Record<string, Dictation>>(loadDictations());
+
+function saveDictation(stageId: string, d: Dictation) {
+  const next = { ...dictations.value, [stageId]: d };
+  dictations.set(next);
+  try {
+    localStorage.setItem(DICTATION_KEY, JSON.stringify(next));
+  } catch {
+    // Not kept this visit.
+  }
+}
+
+/** Practice mode: no play limit, and checks don't count toward progress. */
+export const practiceMode = new Signal<boolean>(false);
+
+export function setPracticeMode(on: boolean, stage: DictationStage) {
+  practiceMode.set(on);
+  const d = dictations.value[stage.id];
+  if (on && d) saveDictation(stage.id, { ...d, practiced: true });
+}
+
+export const playsLeft = (stage: DictationStage, d: Dictation | undefined) => (practiceMode.value ? Infinity : stage.plays - (d?.plays ?? 0));
+
 // ---- The exercise project ------------------------------------------------------------
 
-function transcriptionProject(m: Melody): Project {
+function transcriptionProject(stage: DictationStage, m: Melody): Project {
   const first = m.notes[0];
   const lane = makeTrack("piano", "Your transcription", [{ id: newId(), pitch: first.pitch, start: first.start, dur: first.dur, vel: 0.75 }]);
   return {
-    title: `${m.number} ${m.title}`,
+    title: `${stage.number} ${stage.title}`,
     bpm: m.bpm,
     timeSig: m.timeSig,
-    key: 0,
-    scale: "major",
+    key: m.tonic,
+    scale: m.mode === "minor" ? "minor" : "major",
     loop: { on: false, start: 0, end: melodyEnd(m) },
     tracks: [lane],
-    exercise: { id: m.id },
+    exercise: { id: stage.id },
   };
 }
 
@@ -73,13 +119,7 @@ function clear() {
   focusedNotes.set([]);
 }
 
-/** Open a melody, or pick up where you left off if it's the one already in progress. */
-export function openTranscription(m: Melody) {
-  stop();
-  if (store.project.exercise?.id !== m.id) {
-    store.replace(transcriptionProject(m));
-    clear();
-  }
+function setupView() {
   const lane = store.project.tracks.find((t) => !t.locked);
   ui.set({
     selectedTrackId: lane?.id ?? null,
@@ -92,57 +132,96 @@ export function openTranscription(m: Melody) {
   });
 }
 
-export function restartTranscription(m: Melody) {
+/** Open a stage: pick up its melody in progress, or start a fresh one. */
+export function openTranscription(stage: DictationStage) {
   stop();
-  store.replace(transcriptionProject(m));
+  const d = dictations.value[stage.id];
+  if (!d) {
+    newMelody(stage);
+    return;
+  }
+  if (store.project.exercise?.id !== stage.id) {
+    store.replace(transcriptionProject(stage, d.melody));
+    clear();
+  }
+  setupView();
+}
+
+/** A fresh melody for the stage, with a full set of plays. */
+export function newMelody(stage: DictationStage) {
+  stop();
+  const melody = generateMelody(stage);
+  saveDictation(stage.id, { melody, plays: 0, practiced: practiceMode.value });
+  store.replace(transcriptionProject(stage, melody));
   clear();
-  openTranscription(m);
+  setupView();
+}
+
+/** Clear your lane; the melody and the plays used stay. */
+export function restartTranscription(stage: DictationStage) {
+  const d = dictations.value[stage.id];
+  if (!d) return newMelody(stage);
+  stop();
+  store.replace(transcriptionProject(stage, d.melody));
+  clear();
+  setupView();
 }
 
 const seconds = (m: Melody, ticks: number) => (ticks / PPQ) * (60 / m.bpm);
 
-/** Play the original melody, from a tick onward. */
-export function playMelody(m: Melody, fromTick = 0) {
+/** Play the melody from a tick onward, if a play is left. Each play counts, from the start or the cursor. */
+export function playMelody(stage: DictationStage, fromTick = 0) {
+  const d = dictations.value[stage.id];
+  if (!d || playsLeft(stage, d) <= 0) return;
+  const m = d.melody;
   const notes = m.notes.filter((n) => n.start + n.dur > fromTick);
   if (!notes.length) return;
-  const t0 = Math.max(fromTick, 0);
+  saveDictation(stage.id, { ...d, plays: d.plays + 1, practiced: d.practiced || practiceMode.value });
+  const t0 = Math.max(fromTick, Math.min(...notes.map((n) => n.start)));
   void playNotes(notes.map((n) => ({ pitches: [n.pitch], at: seconds(m, Math.max(0, n.start - t0)), dur: seconds(m, n.dur) * 0.95 })));
 }
 
-/** Set the key in your ear: a I–IV–V–I cadence in C, then the tonic. */
-export function playKey() {
-  const t = 60;
+/** Set the key in your ear: I-IV-V-I in the melody's key (i-iv-V-i in minor), then the tonic. Free; doesn't use a play. */
+export function playKey(m: Melody) {
+  // The tonic between F3 and E4, so the chords sit under the melody.
+  const t = 48 + m.tonic + (m.tonic > 4 ? 0 : 12);
+  const third = m.mode === "minor" ? 3 : 4;
+  const sixth = m.mode === "minor" ? 8 : 9;
   const chords = [
-    [t - 12, t, t + 4, t + 7],
-    [t - 7, t, t + 5, t + 9],
+    [t - 12, t, t + third, t + 7],
+    [t - 7, t, t + 5, t + sixth],
     [t - 5, t - 1, t + 2, t + 7],
-    [t - 12, t, t + 4, t + 7],
+    [t - 12, t, t + third, t + 7],
   ];
   void playNotes([...chords.map((c, i) => ({ pitches: c, at: i * 0.7, dur: 0.65 })), { pitches: [t], at: 3.1, dur: 1.2 }]);
 }
 
-export function checkTranscription(m: Melody): TrResult | null {
+export function checkTranscription(stage: DictationStage): TrResult | null {
   const lane = store.project.tracks.find((t) => !t.locked);
-  if (!lane) return null;
+  const d = dictations.value[stage.id];
+  if (!lane || !d) return null;
+  const m = d.melody;
   const result = gradeTranscription(m.notes, lane.notes, m.timeSig);
   const revealed = store.project.tracks.some((t) => t.locked);
-  lastTranscription.set({ id: m.id, result, notes: lane.notes, revealed });
+  const practiced = d.practiced || practiceMode.value;
+  lastTranscription.set({ id: stage.id, result, notes: lane.notes, revealed, practiced });
   const map = new Map<string, MarkSeverity>();
   for (const issue of result.issues) for (const id of issue.noteIds) if (map.get(id) !== "error") map.set(id, issue.severity);
   marks.set(map);
   focusedTrIssue.set(null);
   focusedNotes.set([]);
-  if (!result.blocking && !revealed) {
-    recordProgress(m.id, result.score, result.passed);
+  if (!result.blocking && !revealed && !practiced) {
+    recordProgress(stage.id, result.score, result.passed);
     recordIntervals(result.intervals);
   }
   return result;
 }
 
 /** Add the original as a locked lane so you can compare (stops counting toward progress). */
-export function revealAnswer(m: Melody) {
-  if (store.project.tracks.some((t) => t.locked)) return;
-  const answer = { ...makeTrack("piano", "Answer", m.notes.map((n) => ({ id: newId(), ...n, vel: 0.6 }))), locked: true, mute: true };
+export function revealAnswer(stage: DictationStage) {
+  const m = dictations.value[stage.id]?.melody;
+  if (!m || store.project.tracks.some((t) => t.locked)) return;
+  const answer = { ...makeTrack("piano", "Answer", m.notes.map((n) => ({ id: newId(), pitch: n.pitch, start: n.start, dur: n.dur, vel: 0.6 }))), locked: true, mute: true };
   store.edit((d) => {
     d.tracks.push(answer);
   });
