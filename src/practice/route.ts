@@ -7,11 +7,13 @@ export type Route =
   | { kind: "exercise"; id: string }
   | { kind: "transcribe"; id: string }
   | { kind: "cards"; id: string }
-  | { kind: "train"; id: string };
+  | { kind: "train"; id: string }
+  /** Skill trees; id is the skill, as its class slug ("reading"). */
+  | { kind: "skills"; id: string };
 
 function parse(hash: string): Route {
   const [, kind, id] = hash.replace(/^#/, "").split("/");
-  if ((kind === "drill" || kind === "exercise" || kind === "transcribe" || kind === "cards" || kind === "train") && id) return { kind, id: decodeURIComponent(id) };
+  if ((kind === "drill" || kind === "exercise" || kind === "transcribe" || kind === "cards" || kind === "train" || kind === "skills") && id) return { kind, id: decodeURIComponent(id) };
   return { kind: "home" };
 }
 

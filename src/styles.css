@@ -2358,3 +2358,169 @@ a.btn {
     display: none;
   }
 }
+
+/* ---- Skill trees ----------------------------------------------------------------- */
+
+.skills {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+.skills .drill-head {
+  max-width: none;
+}
+.skills-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.skills-tab {
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--skill) 45%, transparent);
+  border-radius: 999px;
+  background: none;
+  color: var(--skill);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.skills-tab.is-active {
+  background: var(--skill);
+  border-color: var(--skill);
+  color: var(--on-accent);
+}
+.skills-tab.is-tucked {
+  border-style: dashed;
+}
+.skills-tab-count {
+  margin-left: 4px;
+  opacity: 0.75;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.skills-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.skills-bar {
+  flex: 0 1 260px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ink-3);
+  overflow: hidden;
+}
+.skills-bar > div {
+  height: 100%;
+  background: var(--skill);
+}
+.skills-scroll {
+  overflow: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--ink-1);
+}
+.skills-tree {
+  position: relative;
+}
+.skills-tree svg {
+  position: absolute;
+  inset: 0;
+}
+.skills-band {
+  fill: transparent;
+}
+.skills-band.is-alt {
+  fill: color-mix(in srgb, var(--ink-2) 55%, transparent);
+}
+.skills-edge {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+}
+.skills-edge.is-lit {
+  stroke: var(--skill);
+  stroke-dasharray: none;
+  stroke-width: 2.5;
+}
+.skills-col {
+  position: absolute;
+  top: 12px;
+  overflow: hidden;
+  color: var(--skill);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.skills-level {
+  position: absolute;
+  left: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+.skills-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.skills-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 2px solid var(--skill);
+  border-radius: 50%;
+  background: var(--ink-1);
+  color: var(--skill);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.12s;
+}
+.skills-node:hover .skills-dot {
+  transform: scale(1.1);
+}
+.skills-node.is-pass .skills-dot {
+  background: var(--skill);
+  color: var(--on-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--skill) 22%, transparent);
+}
+.skills-node.is-tried .skills-dot {
+  background: color-mix(in srgb, var(--skill) 22%, var(--ink-1));
+}
+.skills-node.is-later .skills-dot {
+  border-style: dashed;
+  opacity: 0.5;
+}
+.skills-label {
+  max-width: 136px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+.skills-node.is-later .skills-label {
+  opacity: 0.6;
+}
+.skills-after {
+  margin-top: 1px;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 10px;
+}

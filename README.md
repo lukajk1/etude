@@ -145,6 +145,12 @@ stages within a topic go a, b, c, and no stage is listed below what it builds on
 aren't ready yet are faded and say what comes first, but stay open. The order is `PREREQS` in
 `src/practice/Home.tsx`.
 
+**Skill trees** (the Course header's button, or `#/skills/<skill>`) show each skill as a tree
+(`src/practice/SkillTrees.tsx`): stages laid out by level from top to bottom, a branch per
+topic, lines to what each builds on that light up in the skill's color once passed, and nodes
+filled, tinted, outlined or faded for passed, tried, ready or not yet. Each skill has its own
+color, which its tags and deck tiles share.
+
 **Your plan**, at the top of the home page, lists the core stages still to pass before real
 pop songs are workable (scale degrees and I, IV, V, vi by ear; note values and simple rhythmic
 dictation; notes, core key signatures and triads), in that recommended order. The rest of the

@@ -158,6 +158,9 @@ export function Home() {
           <span className="pr-dim pr-course-count">
             {passed} of {all.length} passed
           </span>
+          <button className="btn pr-expand" onClick={() => go({ kind: "skills", id: "reading" })}>
+            Skill trees
+          </button>
           <button className="btn pr-expand" onClick={() => saveLevels(allLevelsOpen ? new Set() : new Set(grades))}>
             {allLevelsOpen ? "Collapse all" : "Expand all"}
           </button>

@@ -21,6 +21,7 @@ import { useProject } from "../model/store";
 const DrillView = lazy(() => import("./DrillView"));
 const CardsView = lazy(() => import("./CardsView"));
 const IntervalTrainer = lazy(() => import("./IntervalTrainer"));
+const SkillTrees = lazy(() => import("./SkillTrees"));
 
 function Header({ title, editor = false }: { title?: string; editor?: boolean }) {
   return (
@@ -168,6 +169,17 @@ export function PracticeApp() {
       return <CardsScreen key={route.id} id={route.id} />;
     case "train":
       return <TrainerScreen key={route.id} id={route.id} />;
+    case "skills":
+      return (
+        <div className="app pr-app" style={{ gridTemplateRows: "auto 1fr" }}>
+          <Header title="Skill trees" />
+          <div className="pr-scroll">
+            <Suspense fallback={<div className="drill">Loading…</div>}>
+              <SkillTrees skill={route.id} />
+            </Suspense>
+          </div>
+        </div>
+      );
     default:
       return (
         <div className="app pr-app" style={{ gridTemplateRows: "auto 1fr" }}>

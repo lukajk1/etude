@@ -201,8 +201,14 @@ export const displayNumber = (internal: string) => DISPLAY.get(internal) ?? inte
 
 const BY_ID = new Map(COURSE.map((row) => [routeId(row.it.route), row]));
 
+/** A skill's slug, for classes and routes: "Non-chord tones" → "non-chord-tones". */
+export const skillSlug = (skill: string) => skill.toLowerCase().replace(/\s+/g, "-");
+
 /** The CSS class that colors a skill tag: "Non-chord tones" → "skill-non-chord-tones". */
-export const skillClass = (skill: string) => `skill-${skill.toLowerCase().replace(/\s+/g, "-")}`;
+export const skillClass = (skill: string) => `skill-${skillSlug(skill)}`;
+
+/** Every skill (a unit's tag), in course order. */
+export const SKILLS = UNITS.map((u) => u.kind);
 
 /** A stage by its drill, melody-stage or exercise id. */
 export const stageById = (id: string) => BY_ID.get(id);
