@@ -1,6 +1,6 @@
 import { PPQ, ticksPerBar, ticksPerBeat, type Note } from "../../model/types";
-import { intervalName, noteName } from "../../theory/theory";
-import type { TargetNote } from "./melodies";
+import { intervalName } from "../../theory/theory";
+import type { Mode, TargetNote } from "./melodies";
 
 /**
  * Grade a transcription note by note. Notes are lined up by order (so one missed note
@@ -34,7 +34,26 @@ export const TR_PASS = 90;
 /** How far a note may start from the right place and still count as on time. */
 const ONSET_TOLERANCE = PPQ / 8;
 
-export function gradeTranscription(target: TargetNote[], mine: Note[], timeSig: [number, number]): TrResult {
+/**
+ * Scale degrees by semitones above do, as solfège and number: do-based in both modes, so in
+ * minor, me (3) and te (7) are in the key and ti (raised 7) is the leading tone.
+ */
+const DEGREES: Record<Mode, [string, string][]> = {
+  major: [["do", "1"], ["di", "raised 1"], ["re", "2"], ["me", "lowered 3"], ["mi", "3"], ["fa", "4"], ["fi", "raised 4"], ["sol", "5"], ["le", "lowered 6"], ["la", "6"], ["te", "lowered 7"], ["ti", "7"]],
+  minor: [["do", "1"], ["ra", "lowered 2"], ["re", "2"], ["me", "3"], ["mi", "raised 3"], ["fa", "4"], ["fi", "raised 4"], ["sol", "5"], ["le", "6"], ["la", "raised 6"], ["te", "7"], ["ti", "raised 7"]],
+};
+
+/** "sol (5)", "fi (raised 4)": a pitch as a degree of the key whose do is `tonic`. */
+export function degreeLabel(pitch: number, tonic: number, mode: Mode): string {
+  const [name, num] = DEGREES[mode][(((pitch - tonic) % 12) + 12) % 12];
+  return `${name} (${num})`;
+}
+
+/**
+ * Grade a transcription. Wrong notes are named by scale degree in the melody's key ("this
+ * note is sol; you wrote la"), with the interval from the previous note as a hint.
+ */
+export function gradeTranscription(target: TargetNote[], mine: Note[], timeSig: [number, number], key: { tonic: number; mode: Mode }): TrResult {
   const S = [...mine].sort((a, b) => a.start - b.start || a.pitch - b.pitch);
   const T = target;
   const empty = { score: 0, passed: false, correct: 0, total: T.length, shift: 0, issues: [], intervals: [] };
@@ -96,9 +115,10 @@ export function gradeTranscription(target: TargetNote[], mine: Note[], timeSig: 
   const issues: TrIssue[] = [];
   let correct = 0;
   let lengthSlips = 0;
-  const name = (p: number) => noteName(p);
-  const move = (semis: number) =>
-    semis === 0 ? "repeats the note" : `${semis > 0 ? "goes up" : "goes down"} a ${intervalName(Math.abs(semis))}`;
+  // Your notes are named in the key you wrote in (the melody's, moved by any transposition).
+  const heard = (p: number) => degreeLabel(p, key.tonic, key.mode);
+  const yours = (p: number) => degreeLabel(p - shift, key.tonic, key.mode);
+  const move = (semis: number) => (semis === 0 ? "the same note" : `${semis > 0 ? "up" : "down"} a ${intervalName(Math.abs(semis))}`);
 
   // Runs of unwritten notes are reported once, not note by note.
   for (let i = 0; i < n; ) {
@@ -138,13 +158,11 @@ export function gradeTranscription(target: TargetNote[], mine: Note[], timeSig: 
     if (!pOk) {
       const prevT = T[i - 1];
       const prevJ = i > 0 ? pairOf[i - 1] : null;
-      let detail: string;
+      let detail = `This note is ${heard(t.pitch)}; you wrote ${yours(s.pitch)}.`;
       if (prevT && prevJ !== null) {
         const want = t.pitch - prevT.pitch;
         const got = s.pitch - S[prevJ].pitch;
-        detail = `Here the melody ${move(want)} (${name(prevT.pitch + shift)} to ${name(t.pitch + shift)}); you wrote one that ${move(got)}.`;
-      } else {
-        detail = `This note should be ${name(t.pitch + shift)}; you wrote ${name(s.pitch)}.`;
+        if (want !== got) detail += ` (From the note before: ${move(want)}; yours is ${move(got)}.)`;
       }
       issues.push({ severity: "error", rule: oOk ? "Wrong note" : "Wrong note and timing", detail, tick: s.start, noteIds: [s.id] });
     } else {
@@ -153,7 +171,7 @@ export function gradeTranscription(target: TargetNote[], mine: Note[], timeSig: 
       issues.push({
         severity: "error",
         rule: "Timing",
-        detail: `This ${name(s.pitch)} starts ${amount === 0.5 ? "half a beat" : `${amount} beat${amount === 1 ? "" : "s"}`} ${diff > 0 ? "late" : "early"}; it belongs at ${where(t.start)}.`,
+        detail: `This ${yours(s.pitch)} starts ${amount === 0.5 ? "half a beat" : `${amount} beat${amount === 1 ? "" : "s"}`} ${diff > 0 ? "late" : "early"}; it belongs at ${where(t.start)}.`,
         tick: s.start,
         noteIds: [s.id],
       });
@@ -162,7 +180,7 @@ export function gradeTranscription(target: TargetNote[], mine: Note[], timeSig: 
 
   const extras = S.filter((_, j) => !usedS.has(j));
   for (const s of extras) {
-    issues.push({ severity: "warning", rule: "Extra note", detail: `The ${name(s.pitch)} at ${where(s.start)} isn't in the melody.`, tick: s.start, noteIds: [s.id] });
+    issues.push({ severity: "warning", rule: "Extra note", detail: `The ${yours(s.pitch)} at ${where(s.start)} isn't in the melody.`, tick: s.start, noteIds: [s.id] });
   }
 
   const intervals = T.slice(1).map((t, k) => {

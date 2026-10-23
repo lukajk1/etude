@@ -201,7 +201,7 @@ export function checkTranscription(stage: DictationStage): TrResult | null {
   const d = dictations.value[stage.id];
   if (!lane || !d) return null;
   const m = d.melody;
-  const result = gradeTranscription(m.notes, lane.notes, m.timeSig);
+  const result = gradeTranscription(m.notes, lane.notes, m.timeSig, { tonic: m.tonic, mode: m.mode });
   const revealed = store.project.tracks.some((t) => t.locked);
   const practiced = d.practiced || practiceMode.value;
   lastTranscription.set({ id: stage.id, result, notes: lane.notes, revealed, practiced });

@@ -273,7 +273,8 @@ implies I and V, puts chord tones on downbeats, recovers from leaps by step and 
 from re or ti. From T2 the plays are limited (8, 6, 5, then 4, as in a dictation exam);
 practice mode lifts the limit, but its checks don't count. Checking lines your notes up with
 the melody even if you skip or add one, accepts a version written in another key (it grades
-the intervals), and explains each wrong note in interval terms. Once passed or revealed, the
+the intervals), and names each wrong note by scale degree ("this note is sol (5); you wrote la
+(6)"), with the interval from the note before only as a hint. Once passed or revealed, the
 melody is shown in notation (`MelodyStaff.tsx`); revealing also puts it in a locked lane.
 
 **Unit 1** covers counterpoint essentials in the strict style of Fux's *Gradus ad
