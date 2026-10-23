@@ -330,7 +330,21 @@ function RhythmChoices({ step, chosen, reveal, onPick }: PadProps) {
   );
 }
 
-type TapMark = "hit" | "early" | "late" | "missed";
+/** "close": a little outside the window, allowed once per bar. */
+type TapMark = "hit" | "close" | "early" | "late" | "missed";
+
+/**
+ * How far a tap may be from its note: ±125 ms for quarters and eighths at 80 bpm, narrowing
+ * with the shortest gap between notes so a tap on the wrong sixteenth still counts as wrong.
+ * "Close" reaches a bit further, but never halfway to the neighbouring note.
+ */
+export function tapWindows(expected: number[], beat: number) {
+  const gaps = expected.slice(1).map((e, i) => e - expected[i]);
+  const minGap = Math.min(beat, ...gaps);
+  const tol = Math.max(0.07, Math.min(0.125, 0.4 * minGap));
+  const close = Math.max(tol, Math.min(1.6 * tol, 0.5 * minGap - 0.005));
+  return { tol, close };
+}
 
 /**
  * Tap a rhythm in time. Start plays a bar of clicks, then soft clicks on each beat while
@@ -341,7 +355,7 @@ function TapPad({ step, reveal, onPick }: PadProps) {
   const spec = (step.data ?? "").split("#")[0];
   const { beats, notes } = fromSpec(spec);
   const [phase, setPhase] = useState<"ready" | "playing" | "done">("ready");
-  const [marks, setMarks] = useState<TapMark[]>([]);
+  const [marks, setMarks] = useState<{ mark: TapMark; ms: number | null }[]>([]);
   const [summary, setSummary] = useState("");
   const [flash, setFlash] = useState(0);
   const taps = useRef<number[]>([]);
@@ -353,8 +367,7 @@ function TapPad({ step, reveal, onPick }: PadProps) {
   const expected = onsets(beats, notes);
 
   const grade = () => {
-    // About ±90 ms at 80 bpm: tight enough that a misplaced note counts as wrong.
-    const tol = Math.max(0.07, 0.12 * beat);
+    const { tol, close } = tapWindows(expected, beat);
     const t = taps.current;
     // A steady delay (speakers, Bluetooth, reaction) makes every tap late by about the same
     // amount. Correct for it only when most taps agree on it, so sloppy timing isn't hidden.
@@ -364,33 +377,35 @@ function TapPad({ step, reveal, onPick }: PadProps) {
     const agreeing = near.filter((d) => Math.abs(d - median) <= tol / 2).length;
     const offset = agreeing >= Math.max(2, Math.ceil(0.6 * expected.length)) ? Math.max(-0.25, Math.min(0.25, median)) : 0;
     const used = new Set<number>();
-    const result: TapMark[] = expected.map((e) => {
+    const result = expected.map((e) => {
       let bestI = -1;
       let bestD = Infinity;
       t.forEach((x, i) => {
         const d = x - offset - e;
         if (!used.has(i) && Math.abs(d) < Math.abs(bestD)) [bestI, bestD] = [i, d];
       });
-      if (bestI >= 0 && Math.abs(bestD) <= tol) {
-        used.add(bestI);
-        return "hit";
-      }
-      if (bestI >= 0 && Math.abs(bestD) < beat / 2) {
-        used.add(bestI);
-        return bestD < 0 ? "early" : "late";
-      }
-      return "missed";
+      if (bestI < 0 || Math.abs(bestD) >= beat / 2) return { mark: "missed" as TapMark, ms: null };
+      used.add(bestI);
+      const ms = Math.round(bestD * 1000);
+      const mark: TapMark = Math.abs(bestD) <= tol ? "hit" : Math.abs(bestD) <= close ? "close" : bestD < 0 ? "early" : "late";
+      return { mark, ms };
     });
     const extra = t.length - used.size;
-    const hits = result.filter((m) => m === "hit").length;
-    const score = (hits - 0.5 * extra) / expected.length;
+    const hits = result.filter((r) => r.mark === "hit").length;
+    const closes = result.filter((r) => r.mark === "close").length;
+    // Every note in the window, allowing one slip: a note only a little out, or one stray tap.
+    const ok = hits + closes === expected.length && closes + extra <= 1;
+    const off = result.filter((r) => r.mark !== "hit" && r.ms !== null).map((r) => `${Math.abs(r.ms!)} ms ${r.ms! < 0 ? "early" : "late"}`);
     setMarks(result);
     setSummary(
-      `${hits} of ${expected.length} notes in time${extra ? `, ${extra} extra tap${extra === 1 ? "" : "s"}` : ""}.` +
+      `${hits} of ${expected.length} notes in time (within ±${Math.round(tol * 1000)} ms)` +
+        (off.length ? `; ${off.join(", ")}` : "") +
+        (closes === 1 && ok ? " (close enough, once a bar)" : "") +
+        `${extra ? `, ${extra} extra tap${extra === 1 ? "" : "s"}` : ""}.` +
         (Math.abs(offset) > 0.03 ? ` Your taps ran ${Math.round(Math.abs(offset) * 1000)} ms ${offset > 0 ? "late" : "early"} overall, which is allowed for.` : ""),
     );
     setPhase("done");
-    onPick(score >= 0.85 ? "ok" : "off");
+    onPick(ok ? "ok" : "off");
   };
 
   const start = async () => {
@@ -438,9 +453,10 @@ function TapPad({ step, reveal, onPick }: PadProps) {
       {phase === "done" && (
         <div className="tap-result">
           <div className="tap-marks">
-            {marks.map((m, i) => (
-              <span key={i} className={`tap-mark is-${m}`} title={m}>
-                {m === "hit" ? "✓" : m === "missed" ? "·" : m === "early" ? "early" : "late"}
+            {marks.map(({ mark, ms }, i) => (
+              <span key={i} className={`tap-mark is-${mark}`} title={mark === "missed" ? "missed" : `${ms! > 0 ? "+" : ""}${ms} ms`}>
+                {mark === "hit" || mark === "close" ? "✓" : mark === "missed" ? "·" : mark}
+                {ms !== null && <small>{ms > 0 ? "+" : ms < 0 ? "−" : "±"}{Math.abs(ms)}</small>}
               </span>
             ))}
           </div>

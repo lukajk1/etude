@@ -2054,9 +2054,20 @@ a.btn {
   text-align: center;
   font-size: 12px;
 }
+.tap-mark small {
+  display: block;
+  font-size: 10px;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
 .tap-mark.is-hit {
   border-color: var(--loop);
   background: rgba(143, 107, 38, 0.2);
+}
+.tap-mark.is-close {
+  border-color: var(--loop);
+  border-style: dashed;
+  background: rgba(143, 107, 38, 0.08);
 }
 .tap-mark.is-early,
 .tap-mark.is-late {
