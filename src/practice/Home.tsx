@@ -3,7 +3,7 @@ import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
 import { DECKS, deckForDrill, deckSettings, settingsFor } from "./cards/decks";
 import { cardStates, summarize } from "./cards/srs";
-import { ALL_ITEMS, COURSE, displayNumber, prereqText, routeId, skillClass, stageById, stageGrade, unmetPrereqs, type Item } from "./course";
+import { ALL_ITEMS, COURSE, displayNumber, prereqText, routeId, skillClass, stageById, stageCode, stageGrade, unmetPrereqs, type Item } from "./course";
 import { ROADMAP } from "./exercises/catalog";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, levelLabel, LEVELS } from "./levels";
@@ -71,6 +71,7 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
                       {it.title}
                       <span className={`pr-stage-tag ${skillClass(tag)}`}>{tag}</span>
                       {level && <span className="pr-level">≈ {levelLabel(level)}</span>}
+                      <span className="pr-stage-code" title="This stage's permanent code">{stageCode(routeId(it.route))}</span>
                     </span>
                     <span className="pr-row-summary">{it.summary}</span>
                     <span className="pr-stage-pass">To pass: {it.pass}.</span>
@@ -273,7 +274,7 @@ function PlanSection({ prog }: { prog: Record<string, Progress> }) {
                   <span className="pr-todo-num">{displayNumber(it.number)}</span>
                   <span className="pr-todo-title">{it.title}</span>
                   <span className="pr-todo-meta">
-                    {gradeName(stageGrade(it))}
+                    {stageCode(routeId(it.route))} · {gradeName(stageGrade(it))}
                     {p ? ` · best ${p.best}%` : first.length ? ` · after ${first.map(displayNumber).join(", ")}` : ""}
                   </span>
                 </button>

@@ -199,6 +199,21 @@ const DISPLAY = new Map<string, string>();
 /** The number a stage is shown with: its level, then its place in that level ("3.4", "P.1"). */
 export const displayNumber = (internal: string) => DISPLAY.get(internal) ?? internal;
 
+// ---- Permanent codes ----------------------------------------------------------------------
+
+/** No 0/O or 1/I, so a code reads back unambiguously. */
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/**
+ * A stage's permanent short code ("K7Q"): a hash of its id, so it looks random, never
+ * changes when stages are renumbered, and new stages get one without a list to keep.
+ */
+export function stageCode(id: string): string {
+  let h = 0x811c9dc5; // FNV-1a
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 0x01000193) >>> 0;
+  return [0, 5, 10].map((shift) => CODE_CHARS[(h >>> shift) & 31]).join("");
+}
+
 const BY_ID = new Map(COURSE.map((row) => [routeId(row.it.route), row]));
 
 /** A skill's slug, for classes and routes: "Non-chord tones" → "non-chord-tones". */

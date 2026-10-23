@@ -1,5 +1,5 @@
 import { useSignal } from "../model/ui";
-import { COURSE, displayNumber, prereqsOf, routeId, SKILLS, skillClass, skillSlug, unmetPrereqs, type Item, type Topic } from "./course";
+import { COURSE, displayNumber, prereqsOf, routeId, SKILLS, skillClass, skillSlug, stageCode, unmetPrereqs, type Item, type Topic } from "./course";
 import { progress } from "./exercises/state";
 import { gradeName } from "./levels";
 import { TUCKED_UNITS } from "./plan";
@@ -143,7 +143,7 @@ export default function SkillTrees({ skill: slug }: { skill: string }) {
                 className={`skills-node ${state}`}
                 style={{ left: x - COL_W / 2, top: y - R }}
                 onClick={() => go(it.route)}
-                title={`${displayNumber(it.number)} ${it.title}\n${it.summary}\nTo pass: ${it.pass}.${p && !p.passed ? `\nBest so far: ${p.best}%.` : ""}`}
+                title={`${displayNumber(it.number)} ${it.title} (${stageCode(routeId(it.route))})\n${it.summary}\nTo pass: ${it.pass}.${p && !p.passed ? `\nBest so far: ${p.best}%.` : ""}`}
               >
                 <span className="skills-dot">{displayNumber(it.number)}</span>
                 <span className="skills-label">{shortLabel(it)}</span>

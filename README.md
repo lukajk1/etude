@@ -133,6 +133,8 @@ Stages are shown numbered by level and place: **3.4** is the fourth stage of Lev
 Rhythm, Transcription, Harmony, Cadences). The numbers are computed from the level layout in
 `src/practice/course.ts`, so adding a stage renumbers the ones after it in its level. The
 numbers in the tables here (0.11c, 3.3a, T2) are the stages' internal ids, which don't change.
+Each stage also shows a permanent three-character code ("APN"), a hash of its id
+(`stageCode` in `course.ts`), for referring to it when the level numbers move.
 
 The home page's **Exercises** section groups every stage by level (`src/practice/levels.ts`): the Royal Conservatory
 (RCM) theory levels set the ladder, and ear skills are placed on it by first-year college

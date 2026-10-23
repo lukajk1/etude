@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, playNotesLater, preparePiano, previewPlaying, stopAll } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
-import { displayNumber, nextStage, stageById } from "./course";
+import { displayNumber, nextStage, stageById, stageCode } from "./course";
 import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
 import { buildRound, markSeen } from "./drills/selection";
 import { gradeName, levelLabel, LEVELS } from "./levels";
@@ -191,6 +191,7 @@ export default function DrillView({ id }: { id: string }) {
         <div>
           <div className="drill-number">
             {row ? `${gradeName(row.grade)}, ${row.unit.kind}` : "Practice"}, stage {displayNumber(drill.number)}
+            <span className="pr-stage-code" title="This stage's permanent code">{stageCode(drill.id)}</span>
           </div>
           <h2 className="drill-title">{drill.title}</h2>
         </div>

@@ -1,4 +1,4 @@
-import { displayNumber, nextStage } from "./course";
+import { displayNumber, nextStage, stageCode } from "./course";
 import type { Exercise } from "./exercises/catalog";
 import { PASS_SCORE, type Issue } from "./exercises/grade";
 import { checkWork, focused, focusIssue, lastCheck, progress, resetWork, studentTrack } from "./exercises/state";
@@ -38,7 +38,10 @@ export function ExercisePanel({ ex }: { ex: Exercise }) {
 
   return (
     <aside className="ex-panel" aria-label="Exercise">
-      <div className="ex-number">Exercise, stage {displayNumber(ex.number)}</div>
+      <div className="ex-number">
+        Exercise, stage {displayNumber(ex.number)}
+        <span className="pr-stage-code" title="This stage's permanent code">{stageCode(ex.id)}</span>
+      </div>
       <h2 className="ex-title">{ex.title}</h2>
       <p className="ex-brief">{ex.brief}</p>
 

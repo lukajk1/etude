@@ -3,7 +3,7 @@ import { useSignal, useUi } from "../model/ui";
 import { progress } from "./exercises/state";
 import { TR_PASS, type TrIssue } from "./transcription/grade";
 import { MelodyStaff } from "./transcription/MelodyStaff";
-import { displayNumber, nextStage } from "./course";
+import { displayNumber, nextStage, stageCode } from "./course";
 import type { DictationStage } from "./transcription/melodies";
 import {
   checkTranscription,
@@ -66,7 +66,10 @@ export function TranscriptionPanel({ stage }: { stage: DictationStage }) {
 
   return (
     <aside className="ex-panel" aria-label="Melodic dictation">
-      <div className="ex-number">Melodic dictation, stage {displayNumber(stage.number)}</div>
+      <div className="ex-number">
+        Melodic dictation, stage {displayNumber(stage.number)}
+        <span className="pr-stage-code" title="This stage's permanent code">{stageCode(stage.id)}</span>
+      </div>
       <h2 className="ex-title">{capital(stage.title.replace(/^Melodic dictation: /, ""))}</h2>
       <p className="ex-brief">
         Listen, then write the melody in your lane. It's in {prettyCode(m.keyCode)} {m.mode}, {m.timeSig[0]}/{m.timeSig[1]}, and starts on {spelledName(first.vf)}
