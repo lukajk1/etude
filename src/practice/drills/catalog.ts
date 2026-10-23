@@ -565,7 +565,7 @@ const hearDoMiSolDrone = checkpoint(hearDegrees, {
   summary: "Degrees 1, 3 and 5 in C, with do held underneath.",
   brief:
     "A cadence sets C major, then low C holds as a drone while one note plays: do, mi or sol. Against the drone, do sounds at rest, mi sweet and bright, sol open and hollow. Every question is in C, so do stays in your ear.",
-  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { inC: true, drone: true }),
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { inC: true, drone: true, walkDown: true }),
 });
 
 const hearDoMiSolC = checkpoint(hearDegrees, {
@@ -574,7 +574,7 @@ const hearDoMiSolC = checkpoint(hearDegrees, {
   title: "Hear scale degrees: do, mi, sol in C",
   summary: "Degrees 1, 3 and 5, always in C, without the drone.",
   brief: "The same three notes, still always in C, but with no drone: hold do in your ear from the cadence. Sing the note down to do if you're unsure.",
-  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { inC: true }),
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { inC: true, walkDown: true }),
 });
 
 // Then any key, still after the same I–IV–V–I, before the key is set a new way each time.
@@ -585,7 +585,7 @@ const hearDoMiSolKeys = checkpoint(hearDegrees, {
   summary: "Degrees 1, 3 and 5 in a new key each time, after the same I–IV–V–I cadence.",
   brief:
     "The same three notes, now in a different key each question, still set by the familiar I–IV–V–I cadence. Let the cadence's last chord tell you where do is, then hear the note against it.",
-  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"]),
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { walkDown: true }),
 });
 
 const hearDoMiSol = checkpoint(hearDegrees, {
@@ -593,7 +593,7 @@ const hearDoMiSol = checkpoint(hearDegrees, {
   number: "0.11d",
   title: "Hear scale degrees: do, mi, sol, any opening",
   summary: "Degrees 1, 3 and 5 in any key, after a different opening each time.",
-  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { varied: true }),
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { varied: true, walkDown: true }),
 });
 
 const hearDoToSol = checkpoint(hearDegrees, {
@@ -601,15 +601,16 @@ const hearDoToSol = checkpoint(hearDegrees, {
   number: "0.11e",
   title: "Hear scale degrees: do to sol",
   summary: "Degrees 1 to 5.",
-  generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"], { varied: true }),
+  generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"], { varied: true, walkDown: true }),
 });
 
 /**
  * A scale degree after the key is set; `options` limits the answer buttons. `inC` keeps the
  * key at C instead of a random one; `drone` holds low do under the note (and its replays);
- * `varied` sets the key a different way each time (see keyContext.ts) instead of I–IV–V–I.
+ * `varied` sets the key a different way each time (see keyContext.ts) instead of I–IV–V–I;
+ * `walkDown` makes a missed note walk down to the cadence's do, never up to the one above.
  */
-export function degreeQuestion(degree: number, options?: string[], { inC = false, drone = false, varied = false } = {}): Question {
+export function degreeQuestion(degree: number, options?: string[], { inC = false, drone = false, varied = false, walkDown = false } = {}): Question {
   const t = inC ? 60 : randInt(55, 66);
   const target = t + MAJOR_STEPS[degree - 1];
   const context = varied
@@ -627,7 +628,7 @@ export function degreeQuestion(degree: number, options?: string[], { inC = false
   const at = context.end + 0.65;
   // Two octaves of do, quietly, from just before the note to past its end.
   const droneUnder = (from: number, dur: number) => (drone ? [{ pitches: [t - 24, t - 12], at: from, dur, vel: 0.32 }] : []);
-  const resolve = resolveToDo(target, degree);
+  const resolve = resolveToDo(target, degree, { down: walkDown });
   const resolveEnd = Math.max(...resolve.map((e) => e.at + e.dur));
   return {
     prompt: drone ? "Which scale degree is the note over the drone?" : "Which scale degree is the last note?",

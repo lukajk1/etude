@@ -4,12 +4,14 @@ const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 
 /**
  * A note walking home by step to do, the shorter way (ti, la and sol go up; the rest go
- * down), ending on do with the home chord under it. Played after a wrong scale-degree
- * answer, so you hear where the note sits and how it resolves.
+ * down) unless `down` keeps it to the do below, ending on do with the home chord under it.
+ * Played after a wrong scale-degree answer, so you hear where the note sits and how it
+ * resolves.
  */
-export function resolveToDo(pitch: number, degree: number): AudioEvent[] {
+export function resolveToDo(pitch: number, degree: number, { down = false } = {}): AudioEvent[] {
   const base = pitch - MAJOR_STEPS[degree - 1]; // do in the note's octave
-  const up = 8 - degree < degree - 1;
+  // The shorter way to a do, unless `down` keeps it to the do below (the cadence's).
+  const up = !down && 8 - degree < degree - 1;
   const path: number[] = [];
   if (up) {
     for (let d = degree; d <= 7; d++) path.push(base + MAJOR_STEPS[d - 1]);
