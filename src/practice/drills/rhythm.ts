@@ -337,13 +337,17 @@ export function dictationQuestion(beats: number, level: number): Question {
   };
 }
 
+/** How far off a tap may land, in ms, by level: the window tightens as the rhythms get finer. */
+const TAP_WINDOW_MS = [125, 100, 85];
+
 /** Tap a rhythm in time: read it, then tap after the count-in. */
 export function tapQuestion(beats: number, level: number): Question {
   const notes = randomBar(beats, level);
   return {
     prompt: "Read the rhythm. Press Start, listen to the bar of clicks, then tap each note (Space or the pad) in time.",
     rhythm: toSpec(beats, notes),
-    steps: [{ type: "tap", correct: "ok", data: `${toSpec(beats, notes)}#${Math.random().toString(36).slice(2, 7)}` }],
+    // "spec#nonce#window": the nonce gives each question a fresh pad.
+    steps: [{ type: "tap", correct: "ok", data: `${toSpec(beats, notes)}#${Math.random().toString(36).slice(2, 7)}#${TAP_WINDOW_MS[level - 1]}` }],
     explain: `Counted: ${countText(notes)}. Say the counts aloud while you tap.`,
   };
 }
@@ -468,7 +472,7 @@ export const RHYTHM_DRILLS: Drill[] = [
     number: "3.4a",
     title: "Tap a rhythm: quarters, halves, rests",
     summary: "Read a bar and tap it in time.",
-    brief: "Read the bar, press Start, and tap each note after the bar of clicks, saying the counts aloud. Timing is graded against the beat, allowing for a steady delay from your speakers.",
+    brief: "Read the bar, press Start, and tap each note after the bar of clicks, saying the counts aloud. Timing is graded against the beat, allowing for a steady delay from your speakers: each tap within ±125 ms, with one slip a bar allowed. The average shows how tight you were.",
     ear: true,
     pass: { accuracy: 0.8 },
     generate: () => tapQuestion(pick([3, 4]), 1),
@@ -478,7 +482,7 @@ export const RHYTHM_DRILLS: Drill[] = [
     number: "3.4b",
     title: "Tap a rhythm: eighths",
     summary: "Adds eighth notes.",
-    brief: "The same, with eighths: tap on the \"&\" as well as the beat where the beat is split.",
+    brief: "The same, with eighths: tap on the \"&\" as well as the beat where the beat is split. The window tightens to ±100 ms.",
     ear: true,
     pass: { accuracy: 0.8 },
     generate: () => tapQuestion(pick([3, 4]), 2),
@@ -488,7 +492,7 @@ export const RHYTHM_DRILLS: Drill[] = [
     number: "3.4c",
     title: "Tap a rhythm: dotted and sixteenths",
     summary: "Adds dotted quarters, sixteenths and syncopation.",
-    brief: "The same, with the full set of cells. Keep counting through held notes so the next tap lands in time.",
+    brief: "The same, with the full set of cells. Keep counting through held notes so the next tap lands in time. The window is ±85 ms, or about ±75 ms where there are sixteenths.",
     ear: true,
     pass: { accuracy: 0.75 },
     generate: () => tapQuestion(pick([3, 4]), 3),

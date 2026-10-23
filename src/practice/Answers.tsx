@@ -334,14 +334,14 @@ function RhythmChoices({ step, chosen, reveal, onPick }: PadProps) {
 type TapMark = "hit" | "close" | "early" | "late" | "missed";
 
 /**
- * How far a tap may be from its note: ±125 ms for quarters and eighths at 80 bpm, narrowing
- * with the shortest gap between notes so a tap on the wrong sixteenth still counts as wrong.
+ * How far a tap may be from its note: up to `max` seconds (set by the stage), narrowing with
+ * the shortest gap between notes so a tap on the wrong sixteenth still counts as wrong.
  * "Close" reaches a bit further, but never halfway to the neighbouring note.
  */
-export function tapWindows(expected: number[], beat: number) {
+export function tapWindows(expected: number[], beat: number, max = 0.125) {
   const gaps = expected.slice(1).map((e, i) => e - expected[i]);
   const minGap = Math.min(beat, ...gaps);
-  const tol = Math.max(0.07, Math.min(0.125, 0.4 * minGap));
+  const tol = Math.max(0.07, Math.min(max, 0.4 * minGap));
   const close = Math.max(tol, Math.min(1.6 * tol, 0.5 * minGap - 0.005));
   return { tol, close };
 }
@@ -352,7 +352,7 @@ export function tapWindows(expected: number[], beat: number) {
  * (speakers, Bluetooth, reaction), so only the rhythm itself is graded.
  */
 function TapPad({ step, reveal, onPick }: PadProps) {
-  const spec = (step.data ?? "").split("#")[0];
+  const [spec, , windowMs] = (step.data ?? "").split("#");
   const { beats, notes } = fromSpec(spec);
   const [phase, setPhase] = useState<"ready" | "playing" | "done">("ready");
   const [marks, setMarks] = useState<{ mark: TapMark; ms: number | null }[]>([]);
@@ -367,7 +367,7 @@ function TapPad({ step, reveal, onPick }: PadProps) {
   const expected = onsets(beats, notes);
 
   const grade = () => {
-    const { tol, close } = tapWindows(expected, beat);
+    const { tol, close } = tapWindows(expected, beat, windowMs ? Number(windowMs) / 1000 : undefined);
     const t = taps.current;
     // A steady delay (speakers, Bluetooth, reaction) makes every tap late by about the same
     // amount. Correct for it only when most taps agree on it, so sloppy timing isn't hidden.
@@ -396,9 +396,13 @@ function TapPad({ step, reveal, onPick }: PadProps) {
     // Every note in the window, allowing one slip: a note only a little out, or one stray tap.
     const ok = hits + closes === expected.length && closes + extra <= 1;
     const off = result.filter((r) => r.mark !== "hit" && r.ms !== null).map((r) => `${Math.abs(r.ms!)} ms ${r.ms! < 0 ? "early" : "late"}`);
+    // Precision, apart from pass or fail: how far the tapped notes were off on average.
+    const tapped = result.filter((r) => r.ms !== null).map((r) => Math.abs(r.ms!));
+    const avg = tapped.length ? Math.round(tapped.reduce((s, x) => s + x, 0) / tapped.length) : null;
     setMarks(result);
     setSummary(
-      `${hits} of ${expected.length} notes in time (within ±${Math.round(tol * 1000)} ms)` +
+      (avg !== null ? `Average ${avg} ms off. ` : "") +
+        `${hits} of ${expected.length} notes in time (within ±${Math.round(tol * 1000)} ms)` +
         (off.length ? `; ${off.join(", ")}` : "") +
         (closes === 1 && ok ? " (close enough, once a bar)" : "") +
         `${extra ? `, ${extra} extra tap${extra === 1 ? "" : "s"}` : ""}.` +
