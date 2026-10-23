@@ -1055,6 +1055,28 @@ canvas {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
+.drill-misses.is-edge {
+  color: var(--warn);
+}
+.drill-misses.is-out {
+  color: var(--bad);
+  font-weight: 700;
+}
+.drill-bar.is-out > div {
+  background: var(--bad);
+}
+.drill-out {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: -6px 0 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--bad);
+  border-radius: 8px;
+  color: var(--bad);
+  font-size: 13px;
+}
 .drill-bar {
   height: 4px;
   margin: 8px 0 16px;

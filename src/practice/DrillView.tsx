@@ -175,6 +175,11 @@ export default function DrillView({ id }: { id: string }) {
 
   const elapsed = phase === "run" && !reveal ? Math.max(0, (now - shownAt.current) / 1000) : null;
   const last = answered[answered.length - 1];
+  // Misses the pass mark allows in a round (85% of 20: 3). One more and this round can't pass.
+  const missed = answered.filter((a) => !a.ok).length;
+  const allowed = Math.floor(questions.length * (1 - drill.pass.accuracy) + 1e-9);
+  const outOfReach = missed > allowed;
+  const missState = outOfReach ? " is-out" : missed > 0 && missed === allowed ? " is-edge" : "";
 
   return (
     <section className="drill" aria-label={`Drill ${drill.number}: ${drill.title}`}>
@@ -230,11 +235,22 @@ export default function DrillView({ id }: { id: string }) {
               Question {index + 1} of {questions.length}
             </span>
             <span>{answered.filter((a) => a.ok).length} correct</span>
+            <span className={`drill-misses${missState}`} title={`Passing allows ${allowed} missed in ${questions.length}`}>
+              {missed} missed of {allowed} allowed
+            </span>
             <span className="drill-clock">{elapsed !== null ? `${elapsed.toFixed(1)} s` : ""}</span>
           </div>
-          <div className="drill-bar">
+          <div className={`drill-bar${missState}`}>
             <div style={{ width: `${(index / questions.length) * 100}%` }} />
           </div>
+          {outOfReach && (
+            <div className="drill-out">
+              This round can't pass now: more than {allowed} missed. Keep going for practice, or{" "}
+              <button className="btn" onClick={start}>
+                Restart drill
+              </button>
+            </div>
+          )}
           <p className="drill-prompt">{question.prompt}</p>
           {question.staff && (
             <div className="drill-paper">
