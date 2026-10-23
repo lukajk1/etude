@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { playNotes, preparePiano } from "../audio/live";
+import { playNotes, playNotesLater, preparePiano, stopAll } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
 import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
@@ -48,6 +48,9 @@ export default function DrillView({ id }: { id: string }) {
   const [reveal, setReveal] = useState(false);
   const [now, setNow] = useState(0);
   const shownAt = useRef(0);
+  /** The automatic move to the next question after a right answer. */
+  const advance = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(advance.current), []);
 
   // Reset whenever a different drill is opened.
   useEffect(() => {
@@ -60,6 +63,8 @@ export default function DrillView({ id }: { id: string }) {
   const step = question?.steps[stepIndex];
 
   const start = () => {
+    clearTimeout(advance.current);
+    stopAll();
     setQuestions(Array.from({ length: ROUND_LENGTH }, () => drill.generate()));
     setIndex(0);
     setStepIndex(0);
@@ -83,6 +88,7 @@ export default function DrillView({ id }: { id: string }) {
   }, [phase, reveal, index]);
 
   const next = useCallback(() => {
+    clearTimeout(advance.current);
     if (index + 1 >= questions.length) {
       setPhase("done");
       return;
@@ -108,9 +114,9 @@ export default function DrillView({ id }: { id: string }) {
       setGiven(all);
       setAnswered((a) => [...a, { question, given: all, ok, ms: performance.now() - shownAt.current }]);
       setReveal(true);
-      if (ok) setTimeout(next, 650);
+      if (ok) advance.current = setTimeout(next, 650);
       // After a wrong scale-degree answer, hear the note walk home to do.
-      else if (question.resolve) setTimeout(() => void playNotes(question.resolve!), 250);
+      else if (question.resolve) playNotesLater(question.resolve, 250);
     },
     [question, reveal, given, stepIndex, next],
   );
@@ -178,9 +184,16 @@ export default function DrillView({ id }: { id: string }) {
           </div>
           <h2 className="drill-title">{drill.title}</h2>
         </div>
-        <button className="btn" onClick={() => go({ kind: "home" })}>
-          Back to the Practice Room
-        </button>
+        <div className="drill-head-actions">
+          {phase === "run" && (
+            <button className="btn" onClick={start} title="Start over with new questions">
+              Restart drill
+            </button>
+          )}
+          <button className="btn" onClick={() => go({ kind: "home" })}>
+            Back to the Practice Room
+          </button>
+        </div>
       </div>
 
       {phase === "intro" && (

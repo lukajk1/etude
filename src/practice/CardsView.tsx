@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { playNotes, preparePiano } from "../audio/live";
+import { playNotes, playNotesLater, preparePiano } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { isRight, type Step } from "./drills/catalog";
 import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
@@ -152,7 +152,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
       const ms = performance.now() - shownAt.current;
       const ok = steps.every((s, i) => isRight(s, all[i]));
       review(showing.card.id, ok, ms, Date.now(), fast);
-      if (!ok && showing.shown.resolve) setTimeout(() => void playNotes(showing.shown.resolve!), 250);
+      if (!ok && showing.shown.resolve) playNotesLater(showing.shown.resolve, 250);
       setChosen(value);
       setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: all, ok, ms }]);
     },

@@ -63,12 +63,39 @@ export async function ensureAudio() {
 window.addEventListener("pointerdown", () => void ensureAudio(), { capture: true });
 window.addEventListener("keydown", () => void ensureAudio(), { capture: true });
 
+type PreviewEvent = { pitches: number[]; at: number; dur: number; vel?: number };
+
+/** Bumped by `stopAll`, so a play that was waiting (on a delay or the audio unlock) is dropped. */
+let generation = 0;
+const pending = new Set<ReturnType<typeof setTimeout>>();
+
 /** Play notes outside the project (ear training), on piano. */
-export async function playNotes(events: { pitches: number[]; at: number; dur: number; vel?: number }[]) {
+export async function playNotes(events: PreviewEvent[]) {
+  const gen = generation;
   await ensureAudio();
+  if (gen !== generation) return;
   if (ui.state.playing) stop();
   engine.preview("piano", events);
 }
+
+/** Play notes after a delay, unless `stopAll` comes first. */
+export function playNotesLater(events: PreviewEvent[], ms: number) {
+  const t = setTimeout(() => {
+    pending.delete(t);
+    void playNotes(events);
+  }, ms);
+  pending.add(t);
+}
+
+/** Silence everything: previews, delayed previews and project playback. For leaving a screen or the page. */
+export function stopAll() {
+  generation++;
+  for (const t of pending) clearTimeout(t);
+  pending.clear();
+  engine.stopPreview();
+  if (ui.state.playing) stop();
+}
+window.addEventListener("pagehide", stopAll);
 
 /** Make sure the piano is loaded for the current sound source (for ear training). */
 export function preparePiano() {

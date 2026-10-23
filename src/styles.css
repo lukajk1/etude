@@ -1006,6 +1006,11 @@ canvas {
   max-width: 760px;
   margin: 0 auto 16px;
 }
+.drill-head-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
 .drill-number {
   color: var(--loop);
   font-size: 11px;

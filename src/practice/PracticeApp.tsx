@@ -4,7 +4,7 @@ import { Editor } from "../components/Editor";
 import { Overview } from "../components/Overview";
 import { StatusBar } from "../components/StatusBar";
 import { useEditorShortcuts } from "../lib/shortcuts";
-import { preparePiano } from "../audio/live";
+import { preparePiano, stopAll } from "../audio/live";
 import { getDeck } from "./cards/decks";
 import { DRILLS } from "./drills/catalog";
 import { getExercise } from "./exercises/catalog";
@@ -146,7 +146,15 @@ export function PracticeApp() {
   useEffect(() => {
     document.title = "Etude Practice Room";
     window.scrollTo(0, 0);
+    // Leaving a screen silences it, including anything it scheduled to play later.
+    return stopAll;
   }, [route]);
+  // Nothing here is worth hearing from a background tab.
+  useEffect(() => {
+    const onHide = () => document.hidden && stopAll();
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, []);
 
   switch (route.kind) {
     case "drill":
