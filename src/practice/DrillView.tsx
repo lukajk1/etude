@@ -200,6 +200,12 @@ export default function DrillView({ id }: { id: string }) {
               Restart drill
             </button>
           )}
+          {/* The intro has its own; during and after a round it's up here. */}
+          {deck && phase !== "intro" && (
+            <button className="btn" onClick={() => go({ kind: "cards", id: deck.id })} title={`Flashcards: ${deck.title}`}>
+              Practice as flashcards
+            </button>
+          )}
           <button className="btn" onClick={() => go({ kind: "home" })}>
             Back to the Practice Room
           </button>

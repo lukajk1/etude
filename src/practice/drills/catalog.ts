@@ -544,7 +544,7 @@ const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 
 const hearDegrees: Drill = {
   id: "d-ear-degrees",
-  number: "0.11f",
+  number: "0.11g",
   title: "Hear scale degrees: all seven",
   summary: "Which degree of the key a note is, after a cadence.",
   brief:
@@ -596,9 +596,21 @@ const hearDoMiSol = checkpoint(hearDegrees, {
   generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { varied: true, walkDown: true }),
 });
 
+// The pentatonic five before fa and ti: much pop, folk and hymn melody uses only these, and
+// with no half steps between them they're the easiest to tell apart.
+const hearPentatonic = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-pent",
+  number: "0.11e",
+  title: "Hear scale degrees: do, re, mi, sol, la",
+  summary: "The pentatonic five, after a chord progression: re and la join do, mi and sol.",
+  brief:
+    "A chord progression sets the key, then one note plays: do, re, mi, sol or la, the major pentatonic scale. Much pop, folk and hymn melody uses only these five, and with no half steps between them they're the easiest set to tell apart. Re sounds unfinished and leans down to do; la sounds wistful and leans down to sol.",
+  generate: () => degreeQuestion(pick([1, 2, 3, 5, 6]), ["1", "2", "3", "5", "6"], { varied: true, walkDown: true }),
+});
+
 const hearDoToSol = checkpoint(hearDegrees, {
   id: "d-ear-degrees-15",
-  number: "0.11e",
+  number: "0.11f",
   title: "Hear scale degrees: do to sol",
   summary: "Degrees 1 to 5.",
   generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"], { varied: true, walkDown: true }),
@@ -676,6 +688,7 @@ export const DRILLS: Drill[] = [
   hearDoMiSolC,
   hearDoMiSolKeys,
   hearDoMiSol,
+  hearPentatonic,
   hearDoToSol,
   hearDegrees,
   ...FRAGMENT_DRILLS,

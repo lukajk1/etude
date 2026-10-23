@@ -127,7 +127,7 @@ const PREREQS: Record<string, string[]> = {
   "0.9c": ["0.8c"],
   "0.9d": ["0.8d"],
   "0.10a": ["0.8a"], // major and minor chords differ by their 3rd
-  "0.12a": ["0.11e"], // fragments are scale degrees in a row
+  "0.12a": ["0.11f"], // fragments are scale degrees in a row
   "0.13a": ["0.8a"], // intervals in a melody, after hearing them alone
   "0.14a": ["0.2b", "0.3a"], // the rarer keys, once the core ones and scales are solid
   "2.1a": ["0.11d"], // a chord's bass note is a scale degree
@@ -139,8 +139,8 @@ const PREREQS: Record<string, string[]> = {
   "5.1a": ["0.6a"], // spotting the note outside a chord means reading the chord
   "6.1a": ["0.7a"], // choosing a chord means knowing what's in each one
   T2: ["0.11d"], // skips in the tonic chord: hear do, mi and sol first
-  T3: ["0.11e", "0.3a"],
-  T4: ["0.3b", "0.11f"], // minor: the natural minor scale, and every degree by ear
+  T3: ["0.11f", "0.3a"],
+  T4: ["0.3b", "0.11g"], // minor: the natural minor scale, and every degree by ear
   T5: ["0.13a"], // wide leaps in a melody
   "1.1": ["0.4a"],
   "1.3": ["1.1"],
