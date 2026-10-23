@@ -1,4 +1,5 @@
-import { EXERCISES, type Exercise } from "./exercises/catalog";
+import { displayNumber, nextStage } from "./course";
+import type { Exercise } from "./exercises/catalog";
 import { PASS_SCORE, type Issue } from "./exercises/grade";
 import { checkWork, focused, focusIssue, lastCheck, progress, resetWork, studentTrack } from "./exercises/state";
 import { go } from "./route";
@@ -33,11 +34,11 @@ export function ExercisePanel({ ex }: { ex: Exercise }) {
   const stale = !!(check && student && check.notes !== student.notes);
   const errors = result?.issues.filter((i) => i.severity === "error") ?? [];
   const warnings = result?.issues.filter((i) => i.severity === "warning") ?? [];
-  const next = EXERCISES[EXERCISES.indexOf(ex) + 1];
+  const next = nextStage(ex.id);
 
   return (
     <aside className="ex-panel" aria-label="Exercise">
-      <div className="ex-number">Exercise {ex.number}</div>
+      <div className="ex-number">Exercise, stage {displayNumber(ex.number)}</div>
       <h2 className="ex-title">{ex.title}</h2>
       <p className="ex-brief">{ex.brief}</p>
 
@@ -92,8 +93,8 @@ export function ExercisePanel({ ex }: { ex: Exercise }) {
             </ul>
           )}
           {result.passed && next && (
-            <button className="btn ex-next" onClick={() => go({ kind: "exercise", id: next.id })}>
-              Next: {next.number} {next.title}
+            <button className="btn ex-next" onClick={() => go(next.route)}>
+              Next: {displayNumber(next.number)} {next.title}
             </button>
           )}
         </div>

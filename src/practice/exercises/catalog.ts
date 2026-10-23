@@ -210,7 +210,7 @@ export function exerciseProject(ex: Exercise): Project {
   tracks.push(makeTrack(ex.student.timbre, ex.student.name));
   const bars = ex.given ? ex.given.pitches.length : 14;
   return {
-    title: `${ex.number} ${ex.title}`,
+    title: ex.title,
     bpm: ex.bpm,
     timeSig: [4, 4],
     key: ex.key,

@@ -128,6 +128,12 @@ drill counts how often you've answered each distinct question (what's shown and 
 the key or register of the audio), and each of the 20 slots takes the least-seen of 12
 candidates, never repeating one within the round where it can avoid it.
 
+Stages are shown numbered by level and place: **3.4** is the fourth stage of Level 3, and
+**P.1** the first of Preparatory, with a tag for the skill each exercises (Reading, Ear,
+Rhythm, Transcription, Harmony, Cadences). The numbers are computed from the level layout in
+`src/practice/course.ts`, so adding a stage renumbers the ones after it in its level. The
+numbers in the tables here (0.11c, 3.3a, T2) are the stages' internal ids, which don't change.
+
 The home page groups the course by level (`src/practice/levels.ts`): the Royal Conservatory
 (RCM) theory levels set the ladder, and ear skills are placed on it by first-year college
 aural-skills pacing rather than RCM's ear tests, which are paced for children over a decade of

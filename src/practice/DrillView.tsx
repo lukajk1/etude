@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, playNotesLater, preparePiano, previewPlaying, stopAll } from "../audio/live";
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
+import { displayNumber, nextStage, stageById } from "./course";
 import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
 import { buildRound, markSeen } from "./drills/selection";
-import { levelLabel, LEVELS } from "./levels";
+import { gradeName, levelLabel, LEVELS } from "./levels";
 import { go } from "./route";
 import { progress, recordProgress } from "./exercises/state";
 import { useSignal } from "../model/ui";
@@ -29,16 +30,11 @@ function passMarks(d: Drill) {
   return `${Math.round(d.pass.accuracy * 100)}% correct${d.pass.medianSec ? `, answering in ${d.pass.medianSec} s or less (median)` : ""}`;
 }
 
-const UNIT_NAMES: Record<string, string> = {
-  harmony: "Hearing harmony",
-  rhythm: "Rhythm and meter",
-  cadences: "Cadences",
-  nct: "Non-chord tones",
-  harmonize: "Harmonizing a melody",
-};
-
 export default function DrillView({ id }: { id: string }) {
   const drill = DRILLS.find((d) => d.id === id)!;
+  const row = stageById(drill.id);
+  /** The stage after this one in course order, offered once you pass. */
+  const nextUp = nextStage(drill.id);
   const best = useSignal(progress)[drill.id];
   const deck = deckForDrill(drill.id);
   const [phase, setPhase] = useState<"intro" | "run" | "done">("intro");
@@ -190,11 +186,11 @@ export default function DrillView({ id }: { id: string }) {
   const missState = outOfReach ? " is-out" : missed > 0 && missed === allowed ? " is-edge" : "";
 
   return (
-    <section className="drill" aria-label={`Drill ${drill.number}: ${drill.title}`}>
+    <section className="drill" aria-label={`Stage ${displayNumber(drill.number)}: ${drill.title}`}>
       <div className="drill-head">
         <div>
           <div className="drill-number">
-            {UNIT_NAMES[drill.unit ?? ""] ?? "Foundations"}, drill {drill.number}
+            {row ? `${gradeName(row.grade)}, ${row.unit.kind}` : "Practice"}, stage {displayNumber(drill.number)}
           </div>
           <h2 className="drill-title">{drill.title}</h2>
         </div>
@@ -353,9 +349,9 @@ export default function DrillView({ id }: { id: string }) {
             <button className="ex-check" onClick={start}>
               Go again
             </button>
-            {results.passed && DRILLS[DRILLS.indexOf(drill) + 1] && (
-              <button className="btn" onClick={() => go({ kind: "drill", id: DRILLS[DRILLS.indexOf(drill) + 1].id })}>
-                Next drill
+            {results.passed && nextUp && (
+              <button className="btn" onClick={() => go(nextUp.route)}>
+                Next: {displayNumber(nextUp.number)} {nextUp.title}
               </button>
             )}
           </div>

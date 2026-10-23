@@ -101,7 +101,7 @@ function transcriptionProject(stage: DictationStage, m: Melody): Project {
   const first = m.notes[0];
   const lane = makeTrack("piano", "Your transcription", [{ id: newId(), pitch: first.pitch, start: first.start, dur: first.dur, vel: 0.75 }]);
   return {
-    title: `${stage.number} ${stage.title}`,
+    title: stage.title,
     bpm: m.bpm,
     timeSig: m.timeSig,
     key: m.tonic,

@@ -6,6 +6,7 @@ import { StatusBar } from "../components/StatusBar";
 import { useEditorShortcuts } from "../lib/shortcuts";
 import { preparePiano, stopAll } from "../audio/live";
 import { getDeck } from "./cards/decks";
+import { displayNumber } from "./course";
 import { DRILLS } from "./drills/catalog";
 import { getExercise } from "./exercises/catalog";
 import { currentExercise, openExercise } from "./exercises/state";
@@ -54,7 +55,7 @@ function ExerciseScreen({ id }: { id: string }) {
   if (!ex || currentExercise(project)?.id !== id) return null;
   return (
     <div className="app" style={{ gridTemplateRows: "auto auto 1fr auto" }}>
-      <Header title={`${ex.number} ${ex.title}`} editor />
+      <Header title={`${displayNumber(ex.number)} ${ex.title}`} editor />
       <Overview />
       <div className="main">
         <Editor />
@@ -78,7 +79,7 @@ function TranscriptionScreen({ id }: { id: string }) {
   if (!stage || project.exercise?.id !== id) return null;
   return (
     <div className="app" style={{ gridTemplateRows: "auto 1fr auto" }}>
-      <Header title={`${stage.number} ${stage.title}`} editor />
+      <Header title={`${displayNumber(stage.number)} ${stage.title}`} editor />
       <div className="main">
         <Editor lanesHeight={96} />
         <TranscriptionPanel stage={stage} />
@@ -96,7 +97,7 @@ function DrillScreen({ id }: { id: string }) {
   if (!drill) return null;
   return (
     <div className="app" style={{ gridTemplateRows: "auto 1fr" }}>
-      <Header title={`${drill.number} ${drill.title}`} />
+      <Header title={`${displayNumber(drill.number)} ${drill.title}`} />
       <div className="main">
         <Suspense fallback={<div className="drill">Loading…</div>}>
           <DrillView id={id} />

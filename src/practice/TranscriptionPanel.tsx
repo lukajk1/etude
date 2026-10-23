@@ -3,7 +3,8 @@ import { useSignal, useUi } from "../model/ui";
 import { progress } from "./exercises/state";
 import { TR_PASS, type TrIssue } from "./transcription/grade";
 import { MelodyStaff } from "./transcription/MelodyStaff";
-import { STAGES, type DictationStage } from "./transcription/melodies";
+import { displayNumber, nextStage } from "./course";
+import type { DictationStage } from "./transcription/melodies";
 import {
   checkTranscription,
   dictations,
@@ -56,7 +57,7 @@ export function TranscriptionPanel({ stage }: { stage: DictationStage }) {
   const result = checked?.id === stage.id ? checked.result : null;
   const stale = !!(checked && lane && checked.notes !== lane.notes);
   const revealed = project.tracks.some((t) => t.locked);
-  const next = STAGES[STAGES.indexOf(stage) + 1];
+  const next = nextStage(stage.id);
   if (!d) return null;
   const m = d.melody;
   const first = m.notes[0];
@@ -65,7 +66,7 @@ export function TranscriptionPanel({ stage }: { stage: DictationStage }) {
 
   return (
     <aside className="ex-panel" aria-label="Melodic dictation">
-      <div className="ex-number">Melodic dictation {stage.number}</div>
+      <div className="ex-number">Melodic dictation, stage {displayNumber(stage.number)}</div>
       <h2 className="ex-title">{capital(stage.title.replace(/^Melodic dictation: /, ""))}</h2>
       <p className="ex-brief">
         Listen, then write the melody in your lane. It's in {prettyCode(m.keyCode)} {m.mode}, {m.timeSig[0]}/{m.timeSig[1]}, and starts on {spelledName(first.vf)}
@@ -163,8 +164,8 @@ export function TranscriptionPanel({ stage }: { stage: DictationStage }) {
             </button>
           )}
           {result.passed && next && (
-            <button className="btn ex-next" onClick={() => go({ kind: "transcribe", id: next.id })}>
-              Next: {next.number} {next.title.replace(/^Melodic dictation: /, "")}
+            <button className="btn ex-next" onClick={() => go(next.route)}>
+              Next: {displayNumber(next.number)} {next.title}
             </button>
           )}
         </div>
