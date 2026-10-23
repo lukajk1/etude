@@ -445,9 +445,9 @@ export function Home() {
           </button>
         </div>
         <p className="pr-blurb">
-          Every stage, grouped by level: rough matches to the Royal Conservatory (RCM) theory levels and practical ear tests. Skills RCM doesn't test,
-          from first-year college aural skills, sit at the level they fit by difficulty. Faded stages build on something you haven't passed yet; you can
-          still open them.
+          Every stage, grouped by level. Levels follow the Royal Conservatory (RCM) theory levels; ear skills are placed by first-year college
+          aural-skills pacing, which suits an adult learner better than RCM's ear tests (paced for children over a decade of piano exams), and each
+          shows its RCM level for reference. Faded stages build on something you haven't passed yet; you can still open them.
         </p>
         <div className="pr-levels">
           {grades.map((g) => (

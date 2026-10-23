@@ -123,10 +123,12 @@ speed targets:
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 
-The home page groups the course by level (`src/practice/levels.ts`): rough matches to the
-Royal Conservatory (RCM) theory levels and practical ear tests, with first-year college aural
-skills that RCM doesn't test placed at the level they fit by difficulty. Each stage is tagged
-with its unit. It also suggests an order: each stage lists what's worth passing first (for
+The home page groups the course by level (`src/practice/levels.ts`): the Royal Conservatory
+(RCM) theory levels set the ladder, and ear skills are placed on it by first-year college
+aural-skills pacing rather than RCM's ear tests, which are paced for children over a decade of
+piano exams (all intervals only around Level 8); each keeps its RCM level as a tag. College
+skills RCM doesn't test sit at the level they fit by difficulty. Each stage is tagged with its
+unit. It also suggests an order: each stage lists what's worth passing first (for
 example scales after major key signatures, intervals after scales, I-or-V after do-mi-sol),
 stages within a topic go a, b, c, and no stage is listed below what it builds on. Stages that
 aren't ready yet are faded and say what comes first, but stay open. The order is `PREREQS` in
