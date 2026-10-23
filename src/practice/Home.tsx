@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
-import { DECKS, deckSettings, settingsFor } from "./cards/decks";
+import { DECKS, deckForDrill, deckSettings, settingsFor } from "./cards/decks";
 import { cardStates, summarize } from "./cards/srs";
 import { ALL_ITEMS, COURSE, displayNumber, prereqText, routeId, skillClass, stageById, stageGrade, unmetPrereqs, type Item } from "./course";
 import { ROADMAP } from "./exercises/catalog";
@@ -61,8 +61,9 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
             const unmet = p ? [] : unmetPrereqs(it, prog);
             const chip = p?.passed ? " is-pass" : p ? " is-tried" : unmet.length ? " is-later" : " is-next";
             const level = LEVELS[it.number];
+            const deck = it.route.kind === "drill" ? deckForDrill(it.route.id) : undefined;
             return (
-              <li key={it.number}>
+              <li key={it.number} className="pr-stage-row">
                 <button className={`pr-stage${unmet.length ? " is-later" : ""}`} onClick={() => go(it.route)}>
                   <span className={`pr-chip${chip}`}>{displayNumber(it.number)}</span>
                   <span className="pr-stage-text">
@@ -77,6 +78,11 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
                   </span>
                   <span className={`pr-stage-status${p?.passed ? " is-pass" : ""}`}>{p ? (p.passed ? "Passed" : `Best ${p.best}%`) : ""}</span>
                 </button>
+                {deck && (
+                  <button className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: deck.id })} title={`Practise as flashcards: ${deck.title}`}>
+                    Flashcards
+                  </button>
+                )}
               </li>
             );
           })}
