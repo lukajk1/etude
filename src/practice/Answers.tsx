@@ -60,29 +60,35 @@ export function RhythmStaff({ spec, scale = 1.35 }: { spec: string; scale?: numb
     const el = ref.current;
     if (!el) return;
     el.innerHTML = "";
-    const { beats, notes } = fromSpec(spec);
-    const width = 40 + (beats ? 34 : 0) + notes.reduce((w, x) => w + (x.dur >= 8 ? 46 : 34), 0);
+    const { beats, bars } = fromSpec(spec);
+    // One stave per bar, the time signature on the first.
+    const widths = bars.map((notes, i) => 32 + (beats && i === 0 ? 34 : 0) + notes.reduce((w, x) => w + (x.dur >= 8 ? 46 : 34), 0));
+    const width = 8 + widths.reduce((s, w) => s + w, 0);
     const renderer = new Renderer(el, Renderer.Backends.SVG);
     // Tall enough for stems and beams below the middle line.
     renderer.resize(width * scale, 122 * scale);
     const ctx = renderer.getContext();
     ctx.scale(scale, scale);
-    const stave = new Stave(4, 2, width - 8);
-    if (beats) stave.addTimeSignature(`${beats}/4`);
-    stave.setContext(ctx).draw();
-    const vfNotes = notes.map((x) => {
-      const base = VF_DUR[x.dur] ?? "q";
-      const dotted = base.endsWith("d");
-      const note = new StaveNote({ keys: ["b/4"], duration: (dotted ? base.slice(0, -1) : base) + (x.rest ? "r" : ""), dots: dotted ? 1 : 0 });
-      if (dotted) Dot.buildAndAttach([note], { all: true });
-      return note;
+    let x0 = 4;
+    bars.forEach((notes, i) => {
+      const stave = new Stave(x0, 2, widths[i]);
+      x0 += widths[i];
+      if (beats && i === 0) stave.addTimeSignature(`${beats}/4`);
+      stave.setContext(ctx).draw();
+      const vfNotes = notes.map((x) => {
+        const base = VF_DUR[x.dur] ?? "q";
+        const dotted = base.endsWith("d");
+        const note = new StaveNote({ keys: ["b/4"], duration: (dotted ? base.slice(0, -1) : base) + (x.rest ? "r" : ""), dots: dotted ? 1 : 0 });
+        if (dotted) Dot.buildAndAttach([note], { all: true });
+        return note;
+      });
+      const beams = Beam.generateBeams(vfNotes.filter((v) => !v.isRest()));
+      const total = notes.reduce((t, x) => t + x.dur, 0);
+      const voice = new Voice({ num_beats: Math.max(1, total / 4), beat_value: 4 }).setMode(Voice.Mode.SOFT).addTickables(vfNotes);
+      new Formatter().joinVoices([voice]).format([voice], Math.max(30, stave.getNoteEndX() - stave.getNoteStartX() - 14));
+      voice.draw(ctx, stave);
+      beams.forEach((b) => b.setContext(ctx).draw());
     });
-    const beams = Beam.generateBeams(vfNotes.filter((v) => !v.isRest()));
-    const total = notes.reduce((t, x) => t + x.dur, 0);
-    const voice = new Voice({ num_beats: Math.max(1, total / 4), beat_value: 4 }).setMode(Voice.Mode.SOFT).addTickables(vfNotes);
-    new Formatter().joinVoices([voice]).format([voice], Math.max(30, width - stave.getNoteStartX() - 14));
-    voice.draw(ctx, stave);
-    beams.forEach((b) => b.setContext(ctx).draw());
   }, [spec, scale]);
   return <div className="drill-staff" ref={ref} />;
 }
@@ -128,7 +134,7 @@ export function answerLabel(type: AnswerType, value: string): string {
     case "meter":
       return value === "6/8" ? "6/8 (two beats, each in three)" : `${METER_LABEL[value as MeterId]} (${value} beats)`;
     case "rhythm":
-      return `the rhythm counted ${countText(fromSpec(value).notes)}`;
+      return `the rhythm counted ${countText(fromSpec(value).notes, fromSpec(value).bars)}`;
     case "tap":
       return value === "ok" ? "every note in time" : "some notes off the beat";
     case "cadence":
@@ -315,7 +321,7 @@ function RhythmChoices({ step, chosen, reveal, onPick }: PadProps) {
         else if (reveal && v === chosen) cls += " is-wrong";
         return (
           <button key={v} className={cls} disabled={reveal} onClick={() => onPick(v)} aria-label={answerLabel("rhythm", v)}>
-            <span className="rhythm-choice-letter">{"ABC"[i]}</span>
+            <span className="rhythm-choice-letter">{"ABCD"[i]}</span>
             <RhythmStaff spec={v} scale={1.1} />
           </button>
         );

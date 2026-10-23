@@ -13,14 +13,20 @@ export interface RNote {
   rest?: boolean;
 }
 
-/** A rhythm as text, "beats:durations", e.g. "3:4,4r,2,2" (r for a rest). Beats 0: no time signature. */
+/**
+ * A rhythm as text, "beats:durations", e.g. "3:4,4r,2,2" (r for a rest), with "|" between
+ * bars: "3:4,8|12". Beats 0: no time signature.
+ */
 export type RhythmSpec = string;
 
-export const toSpec = (beats: number, notes: RNote[]): RhythmSpec => `${beats}:${notes.map((n) => `${n.dur}${n.rest ? "r" : ""}`).join(",")}`;
+const durs = (notes: RNote[]) => notes.map((n) => `${n.dur}${n.rest ? "r" : ""}`).join(",");
+export const toSpec = (beats: number, notes: RNote[]): RhythmSpec => `${beats}:${durs(notes)}`;
+export const barsSpec = (beats: number, bars: RNote[][]): RhythmSpec => `${beats}:${bars.map(durs).join("|")}`;
 
-export function fromSpec(spec: RhythmSpec): { beats: number; notes: RNote[] } {
+export function fromSpec(spec: RhythmSpec): { beats: number; notes: RNote[]; bars: RNote[][] } {
   const [b, body] = spec.split(":");
-  return { beats: Number(b), notes: body.split(",").map((t) => ({ dur: parseInt(t, 10), rest: t.endsWith("r") })) };
+  const bars = body.split("|").map((bar) => bar.split(",").map((t) => ({ dur: parseInt(t, 10), rest: t.endsWith("r") })));
+  return { beats: Number(b), notes: bars.flat(), bars };
 }
 
 // ---- Cells and bars ------------------------------------------------------------------
@@ -39,6 +45,7 @@ const CELLS: Cell[][] = [
     { notes: n(4), name: "quarter" },
     { notes: n("4r"), name: "quarter rest" },
     { notes: n(8), name: "half" },
+    { notes: n("8r"), name: "half rest" },
     { notes: n(12), name: "dotted half" },
   ],
   [
@@ -75,7 +82,25 @@ export function randomBar(beats: number, level: number): RNote[] {
   }
 }
 
-/** Swap one cell for another of the same length, for a near-miss answer choice. */
+/** Cells from `level` that add up to `len` beats. */
+function fill(len: number, level: number): RNote[] {
+  const out: RNote[] = [];
+  let left = len;
+  while (left > 0) {
+    const c = pick(cellsUpTo(level).filter((c) => span(c) <= left));
+    out.push(...c.notes.map((x) => ({ ...x })));
+    left -= span(c);
+  }
+  return out;
+}
+
+/** What a rhythm sounds like: each sounding note's start and length. Rests that add up the same sound the same. */
+export const soundKey = (notes: RNote[]) => {
+  let pos = 0;
+  return notes.map((x) => ((pos += x.dur), x.rest ? "" : `${pos - x.dur}+${x.dur}`)).filter(Boolean).join(" ");
+};
+
+/** Rewrite one beat (or a note held across beats) another way, for a near-miss answer choice. */
 function mutate(beats: number, notes: RNote[], level: number): RNote[] {
   // Rebuild the bar as cells by walking beat by beat.
   const groups: RNote[][] = [];
@@ -92,19 +117,21 @@ function mutate(beats: number, notes: RNote[], level: number): RNote[] {
   if (cur.length) groups.push(cur);
   const i = randInt(0, groups.length - 1);
   const len = groups[i].reduce((s, x) => s + x.dur, 0) / 4;
-  const alternatives = cellsUpTo(level).filter((c) => span(c) === len && toSpec(0, c.notes) !== toSpec(0, groups[i]));
-  if (!alternatives.length) return randomBar(beats, level);
-  groups[i] = pick(alternatives).notes.map((x) => ({ ...x }));
-  return groups.flat();
+  for (let tries = 0; tries < 20; tries++) {
+    const alt = fill(len, level);
+    if (soundKey(alt) !== soundKey(groups[i])) return groups.map((g, j) => (j === i ? alt : g)).flat();
+  }
+  return randomBar(beats, level);
 }
 
 // ---- Counting and sound -------------------------------------------------------------------
 
 /**
  * Counting for a rhythm: each note's start ("1", "&", "e", "a"), with rests and beats
- * held through in brackets, e.g. "1 2 & 3 (4) &".
+ * held through in brackets, e.g. "1 2 & 3 (4) &". Bars are joined with " | ".
  */
-export function countText(notes: RNote[]): string {
+export function countText(notes: RNote[], bars?: RNote[][]): string {
+  if (bars && bars.length > 1) return bars.map((b) => countText(b)).join(" | ");
   const word = (pos: number) => {
     const sub = pos % 4;
     return sub === 0 ? String(Math.floor(pos / 4) + 1) : sub === 2 ? "&" : sub === 1 ? "e" : "a";
@@ -131,7 +158,8 @@ export function rhythmAudio(beats: number, notes: RNote[], clicksThrough = false
   for (let i = 0; i < beats; i++) events.push({ pitches: [CLICK + (i === 0 ? 2 : 0)], at: i * b, dur: 0.06, vel: i === 0 ? 0.55 : 0.4 });
   let pos = 0;
   for (const x of notes) {
-    if (!x.rest) events.push({ pitches: [NOTE], at: beats * b + (pos / 4) * b, dur: Math.min(0.9 * (x.dur / 4) * b, 0.45), vel: 0.8 });
+    // Each note rings for nearly its full length, so a half note sounds different from a quarter and a rest.
+    if (!x.rest) events.push({ pitches: [NOTE], at: beats * b + (pos / 4) * b, dur: 0.92 * (x.dur / 4) * b, vel: 0.8 });
     pos += x.dur;
   }
   if (clicksThrough) for (let i = 0; i < beats; i++) events.push({ pitches: [CLICK], at: (beats + i) * b, dur: 0.05, vel: 0.22 });
@@ -286,18 +314,26 @@ export function meterQuestion(meter: MeterId, options: MeterId[], style: MeterSt
   };
 }
 
-/** Rhythmic dictation: hear a bar, pick its notation from three. */
+/**
+ * Rhythmic dictation: hear two bars, pick their notation from four. The wrong choices
+ * each change one beat or cell in one bar, so every beat has to be heard.
+ */
 export function dictationQuestion(beats: number, level: number): Question {
-  const notes = randomBar(beats, level);
-  const correct = toSpec(beats, notes);
-  const choices = new Set([correct]);
-  for (let tries = 0; choices.size < 3 && tries < 40; tries++) choices.add(toSpec(beats, mutate(beats, notes, level)));
-  const options = [...choices].sort(() => Math.random() - 0.5);
+  const bars = [randomBar(beats, level), randomBar(beats, level)];
+  const correct = barsSpec(beats, bars);
+  // Keyed by sound, so no two choices sound alike.
+  const choices = new Map([[soundKey(bars.flat()), correct]]);
+  for (let tries = 0; choices.size < 4 && tries < 60; tries++) {
+    const i = randInt(0, 1);
+    const alt = bars.map((b, j) => (j === i ? mutate(beats, b, level) : b));
+    if (!choices.has(soundKey(alt.flat()))) choices.set(soundKey(alt.flat()), barsSpec(beats, alt));
+  }
+  const options = [...choices.values()].sort(() => Math.random() - 0.5);
   return {
-    prompt: "After one bar of clicks, a rhythm plays. Which one was it?",
-    audio: rhythmAudio(beats, notes),
+    prompt: "After one bar of clicks, two bars of rhythm play. Which was it?",
+    audio: rhythmAudio(beats, bars.flat()),
     steps: [{ type: "rhythm", correct, options }],
-    explain: `It was counted ${countText(notes)}.`,
+    explain: `It was counted ${countText(bars.flat(), bars)}.`,
   };
 }
 
@@ -401,8 +437,8 @@ export const RHYTHM_DRILLS: Drill[] = [
     id: "r-dictation-1",
     number: "3.3a",
     title: "Rhythmic dictation: quarters, halves, rests",
-    summary: "Hear one bar, pick its notation.",
-    brief: "After a bar of clicks to set the beat, one bar of rhythm plays on one note. Pick the matching notation. Count the beats along with the clicks and keep counting through the rhythm.",
+    summary: "Hear two bars, pick their notation from four.",
+    brief: "After a bar of clicks to set the beat, two bars of rhythm play on one note. The four choices differ by a single beat, so count every beat: say \"1 2 3 4\" along with the clicks and keep counting through the rhythm. Notes ring for their full length, so a half note sounds held and a rest sounds empty.",
     ear: true,
     pass: { accuracy: 0.85 },
     generate: () => dictationQuestion(pick([3, 4]), 1),
