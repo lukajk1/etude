@@ -544,7 +544,7 @@ const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 
 const hearDegrees: Drill = {
   id: "d-ear-degrees",
-  number: "0.11e",
+  number: "0.11f",
   title: "Hear scale degrees: all seven",
   summary: "Which degree of the key a note is, after a cadence.",
   brief:
@@ -577,17 +577,28 @@ const hearDoMiSolC = checkpoint(hearDegrees, {
   generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { inC: true }),
 });
 
+// Then any key, still after the same I–IV–V–I, before the key is set a new way each time.
+const hearDoMiSolKeys = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-135-keys",
+  number: "0.11c",
+  title: "Hear scale degrees: do, mi, sol in any key",
+  summary: "Degrees 1, 3 and 5 in a new key each time, after the same I–IV–V–I cadence.",
+  brief:
+    "The same three notes, now in a different key each question, still set by the familiar I–IV–V–I cadence. Let the cadence's last chord tell you where do is, then hear the note against it.",
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"]),
+});
+
 const hearDoMiSol = checkpoint(hearDegrees, {
   id: "d-ear-degrees-135",
-  number: "0.11c",
-  title: "Hear scale degrees: do, mi, sol",
-  summary: "Degrees 1, 3 and 5, the notes of the home chord, in any key.",
+  number: "0.11d",
+  title: "Hear scale degrees: do, mi, sol, any opening",
+  summary: "Degrees 1, 3 and 5 in any key, after a different opening each time.",
   generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { varied: true }),
 });
 
 const hearDoToSol = checkpoint(hearDegrees, {
   id: "d-ear-degrees-15",
-  number: "0.11d",
+  number: "0.11e",
   title: "Hear scale degrees: do to sol",
   summary: "Degrees 1 to 5.",
   generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"], { varied: true }),
@@ -662,6 +673,7 @@ export const DRILLS: Drill[] = [
   hearChords,
   hearDoMiSolDrone,
   hearDoMiSolC,
+  hearDoMiSolKeys,
   hearDoMiSol,
   hearDoToSol,
   hearDegrees,

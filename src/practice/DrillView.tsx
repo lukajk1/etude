@@ -3,6 +3,7 @@ import { playNotes, playNotesLater, preparePiano, stopAll } from "../audio/live"
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
 import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
+import { buildRound, markSeen } from "./drills/selection";
 import { levelLabel, LEVELS } from "./levels";
 import { go } from "./route";
 import { progress, recordProgress } from "./exercises/state";
@@ -66,7 +67,7 @@ export default function DrillView({ id }: { id: string }) {
   const start = () => {
     clearTimeout(advance.current);
     stopAll();
-    setQuestions(Array.from({ length: ROUND_LENGTH }, () => drill.generate()));
+    setQuestions(buildRound(drill, ROUND_LENGTH));
     setIndex(0);
     setStepIndex(0);
     setGiven([]);
@@ -114,6 +115,7 @@ export default function DrillView({ id }: { id: string }) {
       const ok = question.steps.every((s, i) => isRight(s, all[i]));
       setGiven(all);
       setAnswered((a) => [...a, { question, given: all, ok, ms: performance.now() - shownAt.current }]);
+      markSeen(drill.id, question);
       setReveal(true);
       if (ok) advance.current = setTimeout(next, 650);
       // After a wrong scale-degree answer, hear the note walk home to do.

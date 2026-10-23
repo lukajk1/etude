@@ -296,10 +296,11 @@ export const HEAR_DEGREES_DECK = factDeck({
   summary: "Which degree of the key a note is, after a cadence; each degree is a card.",
   brief: "The key is set, then one note plays. Name its scale degree. Each degree is a card. In any key, the key is set a different way each time (a cadence, a scale, the tonic chord or a short melody); in C, by one I–IV–V–I cadence.",
   tag: "0.11",
-  drills: ["d-ear-degrees-135-drone", "d-ear-degrees-135-c", "d-ear-degrees-135", "d-ear-degrees-15", "d-ear-degrees"],
+  drills: ["d-ear-degrees-135-drone", "d-ear-degrees-135-c", "d-ear-degrees-135-keys", "d-ear-degrees-135", "d-ear-degrees-15", "d-ear-degrees"],
   ear: true,
   pools: [
-    { value: "full", label: "Any key" },
+    { value: "full", label: "Any key, any opening" },
+    { value: "keys", label: "Any key, after I–IV–V–I" },
     { value: "c", label: "In C" },
     { value: "drone", label: "In C, over a drone" },
   ],
@@ -309,7 +310,7 @@ export const HEAR_DEGREES_DECK = factDeck({
   rank: (_t, d) => [1, 5, 3, 4, 2, 6, 7].indexOf(Number(d)),
   label: (_t, d) => `degree ${d} (${SOLFEGE[Number(d) - 1]})`,
   cell: (_t, d) => `${d} ${SOLFEGE[Number(d) - 1]}`,
-  question: (_t, d, pool) => degreeQuestion(Number(d), undefined, { inC: pool !== "full", drone: pool === "drone", varied: pool === "full" }),
+  question: (_t, d, pool) => degreeQuestion(Number(d), undefined, { inC: pool === "c" || pool === "drone", drone: pool === "drone", varied: pool === "full" }),
 });
 
 /** Each chord is its own type, so any set can be checked, like the interval deck. */

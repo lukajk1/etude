@@ -10,7 +10,7 @@ export const PLAN_GOAL = "The core for starting on real pop songs: transcribing 
 
 export const GOAL_STAGES = [
   // Hearing melodies: scale degrees, for melodies and bass lines.
-  "0.11a", "0.11b", "0.11c", "0.11d", "0.11e",
+  "0.11a", "0.11b", "0.11c", "0.11d", "0.11e", "0.11f",
   // Hearing harmony: I, IV, V and vi.
   "2.1a", "2.1b", "2.1c",
   // Rhythm: note values, and dictation with quarters and eighths.

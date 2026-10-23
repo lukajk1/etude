@@ -116,12 +116,17 @@ speed targets:
 | 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, c together, d mixed | 90% |
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
 | 0.10 | Hear chord quality: a major or minor, b all four | 90% |
-| 0.11 | Hear scale degrees after a cadence: a do mi sol in C over a drone of do, b do mi sol in C, c do mi sol in any key, d do to sol, e all seven; after a wrong answer the note walks home to do by step | 85% |
+| 0.11 | Hear scale degrees once the key is set: a do mi sol in C over a drone of do, b do mi sol in C, c do mi sol in any key after the same I–IV–V–I, d do mi sol after a different opening each time, e do to sol, f all seven; after a wrong answer the note walks home to do by step | 85% |
 | 0.12 | Hear melodic fragments by scale degree: a common 3-note patterns, b common 4-note patterns with la and ti, c random 5-note fragments, faster | 85% / 80% / 75% |
 | 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
 | 0.14 | All keys: signatures up to 7 sharps or flats, major and minor (after 0.2b and 0.3a) | 95%, median 3 s |
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
+
+Each round favors questions you haven't seen yet (`src/practice/drills/selection.ts`): every
+drill counts how often you've answered each distinct question (what's shown and asked, not
+the key or register of the audio), and each of the 20 slots takes the least-seen of 12
+candidates, never repeating one within the round where it can avoid it.
 
 The home page groups the course by level (`src/practice/levels.ts`): the Royal Conservatory
 (RCM) theory levels set the ladder, and ear skills are placed on it by first-year college
@@ -206,8 +211,8 @@ local dev server and the live site are separate sites, so each has its own progr
 set a different way each time (`src/practice/drills/keyContext.ts`: cadences such as I–V7–I,
 ii–V–I or I–vi–IV–V–I in block, broken or rolled textures; a scale; the tonic chord broken up;
 or a short melody over chords), then one chord plays, voiced as a pianist would (root in the
-bass, the rest close above). Scale degrees from 0.11c on and melodic fragments (0.12) set
-the key the same varied ways; 0.11a and 0.11b keep one I–IV–V–I cadence in C. The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
+bass, the rest close above). Scale degrees from 0.11d on and melodic fragments (0.12) set
+the key the same varied ways; 0.11a to 0.11c keep one I–IV–V–I cadence (in C for a and b). The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
 adding ii; then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the
 '50s progression, the pop I–V–vi–IV, ii–V–I and others), naming chords 2 to 4. The
 explanations point to the bass line (do, fa, sol, la, re), which gives the chord away. The
