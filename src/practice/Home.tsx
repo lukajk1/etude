@@ -7,6 +7,7 @@ import { DRILLS, type Drill } from "./drills/catalog";
 import { EXERCISES, ROADMAP } from "./exercises/catalog";
 import { PASS_SCORE } from "./exercises/grade";
 import { progress, type Progress } from "./exercises/state";
+import { DAILY, MILESTONES, PLAN_GOAL, TUCKED_DECKS, TUCKED_UNITS, WEEKLY, type PlanBlock } from "./plan";
 import { go, type Route } from "./route";
 import { TR_PASS } from "./transcription/grade";
 import { intervalShort, intervalsUsed, MELODIES } from "./transcription/melodies";
@@ -272,38 +273,47 @@ export function Home() {
     saveExpanded(next);
   };
 
-  // Up next: stages that are ready (prerequisites passed). The first in each unit, then
-  // ones from other topics, up to four.
-  const ready = (it: Item) => !prog[routeId(it.route)]?.passed && unmetPrereqs(it, prog).length === 0;
-  const upNext: (Item & { kind: string })[] = [];
-  const pickedTopics = new Set<Topic>();
-  for (const u of UNITS) {
-    const t = u.topics.find((t) => t.items.some(ready));
-    if (t && upNext.length < 4) {
-      upNext.push({ ...t.items.find(ready)!, kind: u.kind });
-      pickedTopics.add(t);
-    }
-  }
-  for (const u of UNITS) {
-    for (const t of u.topics) {
-      if (upNext.length >= 4 || pickedTopics.has(t)) continue;
-      const it = t.items.find(ready);
-      if (it) {
-        upNext.push({ ...it, kind: u.kind });
-        pickedTopics.add(t);
-      }
-    }
-  }
-
-  const all = UNITS.flatMap(unitItems);
+  // Progress counts the units in focus; the composition track is tucked away below.
+  const focusUnits = UNITS.filter((u) => !TUCKED_UNITS.includes(u.title));
+  const tuckedUnits = UNITS.filter((u) => TUCKED_UNITS.includes(u.title));
+  const all = focusUnits.flatMap(unitItems);
   const passed = all.filter((it) => prog[routeId(it.route)]?.passed).length;
 
   const decks = DECKS.map((deck) => {
     const prefs = settingsFor(deck, cardPrefs);
     return { deck, sum: summarize(deck.build(prefs.pool, prefs.types)) };
   });
-  // Decks you've started, to jump back into on your own schedule.
-  const started = decks.filter((d) => d.sum.fresh < d.sum.total);
+
+  const unitCard = (u: Unit) => {
+    const items = unitItems(u);
+    const done = items.filter((it) => prog[routeId(it.route)]?.passed).length;
+    return (
+      <div key={u.title} className="pr-unit-card">
+        <div className="pr-unit-head">
+          <h3>{u.title}</h3>
+          <span className="pr-dim">
+            {done} of {items.length}
+          </span>
+        </div>
+        <ul className="pr-topics">
+          {u.topics.map((t) => (
+            <TopicRow key={topicKey(t)} topic={t} prog={prog} open={expanded.has(topicKey(t))} onToggle={() => toggle(topicKey(t))} />
+          ))}
+        </ul>
+      </div>
+    );
+  };
+  const deckTile = ({ deck, sum }: (typeof decks)[number]) => (
+    <button key={deck.id} className="pr-deck" onClick={() => go({ kind: "cards", id: deck.id })}>
+      <span className="pr-deck-top">
+        <span className="pr-deck-tag">{deck.tag ?? deck.icon}</span>
+        <span className="pr-deck-title">{deck.title}</span>
+      </span>
+      <span className={`pr-deck-status${sum.mastered === sum.total ? " is-pass" : ""}`}>
+        {sum.fresh === sum.total ? "Not started" : `${sum.mastered} of ${sum.total} mastered`}
+      </span>
+    </button>
+  );
 
   return (
     <main className="pr-home">
@@ -322,43 +332,7 @@ export function Home() {
         <p>Drills, ear training, transcription and graded exercises for the foundations of tonal music. Ten to twenty minutes a day goes a long way.</p>
       </section>
 
-      <section className="pr-today">
-        <h2 className="pr-h2">Today</h2>
-        {upNext.length > 0 && (
-          <div className="pr-next">
-            {upNext.map((it) => (
-              <button key={routeId(it.route)} className="pr-next-card" onClick={() => go(it.route)}>
-                <span className="pr-kind">{it.kind}</span>
-                <span className="pr-next-title">
-                  {it.number} {it.title}
-                </span>
-                <span className="pr-next-summary">{it.summary}</span>
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="pr-today-row">
-          <span className="pr-today-label">Flashcards</span>
-          {started.length ? (
-            started.map(({ deck }) => (
-              <button key={deck.id} className="pr-due" onClick={() => go({ kind: "cards", id: deck.id })}>
-                {deck.title}
-              </button>
-            ))
-          ) : (
-            <span className="pr-dim">Pick a deck below to start.</span>
-          )}
-          <button className="btn pr-trainer" onClick={() => go({ kind: "train", id: "intervals" })}>
-            ♪ Interval trainer
-          </button>
-        </div>
-        {weak.length > 0 && (
-          <p className="pr-dim pr-weak-line">
-            Missed most when transcribing:{" "}
-            {weak.map((w) => `${w.semitones > 0 ? "up" : "down"} ${intervalShort(w.semitones)} (${Math.round(w.rate * 100)}%)`).join(", ")}.
-          </p>
-        )}
-      </section>
+      <PlanSection prog={prog} weak={weak.map((w) => `${w.semitones > 0 ? "up" : "down"} ${intervalShort(w.semitones)} (${Math.round(w.rate * 100)}%)`)} />
 
       <section>
         <div className="pr-course-head">
@@ -371,27 +345,14 @@ export function Home() {
           Each topic is split into stages, narrow first. Click a topic to see its stages and what each one asks, or a chip to go straight to one. Faded stages
           build on something you haven't passed yet; you can still open them.
         </p>
-        <div className="pr-units">
-          {UNITS.map((u) => {
-            const items = unitItems(u);
-            const done = items.filter((it) => prog[routeId(it.route)]?.passed).length;
-            return (
-              <div key={u.title} className="pr-unit-card">
-                <div className="pr-unit-head">
-                  <h3>{u.title}</h3>
-                  <span className="pr-dim">
-                    {done} of {items.length}
-                  </span>
-                </div>
-                <ul className="pr-topics">
-                  {u.topics.map((t) => (
-                    <TopicRow key={topicKey(t)} topic={t} prog={prog} open={expanded.has(topicKey(t))} onToggle={() => toggle(topicKey(t))} />
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
+        <div className="pr-units">{focusUnits.map(unitCard)}</div>
+        <details className="pr-tucked">
+          <summary>
+            Composition track, for later: {tuckedUnits.map((u) => u.title.toLowerCase()).join(", ")}
+          </summary>
+          <p className="pr-blurb">These matter for writing music. They're folded away while the focus is fundamentals, pop transcription and reading; everything still works.</p>
+          <div className="pr-units">{tuckedUnits.map(unitCard)}</div>
+        </details>
         <div className="pr-legend pr-dim">
           <span>
             <i className="pr-chip is-pass" /> passed
@@ -410,20 +371,12 @@ export function Home() {
 
       <section>
         <h2 className="pr-h2">Flashcards</h2>
-        <p className="pr-blurb">A deck for each drill, with spaced review: missed cards come back sooner, known ones days or weeks later.</p>
-        <div className="pr-decks">
-          {decks.map(({ deck, sum }) => (
-            <button key={deck.id} className="pr-deck" onClick={() => go({ kind: "cards", id: deck.id })}>
-              <span className="pr-deck-top">
-                <span className="pr-deck-tag">{deck.tag ?? deck.icon}</span>
-                <span className="pr-deck-title">{deck.title}</span>
-              </span>
-              <span className={`pr-deck-status${sum.mastered === sum.total ? " is-pass" : ""}`}>
-                {sum.fresh === sum.total ? "Not started" : `${sum.mastered} of ${sum.total} mastered`}
-              </span>
-            </button>
-          ))}
-        </div>
+        <p className="pr-blurb">A deck for each drill. Intelligent review spends each session on what you're weakest at.</p>
+        <div className="pr-decks">{decks.filter((d) => !TUCKED_DECKS.includes(d.deck.id)).map(deckTile)}</div>
+        <details className="pr-tucked">
+          <summary>Composition-track decks: {decks.filter((d) => TUCKED_DECKS.includes(d.deck.id)).map((d) => d.deck.title.toLowerCase()).join(", ")}</summary>
+          <div className="pr-decks">{decks.filter((d) => TUCKED_DECKS.includes(d.deck.id)).map(deckTile)}</div>
+        </details>
       </section>
 
       <footer className="pr-foot">
@@ -440,6 +393,116 @@ export function Home() {
         <BackupSection />
       </footer>
     </main>
+  );
+}
+
+const ITEM_BY_ID = new Map(UNITS.flatMap(unitItems).map((it) => [routeId(it.route), it]));
+
+/** One daily block: what it's for, its next stage, how far along it is, and its decks. */
+function PlanBlockCard({ block, prog }: { block: PlanBlock; prog: Record<string, Progress> }) {
+  const items = block.stages.map((id) => ITEM_BY_ID.get(id)).filter((x): x is Item => !!x);
+  const next = items.find((it) => !prog[routeId(it.route)]?.passed);
+  const done = items.filter((it) => prog[routeId(it.route)]?.passed).length;
+  const tried = next && prog[routeId(next.route)];
+  return (
+    <div className="pr-block">
+      <div className="pr-block-head">
+        <h3>{block.title}</h3>
+        <span className="pr-dim">~{block.minutes} min</span>
+      </div>
+      <p className="pr-block-why">{block.why}</p>
+      {next ? (
+        <button className="pr-block-next" onClick={() => go(next.route)}>
+          <span className="pr-kind">Next</span>
+          <span className="pr-block-next-title">
+            {next.number} {next.title}
+          </span>
+          {tried && <span className="pr-dim">Best {tried.best}% so far</span>}
+        </button>
+      ) : (
+        <div className="pr-block-done">All done in this block ✓</div>
+      )}
+      <div className="pr-block-progress" title={`${done} of ${items.length} passed`}>
+        {items.map((it) => (
+          <i key={it.number} className={prog[routeId(it.route)]?.passed ? "is-pass" : it === next ? "is-next" : ""} title={`${it.number} ${it.title}`} />
+        ))}
+      </div>
+      {block.tip && <p className="pr-block-tip">{block.tip}</p>}
+      {block.decks && (
+        <div className="pr-block-decks">
+          {block.decks
+            .map((id) => DECKS.find((d) => d.id === id))
+            .filter((d) => !!d)
+            .map((d) => (
+              <button key={d!.id} className="pr-due" onClick={() => go({ kind: "cards", id: d!.id })}>
+                {d!.title}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The study plan: daily blocks, weekly items, and the next couple of weeks' milestones. */
+function PlanSection({ prog, weak }: { prog: Record<string, Progress>; weak: string[] }) {
+  const total = DAILY.reduce((m, b) => m + b.minutes, 0);
+  const milestones = MILESTONES.map((id) => ITEM_BY_ID.get(id)).filter((x): x is Item => !!x);
+  return (
+    <section className="pr-plan">
+      <div className="pr-course-head">
+        <h2 className="pr-h2">Your plan</h2>
+        <span className="pr-dim">about {total} minutes a day</span>
+      </div>
+      <p className="pr-blurb">{PLAN_GOAL} Short and daily beats long and occasional; on a short day, do rhythm and the ear block.</p>
+      <div className="pr-blocks">
+        {DAILY.map((b) => (
+          <PlanBlockCard key={b.id} block={b} prog={prog} />
+        ))}
+      </div>
+      <div className="pr-plan-lower">
+        <div className="pr-weekly">
+          <h3>Each week</h3>
+          {WEEKLY.map((w) => {
+            const next = w.stages?.map((id) => ITEM_BY_ID.get(id)).find((it) => it && !prog[routeId(it.route)]?.passed);
+            return (
+              <div key={w.title} className="pr-weekly-item">
+                <div>
+                  <strong>{w.title}</strong> <span className="pr-dim">{w.minutes}</span>
+                </div>
+                <p className="pr-dim">{w.text}</p>
+                {next && (
+                  <button className="pr-due" onClick={() => go(next.route)}>
+                    Next: {next.number} {next.title}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          <button className="btn pr-trainer-inline" onClick={() => go({ kind: "train", id: "intervals" })}>
+            ♪ Interval trainer
+          </button>
+        </div>
+        <div className="pr-milestones">
+          <h3>Next two weeks</h3>
+          <ul>
+            {milestones.map((it) => {
+              const p = prog[routeId(it.route)];
+              return (
+                <li key={it.number} className={p?.passed ? "is-pass" : ""}>
+                  <button onClick={() => go(it.route)}>
+                    <span className="pr-check">{p?.passed ? "✓" : ""}</span>
+                    {it.number} {it.title}
+                    {!p?.passed && p ? <span className="pr-dim"> · best {p.best}%</span> : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+      {weak.length > 0 && <p className="pr-dim pr-weak-line">Missed most when transcribing: {weak.join(", ")}.</p>}
+    </section>
   );
 }
 
