@@ -1564,14 +1564,28 @@ a.btn {
 .pr-stage-tag {
   margin-left: 8px;
   padding: 0 6px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid color-mix(in srgb, var(--skill, var(--text-dim)) 45%, transparent);
   border-radius: 999px;
-  color: var(--text-dim);
+  background: color-mix(in srgb, var(--skill, transparent) 10%, transparent);
+  color: var(--skill, var(--text-dim));
   font-family: var(--font-ui);
   font-size: 10.5px;
   font-weight: 400;
   white-space: nowrap;
 }
+.pr-level-tags .pr-stage-tag {
+  margin: 0 4px 0 0;
+}
+/* One muted color per skill, for tags, deck tiles and the skill trees. */
+.skill-reading { --skill: #3f6386; }
+.skill-ear { --skill: #3e7a54; }
+.skill-rhythm { --skill: #b0503a; }
+.skill-transcription { --skill: #7a4e6e; }
+.skill-harmony { --skill: #8f6b26; }
+.skill-cadences { --skill: #2f7480; }
+.skill-non-chord-tones { --skill: #5b6470; }
+.skill-harmonizing { --skill: #6d6a2a; }
+.skill-counterpoint { --skill: #7a5a3a; }
 .pr-unit-card {
   break-inside: avoid;
   margin-bottom: 12px;
@@ -1821,7 +1835,7 @@ a.btn {
 }
 .pr-deck-tag {
   flex: none;
-  color: var(--text-dim);
+  color: var(--skill, var(--text-dim));
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
 }

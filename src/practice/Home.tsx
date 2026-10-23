@@ -3,7 +3,7 @@ import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
 import { DECKS, deckSettings, settingsFor } from "./cards/decks";
 import { cardStates, summarize } from "./cards/srs";
-import { ALL_ITEMS, COURSE, displayNumber, prereqText, routeId, stageById, stageGrade, unmetPrereqs, type Item } from "./course";
+import { ALL_ITEMS, COURSE, displayNumber, prereqText, routeId, skillClass, stageById, stageGrade, unmetPrereqs, type Item } from "./course";
 import { ROADMAP } from "./exercises/catalog";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, levelLabel, LEVELS } from "./levels";
@@ -43,7 +43,13 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
         <h3>
           {gradeName(grade)} <span className="pr-caret">{open ? "▾" : "▸"}</span>
         </h3>
-        <span className="pr-level-tags">{tags.join(" · ")}</span>
+        <span className="pr-level-tags">
+          {tags.map((t) => (
+            <span key={t} className={`pr-stage-tag ${skillClass(t)}`}>
+              {t}
+            </span>
+          ))}
+        </span>
         <span className="pr-dim">
           {done} of {rows.length}
         </span>
@@ -62,7 +68,7 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
                   <span className="pr-stage-text">
                     <span className="pr-stage-title">
                       {it.title}
-                      <span className="pr-stage-tag">{tag}</span>
+                      <span className={`pr-stage-tag ${skillClass(tag)}`}>{tag}</span>
                       {level && <span className="pr-level">≈ {levelLabel(level)}</span>}
                     </span>
                     <span className="pr-row-summary">{it.summary}</span>
@@ -127,7 +133,7 @@ export function Home() {
   const deckTile = ({ deck, sum }: (typeof decks)[number]) => (
     <button key={deck.id} className="pr-deck" onClick={() => go({ kind: "cards", id: deck.id })}>
       <span className="pr-deck-top">
-        <span className="pr-deck-tag">{deckTag(deck)}</span>
+        <span className={`pr-deck-tag ${skillClass(deckTag(deck))}`}>{deckTag(deck)}</span>
         <span className="pr-deck-title">{deck.title}</span>
       </span>
       <span className={`pr-deck-status${sum.mastered === sum.total ? " is-pass" : ""}`}>

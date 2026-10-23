@@ -201,6 +201,9 @@ export const displayNumber = (internal: string) => DISPLAY.get(internal) ?? inte
 
 const BY_ID = new Map(COURSE.map((row) => [routeId(row.it.route), row]));
 
+/** The CSS class that colors a skill tag: "Non-chord tones" → "skill-non-chord-tones". */
+export const skillClass = (skill: string) => `skill-${skill.toLowerCase().replace(/\s+/g, "-")}`;
+
 /** A stage by its drill, melody-stage or exercise id. */
 export const stageById = (id: string) => BY_ID.get(id);
 
