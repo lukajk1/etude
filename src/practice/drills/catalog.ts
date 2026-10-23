@@ -26,6 +26,7 @@ import {
   type TriadQuality,
 } from "./theory";
 import { CADENCE_DRILLS } from "./cadences";
+import { CHORD_TYPE_DRILLS } from "./chordTypes";
 import { resolveToDo } from "./resolve";
 import { FRAGMENT_DRILLS } from "./fragments";
 import { HARMONIZE_DRILLS } from "./harmonize";
@@ -34,7 +35,7 @@ import { HARMONY_DRILLS } from "./harmony";
 import { keyContext } from "./keyContext";
 import { RHYTHM_DRILLS } from "./rhythm";
 
-export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct";
+export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "chordType" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct";
 
 export interface Step {
   type: AnswerType;
@@ -728,6 +729,7 @@ export const DRILLS: Drill[] = [
   earIntervalDrill("d-ear-intervals-all", "0.9d", "Hear all intervals: mixed", "Every interval within an octave, rising, falling or together.", ALL_12, 0.8, "mixed"),
   hearMajorMinor,
   hearChords,
+  ...CHORD_TYPE_DRILLS,
   hearDoMiSolDrone,
   hearDoMiSolC,
   hearDoMiSolKeys,

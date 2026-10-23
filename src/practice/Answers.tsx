@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
 import { engine, ensureAudio, playNotes } from "../audio/live";
 import { CADENCE_INFO, type Cadence } from "./drills/cadences";
+import { CHORD_TYPES, type ChordType } from "./drills/chordTypes";
 import { EAR_INTERVALS, isRight, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
 import { NCT_INFO, type Nct } from "./drills/nct";
 import { NUMERAL_NAME, NUMERALS, type Numeral } from "./drills/harmony";
@@ -119,6 +120,8 @@ export function answerLabel(type: AnswerType, value: string): string {
       return accidentalsLabel(Number(value));
     case "triadQuality":
       return value;
+    case "chordType":
+      return CHORD_TYPES[value as ChordType]?.label ?? value;
     case "degree":
       return `${value} (${SOLFEGE[Number(value) - 1]})`;
     case "earInterval":
@@ -227,6 +230,14 @@ export function AnswerPad(props: PadProps) {
         <div className="drill-row">
           {["major", "minor", "diminished", "augmented"].filter((q) => !step.options || step.options.includes(q)).map((q) => (
             <Choice key={q} {...props} value={q} label={q[0].toUpperCase() + q.slice(1)} wide />
+          ))}
+        </div>
+      );
+    case "chordType":
+      return (
+        <div className="drill-grid" style={{ gridTemplateColumns: `repeat(${Math.min(4, step.options?.length ?? 4)}, minmax(0, 1fr))` }}>
+          {(step.options ?? []).map((t) => (
+            <Choice key={t} {...props} value={t} label={CHORD_TYPES[t as ChordType].label} wide />
           ))}
         </div>
       );

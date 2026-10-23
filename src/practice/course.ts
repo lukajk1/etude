@@ -133,6 +133,7 @@ const PREREQS: Record<string, string[]> = {
   "0.13a": ["0.8a"], // intervals in a melody, after hearing them alone
   "0.14a": ["0.2b", "0.3a"], // the rarer keys, once the core ones and scales are solid
   "0.15a": ["0.1c"], // a key's letters, once the notes can be read
+  "0.16a": ["0.10b"], // chord types beyond the triads, once major, minor, dim and aug are heard
   "2.1a": ["0.11d"], // a chord's bass note is a scale degree
   "2.2a": ["2.1b"],
   "2.2b": ["2.1d"],

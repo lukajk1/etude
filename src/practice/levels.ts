@@ -58,6 +58,8 @@ export const LEVELS: Record<string, Level> = {
   "0.9d": e(9, 6),
   "0.10a": e(1, 1),
   "0.10b": e(6, 4),
+  // Chord types beyond triads (7ths, sus, add9, dim7, aug), one group a level after the triads.
+  ...Object.fromEntries([..."abcdefgh"].map((l) => [`0.16${l}`, e(7, 5)])),
   "0.11a": c(2),
   "0.11b": c(2),
   "0.11c": c(3),
