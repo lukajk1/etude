@@ -3,6 +3,7 @@ import { playNotes, playNotesLater, preparePiano, stopAll } from "../audio/live"
 import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
 import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
+import { levelLabel, LEVELS } from "./levels";
 import { go } from "./route";
 import { progress, recordProgress } from "./exercises/state";
 import { useSignal } from "../model/ui";
@@ -203,6 +204,7 @@ export default function DrillView({ id }: { id: string }) {
             To pass: {passMarks(drill)}, over {ROUND_LENGTH} questions.
             {drill.ear ? " Headphones help." : ""}
           </p>
+          {LEVELS[drill.number] && <p className="drill-pass">Level: about {levelLabel(LEVELS[drill.number])}.</p>}
           {best && (
             <p className="drill-pass">
               Your best: {best.best}% {best.passed ? "(passed)" : ""}

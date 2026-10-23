@@ -7,6 +7,7 @@ import { DRILLS, type Drill } from "./drills/catalog";
 import { EXERCISES, ROADMAP } from "./exercises/catalog";
 import { PASS_SCORE } from "./exercises/grade";
 import { progress, type Progress } from "./exercises/state";
+import { levelLabel, levelRange, LEVELS } from "./levels";
 import { DAILY, MILESTONES, PLAN_GOAL, TUCKED_DECKS, TUCKED_UNITS, WEEKLY, type PlanBlock } from "./plan";
 import { go, type Route } from "./route";
 import { TR_PASS } from "./transcription/grade";
@@ -190,6 +191,7 @@ function TopicRow({ topic, prog, open, onToggle }: { topic: Topic; prog: Record<
   // Mark the next checkpoint only in topics already underway, so untouched ones stay quiet.
   const started = topic.items.some((it) => prog[routeId(it.route)]);
   const nextUnmet = next ? unmetPrereqs(next, prog) : [];
+  const level = levelRange(topic.items.map((it) => it.number));
   /** A stage's status class: passed, tried, the next one up, or not ready yet. */
   const chipClass = (it: Item, markNext: boolean) => {
     const p = prog[routeId(it.route)];
@@ -205,6 +207,7 @@ function TopicRow({ topic, prog, open, onToggle }: { topic: Topic; prog: Record<
         <span className="pr-topic-text">
           <span className="pr-row-title">
             {topic.title} <span className="pr-caret">{open ? "▾" : "▸"}</span>
+            {level && <span className="pr-level">≈ {level}</span>}
           </span>
           <span className="pr-row-summary">
             {!next ? "All passed" : nextUnmet.length ? `Next: ${next.detail}, after ${nextUnmet.join(" and ")}` : `Next: ${next.detail}`}
@@ -236,7 +239,9 @@ function TopicRow({ topic, prog, open, onToggle }: { topic: Topic; prog: Record<
                   <span className="pr-stage-text">
                     <span className="pr-stage-title">{capital(it.detail)}</span>
                     <span className="pr-row-summary">{it.summary}</span>
-                    <span className="pr-stage-pass">To pass: {it.pass}.</span>
+                    <span className="pr-stage-pass">
+                      To pass: {it.pass}.{LEVELS[it.number] && ` Level: about ${levelLabel(LEVELS[it.number])}.`}
+                    </span>
                     {unmet.length > 0 && <span className="pr-stage-first">Best after: {prereqText(unmet)}.</span>}
                   </span>
                   <span className={`pr-stage-status${p?.passed ? " is-pass" : ""}`}>{p ? (p.passed ? "Passed" : `Best ${p.best}%`) : it === next && !unmet.length ? "Next" : ""}</span>
@@ -344,7 +349,8 @@ export function Home() {
         </div>
         <p className="pr-blurb">
           Each topic is split into stages, narrow first. Click a topic to see its stages and what each one asks, or a chip to go straight to one. Faded stages
-          build on something you haven't passed yet; you can still open them.
+          build on something you haven't passed yet; you can still open them. Levels are rough matches to the Royal Conservatory (RCM) theory levels and
+          practical ear tests, or to first-year college aural skills for what RCM doesn't test.
         </p>
         <div className="pr-units">{focusUnits.map(unitCard)}</div>
         <details className="pr-tucked">
