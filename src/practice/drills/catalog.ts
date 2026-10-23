@@ -315,7 +315,8 @@ function keySignatureDrill(id: string, number: string, title: string, summary: s
 
 const keySignaturesMajor = keySignatureDrill("d-keys-major", "0.2a", "Key signatures: major, core keys", "The 9 major keys with up to 4 sharps or flats.", 4, "major");
 const keySignatures = keySignatureDrill("d-keys", "0.2b", "Key signatures: major and minor, core keys", "The 9 major and 9 minor keys with up to 4 sharps or flats.", 4);
-const keySignaturesAll = keySignatureDrill("d-keys-all", "0.2c", "Key signatures: all 30 keys", "Every major and minor key, up to 7 sharps or flats.", 7);
+// The rarer keys (5 to 7 sharps or flats) come after the rest of the reading foundations.
+const keySignaturesAll = keySignatureDrill("d-keys-all", "0.14a", "All keys: signatures up to 7 sharps or flats", "All 30 major and minor keys, adding B, F#, C#, Db, Gb and Cb and their minors.", 7);
 
 const scales: Drill = {
   id: "d-scales",
@@ -599,7 +600,6 @@ export const DRILLS: Drill[] = [
   readNotes,
   keySignaturesMajor,
   keySignatures,
-  keySignaturesAll,
   scalesMajor,
   scalesNatural,
   scales,
@@ -611,6 +611,7 @@ export const DRILLS: Drill[] = [
   nameTriads,
   buildTriadsBasic,
   buildTriads,
+  keySignaturesAll,
   earIntervalDrill("d-ear-ess-up", "0.8a", "Hear the essentials: ascending", "Minor and major 3rd, perfect 4th and 5th, octave; low note first.", ESSENTIALS, 0.9, "up"),
   earIntervalDrill("d-ear-ess-down", "0.8b", "Hear the essentials: descending", "The same five, high note first.", ESSENTIALS, 0.9, "down"),
   earIntervalDrill("d-ear-ess-together", "0.8c", "Hear the essentials: together", "The same five, played as a chord.", ESSENTIALS, 0.9, "together"),

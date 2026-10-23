@@ -107,7 +107,7 @@ speed targets:
 | | Checkpoints | To pass |
 |---|---|---|
 | 0.1 | Read notes: a treble clef, b bass clef, c both with ledger lines | 95%, median 2 s |
-| 0.2 | Key signatures: a major core keys, b major and minor core keys, c all 30 | 95%, median 3 s |
+| 0.2 | Key signatures, core keys (up to 4 sharps or flats): a major, b major and minor | 95%, median 3 s |
 | 0.3 | Scale degrees: a major, b natural minor (core keys), c all four kinds, any key | 90%, median 4 s |
 | 0.4 | Name intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 3 s |
 | 0.5 | Build intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 4 s |
@@ -119,6 +119,7 @@ speed targets:
 | 0.11 | Hear scale degrees after a cadence: a do mi sol, b do to sol, c all seven; after a wrong answer the note walks home to do by step | 85% |
 | 0.12 | Hear melodic fragments by scale degree: a common 3-note patterns, b common 4-note patterns with la and ti, c random 5-note fragments, faster | 85% / 80% / 75% |
 | 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
+| 0.14 | All keys: signatures up to 7 sharps or flats, major and minor (after 0.2b and 0.3a) | 95%, median 3 s |
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 

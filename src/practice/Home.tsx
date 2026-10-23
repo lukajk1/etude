@@ -133,6 +133,7 @@ const PREREQS: Record<string, string[]> = {
   "0.10a": ["0.8a"], // major and minor chords differ by their 3rd
   "0.12a": ["0.11b"], // fragments are scale degrees in a row
   "0.13a": ["0.8a"], // intervals in a melody, after hearing them alone
+  "0.14a": ["0.2b", "0.3a"], // the rarer keys, once the core ones and scales are solid
   "2.1a": ["0.11a"], // a chord's bass note is a scale degree
   "2.2a": ["2.1b"],
   "2.2b": ["2.1d"],
