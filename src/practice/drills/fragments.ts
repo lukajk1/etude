@@ -1,10 +1,11 @@
-import type { AudioEvent, Drill, Question } from "./catalog";
+import type { Drill, Question } from "./catalog";
+import { keyContext } from "./keyContext";
 import { resolveToDo } from "./resolve";
 import { pick, randInt } from "./theory";
 
 /**
- * Hearing melodies in context, the way musicians actually do: as scale degrees after a
- * cadence (fragments), and picking out one interval inside a running melody. Degrees here
+ * Hearing melodies in context, the way musicians actually do: as scale degrees once the
+ * key is set (fragments), and picking out one interval inside a running melody. Degrees here
  * are scale steps from do (0), so -1 is the ti below and 7 the do above.
  */
 
@@ -26,28 +27,18 @@ export const PATTERNS_4: number[][] = [
 export const patternId = (p: number[]) => p.join("_");
 export const patternFromId = (id: string) => id.split("_").map(Number);
 
-/** I–IV–V–I in the key, to set it in the ear (as in the scale-degree drill). */
-function cadence(t: number): AudioEvent[] {
-  const chords = [
-    [t - 12, t, t + 4, t + 7],
-    [t - 7, t, t + 5, t + 9],
-    [t - 5, t - 1, t + 2, t + 7],
-    [t - 12, t, t + 4, t + 7],
-  ];
-  return chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 }));
-}
-
-/** Name each note of a fragment by scale degree, after a cadence. */
+/** Name each note of a fragment by scale degree, after the key is set (a different way each time; see keyContext.ts). */
 export function fragmentQuestion(pattern: number[], noteSec: number, options = ["1", "2", "3", "4", "5", "6", "7"]): Question {
   const t = randInt(57, 64);
-  const start = 3.6;
+  const context = keyContext(t);
+  const start = context.end + 0.65;
   return {
-    prompt: `A cadence sets the key, then ${pattern.length} notes play. Name each one's scale degree (keys 1–7 work).`,
-    audio: [...cadence(t), ...pattern.map((d, i) => ({ pitches: [pitchAt(t, d)], at: start + i * noteSec, dur: noteSec * 0.92 }))],
+    prompt: `The key is set, then ${pattern.length} notes play. Name each one's scale degree (keys 1–7 work).`,
+    audio: [...context.events, ...pattern.map((d, i) => ({ pitches: [pitchAt(t, d)], at: start + i * noteSec, dur: noteSec * 0.92 }))],
     resolve: resolveToDo(pitchAt(t, pattern[pattern.length - 1]), sd(pattern[pattern.length - 1])),
     again: { label: "Play notes again", audio: pattern.map((d, i) => ({ pitches: [pitchAt(t, d)], at: i * noteSec, dur: noteSec * 0.92 })) },
     steps: pattern.map((d, i) => ({ type: "degree" as const, label: `Note ${i + 1}`, correct: String(sd(d)), options })),
-    explain: `That was ${solfa(pattern)} (${pattern.map(sd).join(" ")}). Sing it back, then keep going to do: the way it resolves tells you where each note sits.`,
+    explain: `That was ${solfa(pattern)} (${pattern.map(sd).join(" ")}); the key was set by ${context.label}. Sing it back, then keep going to do: the way it resolves tells you where each note sits.`,
   };
 }
 
@@ -100,7 +91,7 @@ export function contextIntervalQuestion(semis: number, options: number[]): Quest
 // ---- Stages ------------------------------------------------------------------------------
 
 const FRAG_BRIEF =
-  "A cadence sets the key, then a short fragment plays. Name each note's scale degree, by number (keys 1–7) or solfège. Don't measure intervals note to note: hear each note's place in the key, and if unsure, sing the fragment and carry on to do.";
+  "The key is set, a different way each time (a cadence, a scale, the tonic chord broken up, or a short melody), then a short fragment plays. Name each note's scale degree, by number (keys 1–7) or solfège. Don't measure intervals note to note: hear each note's place in the key, and if unsure, sing the fragment and carry on to do.";
 const CTX_BRIEF =
   "A short melody plays, mostly by step with one leap. Name the leap between the two notes asked about. Replay as often as you like; this is the skill of picking intervals out of real music.";
 

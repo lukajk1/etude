@@ -485,8 +485,8 @@ export const CHORD_FIT_DECK = factDeck({
 export const FRAGMENTS_DECK = factDeck({
   id: "fragments",
   title: "Melodic fragments",
-  summary: "Common three- and four-note patterns by scale degree, after a cadence.",
-  brief: "A cadence sets the key, then a short fragment plays: name each note's scale degree (keys 1–7). Each common pattern is a card, in a different key each time.",
+  summary: "Common three- and four-note patterns by scale degree, once the key is set.",
+  brief: "The key is set (a different way each time), then a short fragment plays: name each note's scale degree (keys 1–7). Each common pattern is a card, in a different key each time.",
   tag: "0.12",
   drills: ["d-frag-3", "d-frag-4", "d-frag-5"],
   ear: true,
