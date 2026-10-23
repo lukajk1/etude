@@ -23,6 +23,8 @@ export interface Item {
   detail: string;
   /** What it takes to pass. */
   pass: string;
+  /** Set when it's one of a group shown as chips on one row (a key, "G"); see `groupOf`. */
+  chip?: string;
 }
 
 export interface Topic {
@@ -52,7 +54,7 @@ function drillTopics(filter: (d: Drill) => boolean): Topic[] {
     if (!t) topics.push((t = { number, title, about: "", items: [] }));
     // The full drill (the last stage) has the most complete instructions.
     t.about = d.brief;
-    t.items.push({ route: { kind: "drill", id: d.id }, number: d.number, title: d.title, summary: d.summary, detail, pass: drillPass(d) });
+    t.items.push({ route: { kind: "drill", id: d.id }, number: d.number, title: d.title, summary: d.summary, detail, pass: drillPass(d), chip: d.chip });
   }
   return topics;
 }
@@ -130,6 +132,7 @@ const PREREQS: Record<string, string[]> = {
   "0.12a": ["0.11f"], // fragments are scale degrees in a row
   "0.13a": ["0.8a"], // intervals in a melody, after hearing them alone
   "0.14a": ["0.2b", "0.3a"], // the rarer keys, once the core ones and scales are solid
+  "0.15a": ["0.1c"], // a key's letters, once the notes can be read
   "2.1a": ["0.11d"], // a chord's bass note is a scale degree
   "2.2a": ["2.1b"],
   "2.2b": ["2.1d"],
@@ -186,18 +189,47 @@ export const COURSE: { it: Item; unit: Unit; grade: number }[] = UNITS.flatMap((
   .sort((x, y) => x.row.grade - y.row.grade || x.i - y.i)
   .map(({ row }) => row);
 
+/** A group of chipped stages (one topic, such as Scale by key) and its members, in order. */
+export interface StageGroup {
+  topic: Topic;
+  items: Item[];
+}
+
+const GROUPS = new Map<Topic, StageGroup>();
+for (const { it } of COURSE) {
+  if (!it.chip) continue;
+  const topic = UNITS.flatMap((u) => u.topics).find((t) => t.items.includes(it))!;
+  if (!GROUPS.has(topic)) GROUPS.set(topic, { topic, items: [] });
+  GROUPS.get(topic)!.items.push(it);
+}
+
+/** The group a stage belongs to, if it's one of a set shown as chips on one row. */
+export const groupOf = (it: Item) => [...GROUPS.values()].find((g) => g.items.includes(it));
+
 const DISPLAY = new Map<string, string>();
+const GROUP_DISPLAY = new Map<StageGroup, string>();
 {
   const count = new Map<number, number>();
   for (const { it, grade } of COURSE) {
+    // A group takes one place in its level; its members are that number plus their chip, "3.6 G".
+    const group = groupOf(it);
+    if (group && GROUP_DISPLAY.has(group)) {
+      DISPLAY.set(it.number, `${GROUP_DISPLAY.get(group)} ${it.chip}`);
+      continue;
+    }
     const k = (count.get(grade) ?? 0) + 1;
     count.set(grade, k);
-    DISPLAY.set(it.number, `${grade === 0 ? "P" : grade}.${k}`);
+    const n = `${grade === 0 ? "P" : grade}.${k}`;
+    if (group) GROUP_DISPLAY.set(group, n);
+    DISPLAY.set(it.number, group ? `${n} ${it.chip}` : n);
   }
 }
 
-/** The number a stage is shown with: its level, then its place in that level ("3.4", "P.1"). */
+/** The number a stage is shown with: its level, then its place in that level ("3.4", "P.1"; "3.6 G" in a group). */
 export const displayNumber = (internal: string) => DISPLAY.get(internal) ?? internal;
+
+/** A group's own number, without a chip: "3.6". */
+export const groupNumber = (g: StageGroup) => GROUP_DISPLAY.get(g) ?? "";
 
 // ---- Permanent codes ----------------------------------------------------------------------
 

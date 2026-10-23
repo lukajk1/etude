@@ -13,6 +13,7 @@ import {
   parseCode,
   pick,
   pitchOf,
+  prettyCode,
   randInt,
   scaleNotes,
   semitonesFor,
@@ -92,6 +93,8 @@ export interface Drill {
   /** Pass marks from the foundations checklist. */
   pass: { accuracy: number; medianSec?: number };
   generate: () => Question;
+  /** Set on each of a group of small drills shown together as chips on one row (the key, "G"). */
+  chip?: string;
 }
 
 export const ROUND_LENGTH = 20;
@@ -334,6 +337,46 @@ const scales: Drill = {
 };
 
 const coreScaleKeys = (kind: ScaleKind) => scaleKeys(kind).filter((k) => Math.abs(k.accidentals) <= 4);
+
+// ---- Scale by key: each major key's letters, one key at a time ---------------------------
+
+/** One question about a major key: which letter a degree is, or which degree a letter is. */
+export function keyDegreeQuestion(keyCode: string): Question {
+  const notes = scaleNotes(parseCode(keyCode), "major");
+  const degree = randInt(1, 7);
+  const note = notes[degree - 1];
+  const key = `${nameOf(notes[0])} major`;
+  const scale = `${key}: ${notes.map((n, i) => `${SOLFEGE[i]} ${nameOf(n)}`).join(", ")}.`;
+  if (Math.random() < 0.5) {
+    return {
+      prompt: `${key}: which note is ${SOLFEGE[degree - 1]} (${degree})?`,
+      steps: [{ type: "note", correct: codeOf(note) }],
+      explain: scale,
+    };
+  }
+  return {
+    prompt: `${key}: which degree is ${nameOf(note)}?`,
+    steps: [{ type: "degree", correct: String(degree) }],
+    explain: scale,
+  };
+}
+
+/** Major keys in the order they're learned: out from C around the circle of fifths. */
+const KEYS_IN_ORDER = ["C", "G", "F", "D", "Bb", "A", "Eb", "E", "Ab", "B", "Db", "F#"];
+
+/** One small drill per key, shown on the home page as one row with a chip for each key. */
+const SCALE_BY_KEY: Drill[] = KEYS_IN_ORDER.map((code, i) => ({
+  id: `d-key-${code.toLowerCase().replace("#", "s")}`,
+  number: `0.15${"abcdefghijkl"[i]}`,
+  title: `Scale by key: ${prettyCode(code)} major`,
+  summary: `Which letter each degree of ${prettyCode(code)} major is, and which degree each letter is.`,
+  brief:
+    "One major key at a time: which letter is each scale degree (\"which note is mi?\"), and which degree is each letter (\"which degree is F♯?\"). Spell from do, a letter per degree, and apply the key signature: the sharps and flats land on particular degrees (G's F♯ is ti, F's B♭ is fa).",
+  ear: false,
+  pass: { accuracy: 0.9, medianSec: 3 },
+  chip: prettyCode(code),
+  generate: () => keyDegreeQuestion(code),
+}));
 
 const scalesMajor = checkpoint(scales, {
   id: "d-scales-major",
@@ -665,6 +708,7 @@ export const DRILLS: Drill[] = [
   scalesMajor,
   scalesNatural,
   scales,
+  ...SCALE_BY_KEY,
   nameIntervalsCommon,
   nameIntervals,
   buildIntervalsCommon,

@@ -3,7 +3,7 @@ import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
 import { DECKS, deckForDrill, deckSettings, settingsFor } from "./cards/decks";
 import { cardStates, summarize } from "./cards/srs";
-import { ALL_ITEMS, COURSE, displayNumber, prereqText, routeId, skillClass, stageById, stageCode, stageGrade, unmetPrereqs, type Item } from "./course";
+import { ALL_ITEMS, COURSE, displayNumber, groupNumber, groupOf, prereqText, routeId, skillClass, stageById, stageCode, stageGrade, unmetPrereqs, type Item, type StageGroup } from "./course";
 import { ROADMAP } from "./exercises/catalog";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, levelLabel, LEVELS } from "./levels";
@@ -57,6 +57,9 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
       {open && (
         <ol className="pr-stages pr-level-stages">
           {rows.map(({ it, tag }) => {
+            // A group (Scale by key) is one row, at its first member, with a chip per member.
+            const group = groupOf(it);
+            if (group) return group.items[0] === it ? <GroupRow key={it.number} group={group} tag={tag} prog={prog} /> : null;
             const p = prog[routeId(it.route)];
             const unmet = p ? [] : unmetPrereqs(it, prog);
             const chip = p?.passed ? " is-pass" : p ? " is-tried" : unmet.length ? " is-later" : " is-next";
@@ -90,6 +93,51 @@ function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows:
         </ol>
       )}
     </div>
+  );
+}
+
+/** A group of small stages (one per key) as one row: its number and title, and a chip per member. */
+function GroupRow({ group, tag, prog }: { group: StageGroup; tag: string; prog: Record<string, Progress> }) {
+  const first = group.items[0];
+  const passed = group.items.filter((it) => prog[routeId(it.route)]?.passed).length;
+  const level = LEVELS[first.number];
+  const chipClass = (it: Item) => {
+    const p = prog[routeId(it.route)];
+    return p?.passed ? " is-pass" : p ? " is-tried" : unmetPrereqs(it, prog).length ? " is-later" : " is-next";
+  };
+  return (
+    <li className="pr-stage-row">
+      <div className="pr-stage pr-group">
+        <span className={`pr-chip${passed === group.items.length ? " is-pass" : passed ? " is-tried" : " is-next"}`}>{groupNumber(group)}</span>
+        <span className="pr-stage-text">
+          <span className="pr-stage-title">
+            {group.topic.title}
+            <span className={`pr-stage-tag ${skillClass(tag)}`}>{tag}</span>
+            {level && <span className="pr-level">≈ {levelLabel(level)}</span>}
+          </span>
+          <span className="pr-row-summary">One small drill per key, each passed on its own, in the order to learn them:</span>
+          <span className="pr-group-chips">
+            {group.items.map((it) => {
+              const p = prog[routeId(it.route)];
+              return (
+                <button
+                  key={it.number}
+                  className={`pr-chip${chipClass(it)}`}
+                  onClick={() => go(it.route)}
+                  title={`${displayNumber(it.number)} ${it.title} (${stageCode(routeId(it.route))}): ${p ? (p.passed ? "passed" : `best ${p.best}%`) : "not started"}`}
+                >
+                  {it.chip}
+                </button>
+              );
+            })}
+          </span>
+          <span className="pr-stage-pass">To pass each: {first.pass}.</span>
+        </span>
+        <span className={`pr-stage-status${passed === group.items.length ? " is-pass" : ""}`}>
+          {passed} of {group.items.length}
+        </span>
+      </div>
+    </li>
   );
 }
 

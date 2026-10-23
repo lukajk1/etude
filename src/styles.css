@@ -1790,6 +1790,20 @@ a.btn {
   letter-spacing: 0.06em;
 }
 
+/* A group of small stages (Scale by key): one row, a chip per member. */
+.pr-stage.pr-group {
+  cursor: default;
+}
+.pr-stage.pr-group:hover {
+  background: transparent;
+}
+.pr-group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 2px;
+}
+
 /* A stage and, beside it, the button for its flashcard deck. */
 .pr-stage-row {
   display: flex;

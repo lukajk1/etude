@@ -120,6 +120,7 @@ speed targets:
 | 0.12 | Hear melodic fragments by scale degree: a common 3-note patterns, b common 4-note patterns with la and ti, c random 5-note fragments, faster | 85% / 80% / 75% |
 | 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
 | 0.14 | All keys: signatures up to 7 sharps or flats, major and minor (after 0.2b and 0.3a) | 95%, median 3 s |
+| 0.15 | Scale by key: one small drill per major key (C, G, F, D, B♭, A, E♭, E, A♭, B, D♭, F♯), which letter each degree is and which degree each letter is; shown as one row with a chip per key | 90%, median 3 s |
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 

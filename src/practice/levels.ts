@@ -45,6 +45,8 @@ export const LEVELS: Record<string, Level> = {
   "0.7a": t(3),
   "0.7b": t(6),
   "0.14a": t(7),
+  // Scale by key: the letters of each major key, one key at a time (all one level, as one group).
+  ...Object.fromEntries([..."abcdefghijkl"].map((l) => [`0.15${l}`, t(3)])),
   // Ear tests (RCM level, then the college-paced level): intervals ascending first, then descending and harmonic.
   "0.8a": e(2, 2),
   "0.8b": e(4, 3),

@@ -1,5 +1,5 @@
 import { useSignal } from "../model/ui";
-import { COURSE, displayNumber, prereqsOf, routeId, SKILLS, skillClass, skillSlug, stageCode, unmetPrereqs, type Item, type Topic } from "./course";
+import { COURSE, displayNumber, groupNumber, groupOf, prereqsOf, routeId, SKILLS, skillClass, skillSlug, stageCode, unmetPrereqs, type Item, type Topic } from "./course";
 import { progress } from "./exercises/state";
 import { gradeName } from "./levels";
 import { TUCKED_UNITS } from "./plan";
@@ -25,7 +25,8 @@ interface Node {
 }
 
 function layout(skill: string) {
-  const rows = COURSE.filter((r) => r.unit.kind === skill);
+  // A group of stages (Scale by key) is laid out as one node, at its first member.
+  const rows = COURSE.filter((r) => r.unit.kind === skill && (!groupOf(r.it) || groupOf(r.it)!.items[0] === r.it));
   const unit = rows[0]?.unit;
   const topics: Topic[] = unit ? unit.topics.filter((t) => rows.some((r) => t.items.includes(r.it))) : [];
   const grades = [...new Set(rows.map((r) => r.grade))].sort((a, b) => a - b);
@@ -56,7 +57,7 @@ const shortLabel = (it: Item) => it.title.split(": ").slice(1).join(": ") || it.
 export default function SkillTrees({ skill: slug }: { skill: string }) {
   const prog = useSignal(progress);
   const skill = SKILLS.find((s) => skillSlug(s) === slug) ?? SKILLS[0];
-  const { rows, topics, grades, bandStart, bandSize, nodes, width, height } = layout(skill);
+  const { topics, grades, bandStart, bandSize, nodes, width, height } = layout(skill);
   const passedOf = (it: Item) => !!prog[routeId(it.route)]?.passed;
   const tucked = (s: string) => COURSE.some((r) => r.unit.kind === s && TUCKED_UNITS.includes(r.unit.title));
 
@@ -67,7 +68,9 @@ export default function SkillTrees({ skill: slug }: { skill: string }) {
       if (from) edges.push({ from, to: n, lit: passedOf(from.it) });
     }
   }
-  const done = rows.filter((r) => passedOf(r.it)).length;
+  // Progress counts every stage, each key of a group included.
+  const members = COURSE.filter((r) => r.unit.kind === skill);
+  const done = members.filter((r) => passedOf(r.it)).length;
 
   return (
     <section className={`skills ${skillClass(skill)}`} aria-label="Skill trees">
@@ -102,10 +105,10 @@ export default function SkillTrees({ skill: slug }: { skill: string }) {
 
       <div className="skills-summary">
         <div className="skills-bar">
-          <div style={{ width: `${(done / Math.max(1, rows.length)) * 100}%` }} />
+          <div style={{ width: `${(done / Math.max(1, members.length)) * 100}%` }} />
         </div>
         <span className="pr-dim">
-          {done} of {rows.length} passed
+          {done} of {members.length} passed
         </span>
       </div>
 
@@ -133,6 +136,28 @@ export default function SkillTrees({ skill: slug }: { skill: string }) {
             </div>
           ))}
           {[...nodes.values()].map(({ it, x, y }) => {
+            const group = groupOf(it);
+            if (group) {
+              // A group (Scale by key) is one node: filled when every member is passed, opening the next one to do.
+              const done = group.items.filter((m) => prog[routeId(m.route)]?.passed).length;
+              const started = group.items.some((m) => prog[routeId(m.route)]);
+              const next = group.items.find((m) => !prog[routeId(m.route)]?.passed) ?? group.items[0];
+              const state = done === group.items.length ? "is-pass" : started ? "is-tried" : unmetPrereqs(it, prog).length ? "is-later" : "is-ready";
+              return (
+                <button
+                  key={it.number}
+                  className={`skills-node ${state}`}
+                  style={{ left: x - COL_W / 2, top: y - R }}
+                  onClick={() => go(next.route)}
+                  title={`${groupNumber(group)} ${group.topic.title}: ${done} of ${group.items.length} passed (${group.items.map((m) => m.chip).join(" ")})`}
+                >
+                  <span className="skills-dot">{groupNumber(group)}</span>
+                  <span className="skills-label">
+                    {done} of {group.items.length} keys
+                  </span>
+                </button>
+              );
+            }
             const p = prog[routeId(it.route)];
             const unmet = p ? [] : unmetPrereqs(it, prog);
             const state = p?.passed ? "is-pass" : p ? "is-tried" : unmet.length ? "is-later" : "is-ready";
