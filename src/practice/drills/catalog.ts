@@ -30,6 +30,7 @@ import { FRAGMENT_DRILLS } from "./fragments";
 import { HARMONIZE_DRILLS } from "./harmonize";
 import { NCT_DRILLS } from "./nct";
 import { HARMONY_DRILLS } from "./harmony";
+import { keyContext } from "./keyContext";
 import { RHYTHM_DRILLS } from "./rhythm";
 
 export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct";
@@ -546,11 +547,12 @@ const hearDegrees: Drill = {
   number: "0.11e",
   title: "Hear scale degrees: all seven",
   summary: "Which degree of the key a note is, after a cadence.",
-  brief: "A cadence (I–IV–V–I) sets the key, then one note plays. Name its scale degree, 1 to 7. This is functional ear training: hearing each note's role in the key, not just its distance from the last note.",
+  brief:
+    "The key is set, a different way each time (a cadence, a scale, the tonic chord broken up, or a short melody), then one note plays. Name its scale degree, 1 to 7. This is functional ear training: hearing each note's role in the key, not just its distance from the last note. Whatever sets the key, listen for where it comes to rest: that's do.",
   ear: true,
   pass: { accuracy: 0.85 },
   generate() {
-    return degreeQuestion(randInt(1, 7));
+    return degreeQuestion(randInt(1, 7), undefined, { varied: true });
   },
 };
 
@@ -580,7 +582,7 @@ const hearDoMiSol = checkpoint(hearDegrees, {
   number: "0.11c",
   title: "Hear scale degrees: do, mi, sol",
   summary: "Degrees 1, 3 and 5, the notes of the home chord, in any key.",
-  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"]),
+  generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { varied: true }),
 });
 
 const hearDoToSol = checkpoint(hearDegrees, {
@@ -588,33 +590,41 @@ const hearDoToSol = checkpoint(hearDegrees, {
   number: "0.11d",
   title: "Hear scale degrees: do to sol",
   summary: "Degrees 1 to 5.",
-  generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"]),
+  generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"], { varied: true }),
 });
 
 /**
- * A scale degree after a cadence; `options` limits the answer buttons. `inC` keeps the key
- * at C instead of a random one; `drone` holds low do under the note (and its replays).
+ * A scale degree after the key is set; `options` limits the answer buttons. `inC` keeps the
+ * key at C instead of a random one; `drone` holds low do under the note (and its replays);
+ * `varied` sets the key a different way each time (see keyContext.ts) instead of I–IV–V–I.
  */
-export function degreeQuestion(degree: number, options?: string[], { inC = false, drone = false } = {}): Question {
+export function degreeQuestion(degree: number, options?: string[], { inC = false, drone = false, varied = false } = {}): Question {
   const t = inC ? 60 : randInt(55, 66);
   const target = t + MAJOR_STEPS[degree - 1];
-  const chords = [
-    [t - 12, t, t + 4, t + 7],
-    [t - 7, t, t + 5, t + 9],
-    [t - 5, t - 1, t + 2, t + 7],
-    [t - 12, t, t + 4, t + 7],
-  ];
+  const context = varied
+    ? keyContext(t)
+    : {
+        events: [
+          [t - 12, t, t + 4, t + 7],
+          [t - 7, t, t + 5, t + 9],
+          [t - 5, t - 1, t + 2, t + 7],
+          [t - 12, t, t + 4, t + 7],
+        ].map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })),
+        end: 2.95,
+        label: "a I–IV–V–I cadence",
+      };
+  const at = context.end + 0.65;
   // Two octaves of do, quietly, from just before the note to past its end.
-  const droneUnder = (at: number, dur: number) => (drone ? [{ pitches: [t - 24, t - 12], at, dur, vel: 0.32 }] : []);
+  const droneUnder = (from: number, dur: number) => (drone ? [{ pitches: [t - 24, t - 12], at: from, dur, vel: 0.32 }] : []);
   const resolve = resolveToDo(target, degree);
   const resolveEnd = Math.max(...resolve.map((e) => e.at + e.dur));
   return {
     prompt: drone ? "Which scale degree is the note over the drone?" : "Which scale degree is the last note?",
-    audio: [...chords.map((c, i) => ({ pitches: c, at: i * 0.75, dur: 0.7 })), ...droneUnder(3.3, 2), { pitches: [target], at: 3.6, dur: 1.4 }],
+    audio: [...context.events, ...droneUnder(at - 0.3, 2), { pitches: [target], at, dur: 1.4 }],
     resolve: [...droneUnder(0, resolveEnd), ...resolve],
     again: { label: "Play note again", audio: [...droneUnder(0, 1.7), { pitches: [target], at: drone ? 0.25 : 0, dur: 1.4 }] },
     steps: [{ type: "degree", correct: String(degree), options }],
-    explain: `That was degree ${degree} (${SOLFEGE[degree - 1]}). Listen to it walk home to do.`,
+    explain: `That was degree ${degree} (${SOLFEGE[degree - 1]})${varied ? `; the key was set by ${context.label}` : ""}. Listen to it walk home to do.`,
   };
 }
 

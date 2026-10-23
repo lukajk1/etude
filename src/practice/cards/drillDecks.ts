@@ -294,7 +294,7 @@ export const HEAR_DEGREES_DECK = factDeck({
   id: "hear-degrees",
   title: "Hear scale degrees",
   summary: "Which degree of the key a note is, after a cadence; each degree is a card.",
-  brief: "A cadence sets the key, then one note plays. Name its scale degree. Each degree is a card, in a different key each time.",
+  brief: "The key is set, then one note plays. Name its scale degree. Each degree is a card. In any key, the key is set a different way each time (a cadence, a scale, the tonic chord or a short melody); in C, by one I–IV–V–I cadence.",
   tag: "0.11",
   drills: ["d-ear-degrees-135-drone", "d-ear-degrees-135-c", "d-ear-degrees-135", "d-ear-degrees-15", "d-ear-degrees"],
   ear: true,
@@ -309,7 +309,7 @@ export const HEAR_DEGREES_DECK = factDeck({
   rank: (_t, d) => [1, 5, 3, 4, 2, 6, 7].indexOf(Number(d)),
   label: (_t, d) => `degree ${d} (${SOLFEGE[Number(d) - 1]})`,
   cell: (_t, d) => `${d} ${SOLFEGE[Number(d) - 1]}`,
-  question: (_t, d, pool) => degreeQuestion(Number(d), undefined, { inC: pool !== "full", drone: pool === "drone" }),
+  question: (_t, d, pool) => degreeQuestion(Number(d), undefined, { inC: pool !== "full", drone: pool === "drone", varied: pool === "full" }),
 });
 
 /** Each chord is its own type, so any set can be checked, like the interval deck. */
@@ -317,7 +317,7 @@ export const CHORDS_IN_KEY_DECK = factDeck({
   id: "chords-in-key",
   title: "Chords in a key",
   summary: "I, ii, IV, V and vi by ear after a cadence; pick any set to drill.",
-  brief: "A cadence sets the key, then one chord plays: name it by its role. Check the chords to drill; the answer buttons are just those. Listen to the bass note.",
+  brief: "The key is set (a different way each time), then one chord plays: name it by its role. Check the chords to drill; the answer buttons are just those. Listen to the bass note.",
   tag: "2.1",
   drills: ["h-chords-1-5", "h-chords-1-4-5", "h-chords-vi", "h-chords-all"],
   ear: true,

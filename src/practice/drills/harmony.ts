@@ -1,4 +1,5 @@
-import type { AudioEvent, Drill, Question } from "./catalog";
+import type { Drill, Question } from "./catalog";
+import { keyContext } from "./keyContext";
 import { pick, randInt } from "./theory";
 
 /**
@@ -47,18 +48,15 @@ export function chordPitches(t: number, n: Numeral): number[] {
   return [bass, ...upper];
 }
 
-/** I–IV–V–I in the key, to set it in the ear. */
-function cadence(t: number): AudioEvent[] {
-  return (["I", "IV", "V", "I"] as Numeral[]).map((n, i) => ({ pitches: chordPitches(t, n), at: i * 0.75, dur: 0.7 }));
-}
-
 export function chordInKeyQuestion(n: Numeral, options: Numeral[]): Question {
   const t = randInt(57, 64);
+  // The key is set a different way each time (see keyContext.ts), then the chord plays.
+  const context = keyContext(t);
   return {
-    prompt: "A cadence sets the key, then one chord plays. Which chord is it?",
-    audio: [...cadence(t), { pitches: chordPitches(t, n), at: 3.7, dur: 1.8 }],
+    prompt: "The key is set, then one chord plays. Which chord is it?",
+    audio: [...context.events, { pitches: chordPitches(t, n), at: context.end + 0.75, dur: 1.8 }],
     steps: [{ type: "numeral", correct: n, options }],
-    explain: `That was ${ROLE[n]} Tip: sing the bass note and find it as a scale degree; the bass tells you the chord.`,
+    explain: `That was ${ROLE[n]} (The key was set by ${context.label}.) Tip: sing the bass note and find it as a scale degree; the bass tells you the chord.`,
   };
 }
 
@@ -100,7 +98,7 @@ export function progressionQuestion(chords: Numeral[], options: Numeral[]): Ques
 // ---- Checkpoints ----------------------------------------------------------------------
 
 const BRIEF_CHORDS =
-  "A I–IV–V–I cadence sets the key, then one chord plays. Name it by its role in the key. Listen to the bass: do means I, fa IV, sol V, la vi, re ii. I sounds settled, V tense and leaning home, IV lifted, vi like a darker home, ii minor and on the way to V.";
+  "The key is set, a different way each time (a cadence, a scale, the tonic chord broken up, or a short melody), then one chord plays. Name it by its role in the key. Listen to the bass: do means I, fa IV, sol V, la vi, re ii. I sounds settled, V tense and leaning home, IV lifted, vi like a darker home, ii minor and on the way to V.";
 
 function chordsDrill(id: string, number: string, title: string, summary: string, set: Numeral[], accuracy: number): Drill {
   return {
