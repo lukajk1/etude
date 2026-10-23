@@ -7,7 +7,7 @@ import { DRILLS, type Drill } from "./drills/catalog";
 import { EXERCISES, ROADMAP } from "./exercises/catalog";
 import { PASS_SCORE } from "./exercises/grade";
 import { progress, type Progress } from "./exercises/state";
-import { levelLabel, levelRange, LEVELS } from "./levels";
+import { gradeName, gradeOf, levelLabel, levelRange, LEVELS } from "./levels";
 import { DAILY, MILESTONES, PLAN_GOAL, TUCKED_DECKS, TUCKED_UNITS, WEEKLY, type PlanBlock } from "./plan";
 import { go, type Route } from "./route";
 import { TR_PASS } from "./transcription/grade";
@@ -40,7 +40,7 @@ interface Topic {
 
 interface Unit {
   title: string;
-  /** Shown on its Up next card. */
+  /** Its category tag on stages in the course, which is grouped by level. */
   kind: string;
   topics: Topic[];
 }
@@ -82,8 +82,8 @@ function counterpointTopics(): Topic[] {
 }
 
 const UNITS: Unit[] = [
-  { title: "Foundations: reading and theory", kind: "Reading drill", topics: drillTopics((d) => !d.ear && !d.unit) },
-  { title: "Foundations: ear training", kind: "Ear drill", topics: drillTopics((d) => d.ear && !d.unit) },
+  { title: "Foundations: reading and theory", kind: "Reading", topics: drillTopics((d) => !d.ear && !d.unit) },
+  { title: "Foundations: ear training", kind: "Ear", topics: drillTopics((d) => d.ear && !d.unit) },
   { title: "Rhythm and meter", kind: "Rhythm", topics: drillTopics((d) => d.unit === "rhythm") },
   {
     title: "Transcription",
@@ -105,8 +105,8 @@ const UNITS: Unit[] = [
       },
     ],
   },
-  { title: "Hearing harmony", kind: "Harmony by ear", topics: drillTopics((d) => d.unit === "harmony") },
-  { title: "Cadences", kind: "Cadences by ear", topics: drillTopics((d) => d.unit === "cadences") },
+  { title: "Hearing harmony", kind: "Harmony", topics: drillTopics((d) => d.unit === "harmony") },
+  { title: "Cadences", kind: "Cadences", topics: drillTopics((d) => d.unit === "cadences") },
   { title: "Non-chord tones", kind: "Non-chord tones", topics: drillTopics((d) => d.unit === "nct") },
   { title: "Harmonizing a melody", kind: "Harmonizing", topics: drillTopics((d) => d.unit === "harmonize") },
   { title: "Counterpoint essentials", kind: "Counterpoint", topics: counterpointTopics() },
@@ -156,6 +156,19 @@ function prereqsOf(it: Item): string[] {
   const topic = UNITS.flatMap((u) => u.topics).find((t) => t.items.includes(it))!;
   const i = topic.items.indexOf(it);
   return [...(PREREQS[it.number] ?? []), ...(i > 0 ? [topic.items[i - 1].number] : [])];
+}
+
+const gradeCache = new Map<string, number>();
+
+/** The level a stage is listed under: its own, raised if needed so nothing comes before what it builds on. */
+function stageGrade(it: Item): number {
+  const hit = gradeCache.get(it.number);
+  if (hit !== undefined) return hit;
+  const own = LEVELS[it.number] ? gradeOf(LEVELS[it.number]) : 10;
+  const before = prereqsOf(it).map((n) => ALL_ITEMS.get(n)).filter((p): p is Item => !!p);
+  const g = Math.max(own, ...before.map(stageGrade));
+  gradeCache.set(it.number, g);
+  return g;
 }
 
 const unmetPrereqs = (it: Item, prog: Record<string, Progress>) =>
@@ -255,6 +268,70 @@ function TopicRow({ topic, prog, open, onToggle }: { topic: Topic; prog: Record<
   );
 }
 
+/** A stage in the course by level, with the unit it comes from as its tag. */
+interface LevelRow {
+  it: Item;
+  tag: string;
+}
+
+const LEVELS_KEY = "etude.home.levels";
+
+function loadOpenLevels(): Set<number> | null {
+  try {
+    const raw = localStorage.getItem(LEVELS_KEY);
+    return raw ? new Set(JSON.parse(raw) as number[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** One level of the course: its stages from every unit, each tagged with its unit and source scale. */
+function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows: LevelRow[]; prog: Record<string, Progress>; open: boolean; onToggle: () => void }) {
+  const done = rows.filter((r) => prog[routeId(r.it.route)]?.passed).length;
+  const tags = [...new Set(rows.map((r) => r.tag))];
+  return (
+    <div className={`pr-level-card${open ? " is-open" : ""}`}>
+      <button className="pr-level-head" onClick={onToggle} aria-expanded={open}>
+        <h3>
+          {gradeName(grade)} <span className="pr-caret">{open ? "▾" : "▸"}</span>
+        </h3>
+        <span className="pr-level-tags">{tags.join(" · ")}</span>
+        <span className="pr-dim">
+          {done} of {rows.length}
+        </span>
+      </button>
+      {open && (
+        <ol className="pr-stages pr-level-stages">
+          {rows.map(({ it, tag }) => {
+            const p = prog[routeId(it.route)];
+            const unmet = p ? [] : unmetPrereqs(it, prog);
+            const chip = p?.passed ? " is-pass" : p ? " is-tried" : unmet.length ? " is-later" : " is-next";
+            const level = LEVELS[it.number];
+            return (
+              <li key={it.number}>
+                <button className={`pr-stage${unmet.length ? " is-later" : ""}`} onClick={() => go(it.route)}>
+                  <span className={`pr-chip${chip}`}>{it.number}</span>
+                  <span className="pr-stage-text">
+                    <span className="pr-stage-title">
+                      {it.title}
+                      <span className="pr-stage-tag">{tag}</span>
+                      {level && <span className="pr-level">≈ {levelLabel(level)}</span>}
+                    </span>
+                    <span className="pr-row-summary">{it.summary}</span>
+                    <span className="pr-stage-pass">To pass: {it.pass}.</span>
+                    {unmet.length > 0 && <span className="pr-stage-first">Best after: {prereqText(unmet)}.</span>}
+                  </span>
+                  <span className={`pr-stage-status${p?.passed ? " is-pass" : ""}`}>{p ? (p.passed ? "Passed" : `Best ${p.best}%`) : ""}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 export function Home() {
   const prog = useSignal(progress);
   const stats = useSignal(intervalStats);
@@ -270,8 +347,6 @@ export function Home() {
       // Just not remembered.
     }
   };
-  const allTopics = UNITS.flatMap((u) => u.topics.map(topicKey));
-  const allOpen = allTopics.every((k) => expanded.has(k));
   const toggle = (k: string) => {
     const next = new Set(expanded);
     if (next.has(k)) next.delete(k);
@@ -284,6 +359,34 @@ export function Home() {
   const tuckedUnits = UNITS.filter((u) => TUCKED_UNITS.includes(u.title));
   const all = focusUnits.flatMap(unitItems);
   const passed = all.filter((it) => prog[routeId(it.route)]?.passed).length;
+
+  // The course by level: every focus stage, in course order within its level.
+  const byLevel = new Map<number, LevelRow[]>();
+  for (const u of focusUnits)
+    for (const it of unitItems(u)) {
+      const g = stageGrade(it);
+      byLevel.set(g, [...(byLevel.get(g) ?? []), { it, tag: u.kind }]);
+    }
+  const grades = [...byLevel.keys()].sort((a, b) => a - b);
+  // Until levels are opened or closed by hand, open the first two with anything left to pass.
+  const [savedLevels, setSavedLevels] = useState(loadOpenLevels);
+  const openLevels =
+    savedLevels ?? new Set(grades.filter((g) => byLevel.get(g)!.some((r) => !prog[routeId(r.it.route)]?.passed)).slice(0, 2));
+  const saveLevels = (next: Set<number>) => {
+    setSavedLevels(next);
+    try {
+      localStorage.setItem(LEVELS_KEY, JSON.stringify([...next]));
+    } catch {
+      // Just not remembered.
+    }
+  };
+  const toggleLevel = (g: number) => {
+    const next = new Set(openLevels);
+    if (next.has(g)) next.delete(g);
+    else next.add(g);
+    saveLevels(next);
+  };
+  const allLevelsOpen = grades.every((g) => openLevels.has(g));
 
   const decks = DECKS.map((deck) => {
     const prefs = settingsFor(deck, cardPrefs);
@@ -343,16 +446,20 @@ export function Home() {
       <section>
         <div className="pr-course-head">
           <h2 className="pr-h2">Course</h2>
-          <button className="btn pr-expand" onClick={() => saveExpanded(allOpen ? new Set() : new Set(allTopics))}>
-            {allOpen ? "Collapse all" : "Expand all"}
+          <button className="btn pr-expand" onClick={() => saveLevels(allLevelsOpen ? new Set() : new Set(grades))}>
+            {allLevelsOpen ? "Collapse all" : "Expand all"}
           </button>
         </div>
         <p className="pr-blurb">
-          Each topic is split into stages, narrow first. Click a topic to see its stages and what each one asks, or a chip to go straight to one. Faded stages
-          build on something you haven't passed yet; you can still open them. Levels are rough matches to the Royal Conservatory (RCM) theory levels and
-          practical ear tests, or to first-year college aural skills for what RCM doesn't test.
+          Every stage, grouped by level: rough matches to the Royal Conservatory (RCM) theory levels and practical ear tests. Skills RCM doesn't test,
+          from first-year college aural skills, sit at the level they fit by difficulty. Faded stages build on something you haven't passed yet; you can
+          still open them.
         </p>
-        <div className="pr-units">{focusUnits.map(unitCard)}</div>
+        <div className="pr-levels">
+          {grades.map((g) => (
+            <LevelCard key={g} grade={g} rows={byLevel.get(g)!} prog={prog} open={openLevels.has(g)} onToggle={() => toggleLevel(g)} />
+          ))}
+        </div>
         <details className="pr-tucked">
           <summary>
             Composition track, for later: {tuckedUnits.map((u) => u.title.toLowerCase()).join(", ")}
@@ -368,7 +475,7 @@ export function Home() {
             <i className="pr-chip is-tried" /> tried
           </span>
           <span>
-            <i className="pr-chip is-next" /> next
+            <i className="pr-chip is-next" /> ready
           </span>
           <span>
             <i className="pr-chip is-later" /> after something else

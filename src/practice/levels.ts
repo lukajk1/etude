@@ -11,11 +11,14 @@ export interface Level {
   scheme: Scheme;
   /** RCM level (0 for Preparatory), or college year. */
   n: number;
+  /** Where it sits on the one RCM-style ladder the course is grouped by; set for college skills, which RCM doesn't test. */
+  grade?: number;
 }
 
 const t = (n: number): Level => ({ scheme: "theory", n });
 const e = (n: number): Level => ({ scheme: "ear", n });
-const c = (n: number): Level => ({ scheme: "college", n });
+/** A first-year college aural skill, placed at the RCM level it fits by difficulty. */
+const c = (grade: number): Level => ({ scheme: "college", n: 1, grade });
 
 export const LEVELS: Record<string, Level> = {
   // Reading and theory: keys, scales, intervals and triads grow by level.
@@ -47,14 +50,14 @@ export const LEVELS: Record<string, Level> = {
   "0.9d": e(9),
   "0.10a": e(1),
   "0.10b": e(6),
-  "0.11a": c(1),
-  "0.11b": c(1),
-  "0.11c": c(1),
-  "0.12a": c(1),
-  "0.12b": c(1),
-  "0.12c": c(1),
-  "0.13a": c(1),
-  "0.13b": c(1),
+  "0.11a": c(3),
+  "0.11b": c(4),
+  "0.11c": c(5),
+  "0.12a": c(4),
+  "0.12b": c(5),
+  "0.12c": c(6),
+  "0.13a": c(4),
+  "0.13b": c(8),
   // Hearing harmony and cadences: the chord-progression ear tests.
   "2.1a": e(5),
   "2.1b": e(6),
@@ -70,13 +73,13 @@ export const LEVELS: Record<string, Level> = {
   "3.1b": t(3),
   "3.1c": t(2),
   "3.2a": c(1),
-  "3.2b": c(1),
-  "3.2c": c(1),
-  "3.2d": c(1),
-  "3.2e": c(1),
-  "3.3a": c(1),
-  "3.3b": c(1),
-  "3.3c": c(1),
+  "3.2b": c(2),
+  "3.2c": c(3),
+  "3.2d": c(4),
+  "3.2e": c(5),
+  "3.3a": c(2),
+  "3.3b": c(3),
+  "3.3c": c(5),
   "3.4a": e(1),
   "3.4b": e(2),
   "3.4c": e(5),
@@ -94,17 +97,21 @@ export const LEVELS: Record<string, Level> = {
   "1.5": t(10),
   "1.6": t(10),
   "1.7": t(10),
-  T1: c(1),
-  T2: c(1),
-  T3: c(1),
-  T4: c(1),
-  T5: c(1),
-  T6: c(1),
-  T7: c(1),
+  T1: c(2),
+  T2: c(3),
+  T3: c(3),
+  T4: c(3),
+  T5: c(4),
+  T6: c(4),
+  T7: c(5),
 };
 
 const SCHEME_NAME: Record<Scheme, string> = { theory: "RCM Theory", ear: "RCM Ear", college: "College aural yr" };
 const levelNum = (l: Level) => (l.scheme !== "college" && l.n === 0 ? "Prep" : String(l.n));
+
+/** The level a stage is grouped under, 0 (Preparatory) to 10. */
+export const gradeOf = (l: Level) => l.grade ?? l.n;
+export const gradeName = (g: number) => (g === 0 ? "Preparatory" : `Level ${g}`);
 
 /** "RCM Theory 3", "RCM Ear Prep", "College aural yr 1". */
 export const levelLabel = (l: Level) => `${SCHEME_NAME[l.scheme]} ${levelNum(l)}`;
