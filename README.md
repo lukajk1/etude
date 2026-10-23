@@ -207,10 +207,10 @@ data. The app asks the browser to keep it even when disk space runs low. For a s
 JSON file, and **Restore from a file** loads it back, in this browser or another one. The
 local dev server and the live site are separate sites, so each has its own progress.
 
-**Unit 2, Hearing harmony**: naming chords by their role in a major key, by ear. The key is
-set a different way each time (`src/practice/drills/keyContext.ts`: cadences such as I–V7–I,
-ii–V–I or I–vi–IV–V–I in block, broken or rolled textures; a scale; the tonic chord broken up;
-or a short melody over chords), then one chord plays, voiced as a pianist would (root in the
+**Unit 2, Hearing harmony**: naming chords by their role in a major key, by ear. A chord
+progression sets the key, a different one each time (`src/practice/drills/keyContext.ts`:
+I–IV–V–I, I–V–I, I–V7–I, ii–V–I, I–vi–IV–V–I or I–IV–I–V7–I, in block, broken or rolled
+textures), then one chord plays, voiced as a pianist would (root in the
 bass, the rest close above). Scale degrees from 0.11d on and melodic fragments (0.12) set
 the key the same varied ways; 0.11a to 0.11c keep one I–IV–V–I cadence (in C for a and b). The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
 adding ii; then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the

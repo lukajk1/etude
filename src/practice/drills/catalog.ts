@@ -548,7 +548,7 @@ const hearDegrees: Drill = {
   title: "Hear scale degrees: all seven",
   summary: "Which degree of the key a note is, after a cadence.",
   brief:
-    "The key is set, a different way each time (a cadence, a scale, the tonic chord broken up, or a short melody), then one note plays. Name its scale degree, 1 to 7. This is functional ear training: hearing each note's role in the key, not just its distance from the last note. Whatever sets the key, listen for where it comes to rest: that's do.",
+    "A chord progression sets the key, a different one each time (I–IV–V–I, I–V7–I, ii–V–I and others), then one note plays. Name its scale degree, 1 to 7. This is functional ear training: hearing each note's role in the key, not just its distance from the last note. Whichever progression plays, listen for where it comes to rest: that's do.",
   ear: true,
   pass: { accuracy: 0.85 },
   generate() {

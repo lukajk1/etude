@@ -91,7 +91,7 @@ export function contextIntervalQuestion(semis: number, options: number[]): Quest
 // ---- Stages ------------------------------------------------------------------------------
 
 const FRAG_BRIEF =
-  "The key is set, a different way each time (a cadence, a scale, the tonic chord broken up, or a short melody), then a short fragment plays. Name each note's scale degree, by number (keys 1–7) or solfège. Don't measure intervals note to note: hear each note's place in the key, and if unsure, sing the fragment and carry on to do.";
+  "A chord progression sets the key, a different one each time (I–IV–V–I, I–V7–I, ii–V–I and others), then a short fragment plays. Name each note's scale degree, by number (keys 1–7) or solfège. Don't measure intervals note to note: hear each note's place in the key, and if unsure, sing the fragment and carry on to do.";
 const CTX_BRIEF =
   "A short melody plays, mostly by step with one leap. Name the leap between the two notes asked about. Replay as often as you like; this is the skill of picking intervals out of real music.";
 

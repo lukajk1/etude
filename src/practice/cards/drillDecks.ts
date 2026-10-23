@@ -294,7 +294,7 @@ export const HEAR_DEGREES_DECK = factDeck({
   id: "hear-degrees",
   title: "Hear scale degrees",
   summary: "Which degree of the key a note is, after a cadence; each degree is a card.",
-  brief: "The key is set, then one note plays. Name its scale degree. Each degree is a card. In any key, the key is set a different way each time (a cadence, a scale, the tonic chord or a short melody); in C, by one I–IV–V–I cadence.",
+  brief: "The key is set, then one note plays. Name its scale degree. Each degree is a card. In any key with any opening, a different chord progression sets the key each time; otherwise it's one I–IV–V–I cadence.",
   tag: "0.11",
   drills: ["d-ear-degrees-135-drone", "d-ear-degrees-135-c", "d-ear-degrees-135-keys", "d-ear-degrees-135", "d-ear-degrees-15", "d-ear-degrees"],
   ear: true,

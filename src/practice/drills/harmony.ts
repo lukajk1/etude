@@ -98,7 +98,7 @@ export function progressionQuestion(chords: Numeral[], options: Numeral[]): Ques
 // ---- Checkpoints ----------------------------------------------------------------------
 
 const BRIEF_CHORDS =
-  "The key is set, a different way each time (a cadence, a scale, the tonic chord broken up, or a short melody), then one chord plays. Name it by its role in the key. Listen to the bass: do means I, fa IV, sol V, la vi, re ii. I sounds settled, V tense and leaning home, IV lifted, vi like a darker home, ii minor and on the way to V.";
+  "A chord progression sets the key, a different one each time (I–IV–V–I, I–V7–I, ii–V–I and others), then one chord plays. Name it by its role in the key. Listen to the bass: do means I, fa IV, sol V, la vi, re ii. I sounds settled, V tense and leaning home, IV lifted, vi like a darker home, ii minor and on the way to V.";
 
 function chordsDrill(id: string, number: string, title: string, summary: string, set: Numeral[], accuracy: number): Drill {
   return {
