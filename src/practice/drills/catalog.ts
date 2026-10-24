@@ -226,6 +226,40 @@ export function nameTriadQuestion(quality: TriadQuality, inversion: number, root
   };
 }
 
+/** The common keys, the everyday ones more often. */
+const COMMON_KEYS = ["C", "C", "G", "G", "F", "F", "D", "D", "Bb", "A", "Eb", "E", "Ab"];
+const KEY_NUMERALS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
+
+/**
+ * A common chord (I, ii, IV, V or vi) of a common key, on the staff with the key's signature,
+ * the way chords appear in real music; `inverted` puts it in first or second inversion.
+ * Name its root, then its quality.
+ */
+export function keyTriadQuestion(inverted: boolean): Question {
+  const key = pick(COMMON_KEYS);
+  const lower = scaleNotes(parseCode(key, 4), "major");
+  const scale = [...lower, ...lower.map((n) => ({ ...n, octave: n.octave + 1 }))];
+  const degree = pick([0, 0, 3, 3, 4, 4, 5, 1]);
+  let notes = [degree, degree + 2, degree + 4].map((d) => scale[d]);
+  // Keep the root between middle C and the B above it.
+  const shift = pitchOf(notes[0]) > 71 ? -1 : 0;
+  notes = notes.map((n) => ({ ...n, octave: n.octave + shift }));
+  const quality: TriadQuality = [0, 3, 4].includes(degree) ? "major" : "minor";
+  const inversion = inverted ? randInt(1, 2) : 0;
+  const up = (n: Spelled): Spelled => ({ ...n, octave: n.octave + 1 });
+  const voiced = inversion === 0 ? notes : inversion === 1 ? [notes[1], notes[2], up(notes[0])] : [notes[2], up(notes[0]), up(notes[1])];
+  const invName = ["root position", "first inversion (3rd in the bass)", "second inversion (5th in the bass)"][inversion];
+  return {
+    prompt: "Name this triad: its root, then its quality.",
+    staff: { clef: "treble", keySig: key, groups: [voiced] },
+    steps: [
+      { type: "note", label: "Root", correct: codeOf(notes[0]) },
+      { type: "triadQuality", label: "Quality", correct: quality, options: ["major", "minor"] },
+    ],
+    explain: `In ${nameOf(parseCode(key))} major this is ${KEY_NUMERALS[degree]}, ${notes.map((n) => nameOf(n)).join(" ")} stacked in 3rds: ${nameOf(notes[0])} ${quality}, shown in ${invName}. Remember the key signature's sharps and flats.`,
+  };
+}
+
 export function buildTriadQuestion(quality: TriadQuality, root: string): Question {
   const notes = triad(parseCode(root, 4), quality);
   return {
@@ -443,7 +477,7 @@ const buildIntervalsCommon = checkpoint(buildIntervals, {
 
 const nameTriads: Drill = {
   id: "d-name-triads",
-  number: "0.6b",
+  number: "0.6c",
   title: "Name triads: all four qualities, any inversion",
   summary: "Root and quality of any triad, in root position or an inversion.",
   brief: "A triad appears in root position or an inversion. Find the root (stack it in 3rds; the bottom note of the stack is the root), then name its quality.",
@@ -454,12 +488,26 @@ const nameTriads: Drill = {
   },
 };
 
+// First the chords you'll actually meet, in a key with its signature; then inverted; then any triad.
+const KEY_TRIADS_BRIEF =
+  "A common chord (I, ii, IV, V or vi) of a common key appears with the key's signature, as chords do in real music. Name its root, then its quality. The key signature counts: in G major an F is F♯, in F major a B is B♭.";
+
 const nameTriadsBasic = checkpoint(nameTriads, {
   id: "d-name-triads-basic",
   number: "0.6a",
-  title: "Name triads: major and minor, root position",
-  summary: "Root and quality of major and minor triads stacked in 3rds.",
-  generate: () => nameTriadQuestion(pick<TriadQuality>(["major", "minor"]), 0),
+  title: "Name triads: common chords in a key",
+  summary: "I, ii, IV, V and vi of the common keys, root position, with the key signature.",
+  brief: KEY_TRIADS_BRIEF,
+  generate: () => keyTriadQuestion(false),
+});
+
+const nameTriadsInverted = checkpoint(nameTriads, {
+  id: "d-name-triads-keyinv",
+  number: "0.6b",
+  title: "Name triads: common chords, inverted",
+  summary: "The same chords in first or second inversion: stack them in 3rds to find the root.",
+  brief: `${KEY_TRIADS_BRIEF} Now they're inverted: rearrange the notes into a stack of 3rds, and the bottom of the stack is the root.`,
+  generate: () => keyTriadQuestion(true),
 });
 
 const buildTriads: Drill = {
@@ -716,6 +764,7 @@ export const DRILLS: Drill[] = [
   buildIntervalsCommon,
   buildIntervals,
   nameTriadsBasic,
+  nameTriadsInverted,
   nameTriads,
   buildTriadsBasic,
   buildTriads,

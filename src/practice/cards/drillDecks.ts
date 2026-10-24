@@ -211,7 +211,7 @@ export const NAME_TRIADS_DECK = factDeck({
   summary: "Root and quality of triads; each quality and inversion is a card.",
   brief: "Name a triad's root and quality. Each quality in each position is a card, on a different root each time. Start in root position, then add inversions.",
   tag: "0.6",
-  drills: ["d-name-triads-basic", "d-name-triads"],
+  drills: ["d-name-triads-basic", "d-name-triads-keyinv", "d-name-triads"],
   fastMs: 5000,
   pools: corePool("Root position", "All inversions"),
   types: qualityTypes,

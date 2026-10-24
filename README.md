@@ -111,7 +111,7 @@ speed targets:
 | 0.3 | Scale degrees: a major, b natural minor (core keys), c all four kinds, any key | 90%, median 4 s |
 | 0.4 | Name intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 3 s |
 | 0.5 | Build intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 4 s |
-| 0.6 | Name triads: a major and minor in root position, b all qualities and inversions | 90%, median 5 s |
+| 0.6 | Name triads: a common chords (I ii IV V vi of the common keys) in root position with the key signature, b the same inverted, c all four qualities on any root, any inversion | 90%, median 5 s |
 | 0.7 | Build triads: a major and minor, b all four qualities | 90%, median 6 s |
 | 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, c together, d mixed | 90% |
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
