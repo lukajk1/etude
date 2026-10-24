@@ -140,7 +140,7 @@ export function Home() {
           </button>
         </div>
         <div className="pr-levels-summary">
-          <span className="pr-overall-level">{overall === undefined ? "All passed" : `You're on ${gradeName(overall)}`}</span>
+          <span className="pr-overall-level">Overall level: {overall === undefined ? "all passed" : overall === 0 ? "P" : overall}</span>
           {focusUnits.map((u) => {
             const l = workingLevel(
               COURSE.filter((r) => r.unit === u),
