@@ -3,6 +3,7 @@ import { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveNote, Voice } f
 import { engine, ensureAudio, playNotes } from "../audio/live";
 import { CADENCE_INFO, type Cadence } from "./drills/cadences";
 import { CHORD_TYPES, type ChordType } from "./drills/chordTypes";
+import { prettyChord } from "./drills/keyChords";
 import { EAR_INTERVALS, isRight, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
 import { NCT_INFO, type Nct } from "./drills/nct";
 import { NUMERAL_NAME, NUMERALS, type Numeral } from "./drills/harmony";
@@ -14,6 +15,15 @@ import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vf
 // ---- Staff --------------------------------------------------------------------
 
 const SCALE = 1.5;
+
+/** The accidental a key signature puts on each letter (0–6 for C–B): +1 sharp, -1 flat, 0 none. */
+function signatureByLetter(accidentals: number): number[] {
+  const sig = new Array(7).fill(0);
+  const sharps = [3, 0, 4, 1, 5, 2, 6]; // F C G D A E B
+  const flats = [6, 2, 5, 1, 4, 0, 3]; // B E A D G C F
+  for (let i = 0; i < Math.abs(accidentals); i++) sig[(accidentals > 0 ? sharps : flats)[i]] = accidentals > 0 ? 1 : -1;
+  return sig;
+}
 
 export function Staff({ spec }: { spec: StaffSpec }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -33,11 +43,13 @@ export function Staff({ spec }: { spec: StaffSpec }) {
     if (spec.keySig && spec.keySig !== "C") stave.addKeySignature(spec.keySig);
     stave.setContext(ctx).draw();
     if (spec.groups.length) {
+      // Accidentals only where a note differs from the key signature (a natural where it cancels one).
+      const sig = signatureByLetter(MAJOR_KEYS.find((k) => k.code === spec.keySig)?.accidentals ?? 0);
       const notes = spec.groups.map((group) => {
         const sorted = [...group];
         const note = new StaveNote({ keys: sorted.map(vfKey), duration: "w", clef: spec.clef });
         sorted.forEach((n, i) => {
-          if (n.acc !== 0) note.addModifier(new Accidental(n.acc === 1 ? "#" : n.acc === -1 ? "b" : n.acc === 2 ? "##" : "bb"), i);
+          if (n.acc !== sig[n.letter]) note.addModifier(new Accidental(n.acc === 0 ? "n" : n.acc === 1 ? "#" : n.acc === -1 ? "b" : n.acc === 2 ? "##" : "bb"), i);
         });
         return note;
       });
@@ -122,6 +134,8 @@ export function answerLabel(type: AnswerType, value: string): string {
       return value;
     case "chordType":
       return CHORD_TYPES[value as ChordType]?.label ?? value;
+    case "label":
+      return prettyChord(value);
     case "degree":
       return `${value} (${SOLFEGE[Number(value) - 1]})`;
     case "earInterval":
@@ -230,6 +244,14 @@ export function AnswerPad(props: PadProps) {
         <div className="drill-row">
           {["major", "minor", "diminished", "augmented"].filter((q) => !step.options || step.options.includes(q)).map((q) => (
             <Choice key={q} {...props} value={q} label={q[0].toUpperCase() + q.slice(1)} wide />
+          ))}
+        </div>
+      );
+    case "label":
+      return (
+        <div className="drill-grid" style={{ gridTemplateColumns: `repeat(${Math.min(4, step.options?.length ?? 4)}, minmax(0, 1fr))` }}>
+          {(step.options ?? []).map((v) => (
+            <Choice key={v} {...props} value={v} label={prettyChord(v)} wide />
           ))}
         </div>
       );

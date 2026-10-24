@@ -122,6 +122,7 @@ speed targets:
 | 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
 | 0.14 | All keys: signatures up to 7 sharps or flats, major and minor (after 0.2b and 0.3a) | 95%, median 3 s |
 | 0.15 | Scale by key: one small drill per major key (C, G, F, D, B♭, A, E♭, E, A♭, B, D♭, F♯), which letter each degree is and which degree each letter is; shown as one row with a chip per key | 90%, median 3 s |
+| 0.17 | Chords by key: one small drill per major key, its chords (I ii iii IV V vi vii°, and V7) on the staff with the key signature, to name by letter or numeral | 90%, median 4 s |
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 

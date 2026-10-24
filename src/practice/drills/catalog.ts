@@ -13,6 +13,7 @@ import {
   parseCode,
   pick,
   pitchOf,
+  KEYS_IN_ORDER,
   prettyCode,
   randInt,
   scaleNotes,
@@ -27,6 +28,7 @@ import {
 } from "./theory";
 import { CADENCE_DRILLS } from "./cadences";
 import { CHORD_TYPE_DRILLS } from "./chordTypes";
+import { KEY_CHORD_DRILLS } from "./keyChords";
 import { resolveToDo } from "./resolve";
 import { FRAGMENT_DRILLS } from "./fragments";
 import { HARMONIZE_DRILLS } from "./harmonize";
@@ -35,7 +37,7 @@ import { HARMONY_DRILLS } from "./harmony";
 import { keyContext } from "./keyContext";
 import { RHYTHM_DRILLS } from "./rhythm";
 
-export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "chordType" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct";
+export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "chordType" | "label" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct";
 
 export interface Step {
   type: AnswerType;
@@ -363,9 +365,6 @@ export function keyDegreeQuestion(keyCode: string): Question {
     explain: scale,
   };
 }
-
-/** Major keys in the order they're learned: out from C around the circle of fifths. */
-const KEYS_IN_ORDER = ["C", "G", "F", "D", "Bb", "A", "Eb", "E", "Ab", "B", "Db", "F#"];
 
 /** One small drill per key, shown on the home page as one row with a chip for each key. */
 const SCALE_BY_KEY: Drill[] = KEYS_IN_ORDER.map((code, i) => ({
@@ -720,6 +719,7 @@ export const DRILLS: Drill[] = [
   nameTriads,
   buildTriadsBasic,
   buildTriads,
+  ...KEY_CHORD_DRILLS,
   keySignaturesAll,
   earIntervalDrill("d-ear-ess-up", "0.8a", "Hear the essentials: ascending", "Minor and major 3rd, perfect 4th and 5th, octave; low note first.", ESSENTIALS, 0.9, "up"),
   earIntervalDrill("d-ear-ess-down", "0.8b", "Hear the essentials: descending", "The same five, high note first.", ESSENTIALS, 0.9, "down"),

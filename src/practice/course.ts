@@ -134,6 +134,7 @@ const PREREQS: Record<string, string[]> = {
   "0.14a": ["0.2b", "0.3a"], // the rarer keys, once the core ones and scales are solid
   "0.15a": ["0.1c"], // a key's letters, once the notes can be read
   "0.16a": ["0.10b"], // chord types beyond the triads, once major, minor, dim and aug are heard
+  "0.17a": ["0.6a"], // a key's chords on the staff, once triads can be named
   "2.1a": ["0.11d"], // a chord's bass note is a scale degree
   "2.2a": ["2.1b"],
   "2.2b": ["2.1d"],

@@ -105,6 +105,9 @@ export const MAJOR_KEYS: Key[] = [
   { code: "B", accidentals: 5 }, { code: "F#", accidentals: 6 }, { code: "C#", accidentals: 7 },
 ];
 
+/** Major keys in the order they're learned: out from C around the circle of fifths. */
+export const KEYS_IN_ORDER = ["C", "G", "F", "D", "Bb", "A", "Eb", "E", "Ab", "B", "Db", "F#"];
+
 export const MINOR_KEYS: Key[] = [
   { code: "Ab", accidentals: -7 }, { code: "Eb", accidentals: -6 }, { code: "Bb", accidentals: -5 },
   { code: "F", accidentals: -4 }, { code: "C", accidentals: -3 }, { code: "G", accidentals: -2 },
