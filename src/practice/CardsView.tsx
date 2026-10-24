@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, playNotesLater, preparePiano, previewPlaying, stopAll } from "../audio/live";
-import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
+import { AnswerPad, answerLabel, LETTERS, PlayStopIcon, RhythmStaff, Staff } from "./Answers";
 import { isRight, type Step } from "./drills/catalog";
 import { deckSettings, setDeckSettings, settingsFor, type DeckSettings } from "./cards/decks";
 import type { Card, DeckDef, Shown } from "./cards/types";
@@ -386,8 +386,8 @@ export default function CardsView({ def }: { def: DeckDef }) {
             <div className="cards-key">{showing.shown.display}</div>
           ) : null}
           {showing.shown.audio && (
-            <button className="btn drill-replay drill-play" onClick={togglePlay}>
-              {playing ? "Stop (R)" : "Play again (R)"}
+            <button className="btn drill-replay drill-play" onClick={togglePlay} title={playing ? "Stop (R)" : "Play again (R)"} aria-label={playing ? "Stop" : "Play again"}>
+              <PlayStopIcon playing={playing} />
             </button>
           )}
           {showing.shown.again && (

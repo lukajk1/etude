@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playNotes, playNotesLater, preparePiano, previewPlaying, stopAll } from "../audio/live";
-import { AnswerPad, answerLabel, LETTERS, RhythmStaff, Staff } from "./Answers";
+import { AnswerPad, answerLabel, LETTERS, PlayStopIcon, RhythmStaff, Staff } from "./Answers";
 import { deckForDrill } from "./cards/decks";
 import { displayNumber, nextStage, stageById, stageCode } from "./course";
 import { DRILLS, isRight, ROUND_LENGTH, type Drill, type Question } from "./drills/catalog";
@@ -253,8 +253,12 @@ export default function DrillView({ id }: { id: string }) {
             </span>
             <span className="drill-clock">{elapsed !== null ? `${elapsed.toFixed(1)} s` : ""}</span>
           </div>
-          <div className={`drill-bar${missState}`}>
-            <div style={{ width: `${(index / questions.length) * 100}%` }} />
+          {/* A pip per question: filled when right, red when missed, outlined for the current one. */}
+          <div className="drill-pips" aria-label={`Question ${index + 1} of ${questions.length}`}>
+            {questions.map((_, i) => {
+              const a = answered[i];
+              return <i key={i} className={`drill-pip${a ? (a.ok ? " is-right" : " is-wrong") : i === index ? " is-current" : ""}`} />;
+            })}
           </div>
           <p className="drill-prompt">{question.prompt}</p>
           {question.staff && (
@@ -268,8 +272,8 @@ export default function DrillView({ id }: { id: string }) {
             </div>
           )}
           {question.audio && (
-            <button className="btn drill-replay drill-play" onClick={togglePlay}>
-              {playing ? "Stop (R)" : "Play again (R)"}
+            <button className="btn drill-replay drill-play" onClick={togglePlay} title={playing ? "Stop (R)" : "Play again (R)"} aria-label={playing ? "Stop" : "Play again"}>
+              <PlayStopIcon playing={playing} />
             </button>
           )}
           {question.again && (

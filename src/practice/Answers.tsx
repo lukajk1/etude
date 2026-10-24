@@ -106,6 +106,15 @@ export function RhythmStaff({ spec, scale = 1.35 }: { spec: string; scale?: numb
   return <div className="drill-staff" ref={ref} />;
 }
 
+/** The play/stop toggle's icon: a triangle to play, a square while playing (to stop). */
+export function PlayStopIcon({ playing }: { playing: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 12 12" aria-hidden="true">
+      {playing ? <rect x="1.5" y="1.5" width="9" height="9" rx="1" fill="currentColor" /> : <path d="M2.5 1.2 L10.8 6 L2.5 10.8 Z" fill="currentColor" />}
+    </svg>
+  );
+}
+
 // ---- Answer pads -------------------------------------------------------------------
 
 export const LETTERS = ["C", "D", "E", "F", "G", "A", "B"];
