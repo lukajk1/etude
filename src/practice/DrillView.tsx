@@ -148,6 +148,8 @@ export default function DrillView({ id }: { id: string }) {
         togglePlay();
       } else if (k === "N" && question.again) {
         void playNotes(question.again.audio);
+      } else if (question.replays && step.type !== "degree" && /^[1-9]$/.test(e.key) && question.replays[Number(e.key) - 1]) {
+        void playNotes(question.replays[Number(e.key) - 1].audio);
       } else if ((step.type === "letter" || step.type === "note") && LETTERS.includes(k)) {
         pickAnswer(k);
       } else if (step.type === "degree" && /^[1-7]$/.test(e.key)) {
@@ -275,6 +277,11 @@ export default function DrillView({ id }: { id: string }) {
               {question.again.label} (N)
             </button>
           )}
+          {question.replays?.map((r, i) => (
+            <button key={r.label} className="btn drill-replay" onClick={() => void playNotes(r.audio)}>
+              {r.label} ({i + 1})
+            </button>
+          ))}
           {question.steps.length > 1 && (
             <div className="drill-steps">
               {question.steps.map((s, i) => (

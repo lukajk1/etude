@@ -77,6 +77,8 @@ export interface Question {
   resolve?: AudioEvent[];
   /** A shorter replay offered beside "Play again" (key N): just the note, without the cadence. */
   again?: { label: string; audio: AudioEvent[] };
+  /** More replays beside Play again, on keys 1, 2…: each bar of a rhythm on its own, say. */
+  replays?: { label: string; audio: AudioEvent[] }[];
   steps: Step[];
   /** Shown after a wrong answer: the reasoning, not just the answer. */
   explain: string;
