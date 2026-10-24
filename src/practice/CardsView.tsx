@@ -90,7 +90,10 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const settings = settingsFor(def, useSignal(deckSettings));
   const setCardSettings = (patch: Partial<DeckSettings>) => setDeckSettings(def, patch);
   useSignal(cardStates);
-  const deck = useMemo(() => def.build(settings.pool, settings.types), [def, settings.pool, settings.types]);
+  // Keyed on the types' contents: settingsFor returns a fresh array each render, and a new deck
+  // each render would keep restarting the auto-advance timer.
+  const typesKey = settings.types.join(",");
+  const deck = useMemo(() => def.build(settings.pool, settings.types), [def, settings.pool, typesKey]);
   const [phase, setPhase] = useState<"setup" | "run" | "done">("setup");
   const [showing, setShowing] = useState<Showing | null>(null);
   const [answered, setAnswered] = useState<Answered[]>([]);
@@ -190,13 +193,16 @@ export default function CardsView({ def }: { def: DeckDef }) {
     if (phase === "run") replay();
   }, [phase, replay]);
 
-  // Right answers move on by themselves.
+  // Right answers move on by themselves. The timer calls the latest `next` through a ref, so a
+  // re-render while it waits can't cancel it.
   const last = answered[answered.length - 1];
+  const nextRef = useRef(next);
+  nextRef.current = next;
   useEffect(() => {
     if (phase !== "run" || chosen === null || !last?.ok) return;
-    timer.current = setTimeout(next, 650);
+    timer.current = setTimeout(() => nextRef.current(), 650);
     return () => clearTimeout(timer.current);
-  }, [phase, chosen, last, next]);
+  }, [phase, chosen, last]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
