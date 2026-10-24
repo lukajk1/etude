@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
-import { deckForDrill } from "./cards/decks";
+import { deckForDrill, getDeck } from "./cards/decks";
 import { ALL_ITEMS, chipName, COURSE, prereqText, routeId, skillClass, stageCode, stageGrade, UNITS, unmetPrereqs, type Item, type Topic, type Unit } from "./course";
 import { ROADMAP } from "./exercises/catalog";
 import { progress, type Progress } from "./exercises/state";
@@ -32,6 +32,9 @@ function chipState(it: Item, prog: Prog) {
   return p?.passed ? " is-pass" : p ? " is-tried" : unmetPrereqs(it, prog).length ? " is-later" : " is-next";
 }
 
+/** Practice decks that belong to no drill, offered on the row of the exercise they go with. */
+const EXTRA_PRACTICE: Record<string, string[]> = { "Name intervals": ["intervals"] };
+
 /** One type of exercise (a topic) as a row: its name, a chip per stage in order, where it sits and how far along. */
 function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
   const items = topic.items;
@@ -39,6 +42,7 @@ function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
   const next = items.find((it) => !prog[routeId(it.route)]?.passed);
   const first = items[0];
   const deck = first.route.kind === "drill" ? deckForDrill(first.route.id) : undefined;
+  const extra = (EXTRA_PRACTICE[topic.title] ?? []).map(getDeck).filter((d) => !!d);
   const grades = items.map(stageGrade);
   const lo = Math.min(...grades);
   const hi = Math.max(...grades);
@@ -78,6 +82,11 @@ function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
           Practice
         </button>
       )}
+      {extra.map((d) => (
+        <button key={d!.id} className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: d!.id })} title={`Practice: ${d!.title}`}>
+          {d!.title.replace(/^Intervals in /, "").replace(/^./, (c) => c.toUpperCase())}
+        </button>
+      ))}
     </li>
   );
 }
