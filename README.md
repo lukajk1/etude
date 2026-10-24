@@ -111,7 +111,7 @@ speed targets:
 | 0.3 | Scale degrees: a major, b natural minor (core keys), c all four kinds, any key | 90%, median 4 s |
 | 0.4 | Name intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 3 s |
 | 0.5 | Build intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 4 s |
-| 0.6 | Name triads: a common chords (I ii IV V vi of the common keys) in root position with the key signature, b the same inverted, c all four qualities on any root, any inversion | 90%, median 5 s |
+| 0.6 | Name chords: a–l one major key at a time (C, G, F, D, B♭, A, E♭, E, A♭, B, D♭, F♯), its chords I ii iii IV V vi vii° and V7 on the staff with the key signature, named by letter or numeral; m common chords in mixed keys, root and quality; n the same inverted; o any triad, any inversion | 90%, median 4–5 s |
 | 0.7 | Build triads: a major and minor, b all four qualities | 90%, median 6 s |
 | 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, c together, d mixed | 90% |
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
@@ -122,7 +122,6 @@ speed targets:
 | 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
 | 0.14 | All keys: signatures up to 7 sharps or flats, major and minor (after 0.2b and 0.3a) | 95%, median 3 s |
 | 0.15 | Scale by key: one small drill per major key (C, G, F, D, B♭, A, E♭, E, A♭, B, D♭, F♯), which letter each degree is and which degree each letter is; shown as one row with a chip per key | 90%, median 3 s |
-| 0.17 | Chords by key: one small drill per major key, its chords (I ii iii IV V vi vii°, and V7) on the staff with the key signature, to name by letter or numeral | 90%, median 4 s |
 
 The last checkpoint of each topic is the original full drill, so earlier passes still count.
 

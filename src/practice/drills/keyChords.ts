@@ -2,8 +2,9 @@ import type { Drill, Question } from "./catalog";
 import { codeOf, KEYS_IN_ORDER, nameOf, parseCode, pick, prettyCode, scaleNotes, type Spelled } from "./theory";
 
 /**
- * Chords by key: one major key at a time, its chords on the staff with its key signature,
- * to name by letter ("Em") or by numeral (vi). The seven triads built on its scale, plus V7.
+ * Name chords, key by key: one major key at a time, its chords on the staff with its key
+ * signature, to name by letter ("Em") or by numeral (vi). The seven triads built on its
+ * scale, plus V7.
  */
 
 const NUMERALS = ["I", "ii", "iii", "IV", "V", "vi", "vii°", "V7"];
@@ -48,8 +49,8 @@ export function keyChordQuestion(keyCode: string): Question {
 /** One small drill per key, shown on the home page as one row with a chip for each key. */
 export const KEY_CHORD_DRILLS: Drill[] = KEYS_IN_ORDER.map((code, i) => ({
   id: `d-keychords-${code.toLowerCase().replace("#", "s")}`,
-  number: `0.17${"abcdefghijkl"[i]}`,
-  title: `Chords by key: ${prettyCode(code)} major`,
+  number: `0.6${"abcdefghijkl"[i]}`,
+  title: `Name chords: ${prettyCode(code)} major`,
   summary: `The chords of ${prettyCode(code)} major on the staff, by name and by numeral.`,
   brief:
     "One major key at a time: a chord of the key appears on the staff, with the key signature, root position. Name it by letter (\"Em\") or by its numeral in the key (vi). Find the root (the bottom note), name it as a degree of the scale, and the numeral follows; in every major key, I, IV and V are major, ii, iii and vi minor, and vii° diminished. V7 adds fa on top of V.",

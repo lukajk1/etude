@@ -123,7 +123,7 @@ const PREREQS: Record<string, string[]> = {
   "0.4a": ["0.1c", "0.3a"], // read the notes; the major scale gives each interval's quality
   "0.5a": ["0.4a"],
   "0.6a": ["0.4a"], // triads are stacked 3rds
-  "0.7a": ["0.5a", "0.6a"],
+  "0.7a": ["0.5a", "0.6m"],
   "0.9a": ["0.8a"],
   "0.9b": ["0.8b"],
   "0.9c": ["0.8c"],
@@ -134,14 +134,13 @@ const PREREQS: Record<string, string[]> = {
   "0.14a": ["0.2b", "0.3a"], // the rarer keys, once the core ones and scales are solid
   "0.15a": ["0.1c"], // a key's letters, once the notes can be read
   "0.16a": ["0.10b"], // chord types beyond the triads, once major, minor, dim and aug are heard
-  "0.17a": ["0.6a"], // a key's chords on the staff, once triads can be named
   "2.1a": ["0.11d"], // a chord's bass note is a scale degree
   "2.2a": ["2.1b"],
   "2.2b": ["2.1d"],
   "3.3a": ["3.1a"], // read the values before hearing them
   "3.4a": ["3.1a"],
   "4.1a": ["2.1b"], // a cadence is chords: I, IV and V by ear first
-  "5.1a": ["0.6a"], // spotting the note outside a chord means reading the chord
+  "5.1a": ["0.6m"], // spotting the note outside a chord means reading the chord
   "6.1a": ["0.7a"], // choosing a chord means knowing what's in each one
   T2: ["0.11d"], // skips in the tonic chord: hear do, mi and sol first
   T3: ["0.11f", "0.3a"],
@@ -262,9 +261,9 @@ const CHIP_NAMES: Record<string, string> = {
   "0.4b": "all",
   "0.5a": "M, m, P",
   "0.5b": "all",
-  "0.6a": "in a key",
-  "0.6b": "inverted",
-  "0.6c": "any triad",
+  "0.6m": "mixed keys",
+  "0.6n": "inverted",
+  "0.6o": "any triad",
   "0.7a": "major, minor",
   "0.7b": "all four",
   "0.14a": "up to 7 ♯/♭",

@@ -41,7 +41,8 @@ function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
   const done = passedIn(items, prog);
   const next = items.find((it) => !prog[routeId(it.route)]?.passed);
   const first = items[0];
-  const deck = first.route.kind === "drill" ? deckForDrill(first.route.id) : undefined;
+  // The row's practice deck: the first of its stages that has one.
+  const deck = items.map((it) => (it.route.kind === "drill" ? deckForDrill(it.route.id) : undefined)).find((d) => d);
   const extra = (EXTRA_PRACTICE[topic.title] ?? []).map(getDeck).filter((d) => !!d);
   const grades = items.map(stageGrade);
   const lo = Math.min(...grades);

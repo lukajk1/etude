@@ -40,14 +40,14 @@ export const LEVELS: Record<string, Level> = {
   "0.4b": t(5),
   "0.5a": t(3),
   "0.5b": t(5),
-  "0.6a": t(3),
-  "0.6b": t(4),
-  "0.6c": t(6),
+  // Name chords: key by key (one group, a–l), then mixed keys, inverted, any triad.
+  ...Object.fromEntries([..."abcdefghijkl"].map((l) => [`0.6${l}`, t(3)])),
+  "0.6m": t(3),
+  "0.6n": t(4),
+  "0.6o": t(6),
   "0.7a": t(3),
   "0.7b": t(6),
   "0.14a": t(7),
-  // Chords by key: each major key's chords on the staff, one key at a time (one group, one level).
-  ...Object.fromEntries([..."abcdefghijkl"].map((l) => [`0.17${l}`, t(4)])),
   // Scale by key: the letters of each major key, one key at a time (all one level, as one group).
   ...Object.fromEntries([..."abcdefghijkl"].map((l) => [`0.15${l}`, t(3)])),
   // Ear tests (RCM level, then the college-paced level): intervals ascending first, then descending and harmonic.

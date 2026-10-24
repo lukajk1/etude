@@ -477,8 +477,8 @@ const buildIntervalsCommon = checkpoint(buildIntervals, {
 
 const nameTriads: Drill = {
   id: "d-name-triads",
-  number: "0.6c",
-  title: "Name triads: all four qualities, any inversion",
+  number: "0.6o",
+  title: "Name chords: any triad, any inversion",
   summary: "Root and quality of any triad, in root position or an inversion.",
   brief: "A triad appears in root position or an inversion. Find the root (stack it in 3rds; the bottom note of the stack is the root), then name its quality.",
   ear: false,
@@ -494,8 +494,8 @@ const KEY_TRIADS_BRIEF =
 
 const nameTriadsBasic = checkpoint(nameTriads, {
   id: "d-name-triads-basic",
-  number: "0.6a",
-  title: "Name triads: common chords in a key",
+  number: "0.6m",
+  title: "Name chords: common chords, mixed keys",
   summary: "I, ii, IV, V and vi of the common keys, root position, with the key signature.",
   brief: KEY_TRIADS_BRIEF,
   generate: () => keyTriadQuestion(false),
@@ -503,8 +503,8 @@ const nameTriadsBasic = checkpoint(nameTriads, {
 
 const nameTriadsInverted = checkpoint(nameTriads, {
   id: "d-name-triads-keyinv",
-  number: "0.6b",
-  title: "Name triads: common chords, inverted",
+  number: "0.6n",
+  title: "Name chords: common chords, inverted",
   summary: "The same chords in first or second inversion: stack them in 3rds to find the root.",
   brief: `${KEY_TRIADS_BRIEF} Now they're inverted: rearrange the notes into a stack of 3rds, and the bottom of the stack is the root.`,
   generate: () => keyTriadQuestion(true),
@@ -763,12 +763,12 @@ export const DRILLS: Drill[] = [
   nameIntervals,
   buildIntervalsCommon,
   buildIntervals,
+  ...KEY_CHORD_DRILLS,
   nameTriadsBasic,
   nameTriadsInverted,
   nameTriads,
   buildTriadsBasic,
   buildTriads,
-  ...KEY_CHORD_DRILLS,
   keySignaturesAll,
   earIntervalDrill("d-ear-ess-up", "0.8a", "Hear the essentials: ascending", "Minor and major 3rd, perfect 4th and 5th, octave; low note first.", ESSENTIALS, 0.9, "up"),
   earIntervalDrill("d-ear-ess-down", "0.8b", "Hear the essentials: descending", "The same five, high note first.", ESSENTIALS, 0.9, "down"),
