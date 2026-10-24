@@ -272,7 +272,7 @@ const CHIP_NAMES: Record<string, string> = {
   "0.11c": "any key",
   "0.11d": "any opening",
   "0.11e": "pentatonic",
-  "0.11f": "do to sol",
+  "0.11f": "+ fa",
   "0.12a": "3 notes",
   "0.12b": "4, with la ti",
   "0.12c": "5, faster",

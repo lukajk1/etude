@@ -704,9 +704,10 @@ const hearPentatonic = checkpoint(hearDegrees, {
 const hearDoToSol = checkpoint(hearDegrees, {
   id: "d-ear-degrees-15",
   number: "0.11f",
-  title: "Hear scale degrees: do to sol",
-  summary: "Degrees 1 to 5.",
-  generate: () => degreeQuestion(randInt(1, 5), ["1", "2", "3", "4", "5"], { varied: true, walkDown: true }),
+  title: "Hear scale degrees: do to la",
+  summary: "Degrees 1 to 6: the pentatonic five plus fa.",
+  // Adds fa to the pentatonic five, so each step adds notes: do mi sol, + re la, + fa, + ti.
+  generate: () => degreeQuestion(randInt(1, 6), ["1", "2", "3", "4", "5", "6"], { varied: true, walkDown: true }),
 });
 
 /**
