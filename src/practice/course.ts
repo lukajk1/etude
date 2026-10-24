@@ -179,8 +179,8 @@ export const unmetPrereqs = (it: Item, prog: Record<string, Progress>) =>
     return p && !prog[routeId(p.route)]?.passed;
   });
 
-/** "3.2 Hear scale degrees: do, mi, sol in C, 3.5 …": prerequisites by their shown numbers. */
-export const prereqText = (nums: string[]) => nums.map((n) => `${displayNumber(n)} ${ALL_ITEMS.get(n)?.title ?? ""}`.trim()).join(", ");
+/** "Hear scale degrees: do, mi, sol in C, …": prerequisites by title. */
+export const prereqText = (nums: string[]) => nums.map((n) => ALL_ITEMS.get(n)?.title ?? n).join(", ");
 
 // ---- Display numbers ----------------------------------------------------------------------
 
@@ -248,6 +248,61 @@ export function stageCode(id: string): string {
 }
 
 const BY_ID = new Map(COURSE.map((row) => [routeId(row.it.route), row]));
+
+// ---- Chip names --------------------------------------------------------------------------
+
+/** Short names for stages whose title detail is too long for a chip, by internal number. */
+const CHIP_NAMES: Record<string, string> = {
+  "0.1c": "both clefs",
+  "0.2a": "major",
+  "0.2b": "+ minor",
+  "0.3c": "all minors",
+  "0.4a": "M, m, P",
+  "0.4b": "all",
+  "0.5a": "M, m, P",
+  "0.5b": "all",
+  "0.6a": "major, minor",
+  "0.6b": "all, inverted",
+  "0.7a": "major, minor",
+  "0.7b": "all four",
+  "0.14a": "up to 7 ♯/♭",
+  "0.11a": "drone in C",
+  "0.11b": "in C",
+  "0.11c": "any key",
+  "0.11d": "any opening",
+  "0.11e": "pentatonic",
+  "0.11f": "do to sol",
+  "0.12a": "3 notes",
+  "0.12b": "4, with la ti",
+  "0.12c": "5, faster",
+  "0.13a": "essentials",
+  "0.13b": "all",
+  "3.1a": "whole to 16th",
+  "3.2c": "over a bass",
+  "3.2d": "melody alone",
+  "3.2e": "simple or compound",
+  "3.3a": "quarters",
+  "3.3c": "dotted, 16ths",
+  "3.4a": "quarters",
+  "3.4c": "dotted, 16ths",
+  T1: "by step",
+  T2: "tonic skips",
+  T3: "major scale",
+  T4: "minor",
+  T5: "long, pickups",
+  "2.1a": "I or V",
+  "2.1b": "I, IV, V",
+  "2.1c": "+ vi",
+  "2.1d": "+ ii",
+  "2.2a": "I, IV, V",
+  "2.2b": "+ vi, ii",
+  "4.1a": "authentic, half",
+  "4.1b": "+ plagal",
+  "4.1c": "+ deceptive",
+};
+
+/** A stage's chip name: what it practises ("any key", "+ vi"), shortest form. */
+export const chipName = (it: Item) => it.chip ?? CHIP_NAMES[it.number] ?? it.detail;
 
 /** A skill's slug, for classes and routes: "Non-chord tones" → "non-chord-tones". */
 export const skillSlug = (skill: string) => skill.toLowerCase().replace(/\s+/g, "-");

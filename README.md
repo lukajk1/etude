@@ -130,24 +130,26 @@ drill counts how often you've answered each distinct question (what's shown and 
 the key or register of the audio), and each of the 20 slots takes the least-seen of 12
 candidates, never repeating one within the round where it can avoid it.
 
-Stages are shown numbered by level and place: **3.4** is the fourth stage of Level 3, and
-**P.1** the first of Preparatory, with a tag for the skill each exercises (Reading, Ear,
-Rhythm, Transcription, Harmony, Cadences). The numbers are computed from the level layout in
-`src/practice/course.ts`, so adding a stage renumbers the ones after it in its level. The
-numbers in the tables here (0.11c, 3.3a, T2) are the stages' internal ids, which don't change.
-Each stage also shows a permanent three-character code ("APN"), a hash of its id
-(`stageCode` in `course.ts`), for referring to it when the level numbers move.
+The home page's **Exercises** section is organised by skill. At the top is your level: the
+lowest level with a stage not yet passed, overall and for each skill (Reading, Ear, Rhythm,
+Transcription, Harmony, Cadences). Below it is a card per skill, and in each card a row per
+type of exercise (Read notes, Hear scale degrees, Rhythmic dictation…) with a chip per stage,
+in order, named by what it practises ("drone in C", "any key", "+ vi"). Chips are filled when
+passed, tinted when tried, outlined when ready and faded when they build on something not yet
+passed; hovering shows a stage's level, code and pass mark. The composition skills are folded
+away below.
 
-The home page's **Exercises** section groups every stage by level (`src/practice/levels.ts`): the Royal Conservatory
-(RCM) theory levels set the ladder, and ear skills are placed on it by first-year college
-aural-skills pacing rather than RCM's ear tests, which are paced for children over a decade of
-piano exams (all intervals only around Level 8); each keeps its RCM level as a tag. College
-skills RCM doesn't test sit at the level they fit by difficulty. Each stage is tagged with its
-unit. It also suggests an order: each stage lists what's worth passing first (for
-example scales after major key signatures, intervals after scales, I-or-V after do-mi-sol),
-stages within a topic go a, b, c, and no stage is listed below what it builds on. Stages that
-aren't ready yet are faded and say what comes first, but stay open. The order is `PREREQS` in
-`src/practice/course.ts`.
+Levels (`src/practice/levels.ts`) follow the Royal Conservatory (RCM) theory levels, with ear
+skills placed by first-year college aural-skills pacing rather than RCM's ear tests, which are
+paced for children over a decade of piano exams (all intervals only around Level 8); each keeps
+its RCM level as a tag. College skills RCM doesn't test sit at the level they fit by difficulty.
+The recommended order (`PREREQS` in `src/practice/course.ts`) says what's worth passing first,
+for example scales after major key signatures, intervals after scales, I-or-V after do-mi-sol;
+no stage sits below what it builds on.
+
+Each stage has a permanent three-character code ("APN"), a hash of its id (`stageCode` in
+`course.ts`), and a level number on its own page ("Level 3, Ear, stage 3.5"), computed from the
+level layout. The numbers in the tables here (0.11c, 3.3a, T2) are the stages' internal ids.
 
 **Skill trees** (the Exercises header's button, or `#/skills/<skill>`) show each skill as a tree
 (`src/practice/SkillTrees.tsx`): stages laid out by level from top to bottom, a branch per

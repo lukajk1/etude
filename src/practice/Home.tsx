@@ -3,7 +3,7 @@ import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
 import { DECKS, deckForDrill, deckSettings, settingsFor } from "./cards/decks";
 import { cardStates, summarize } from "./cards/srs";
-import { ALL_ITEMS, COURSE, displayNumber, groupNumber, groupOf, prereqText, routeId, skillClass, stageById, stageCode, stageGrade, unmetPrereqs, type Item, type StageGroup } from "./course";
+import { ALL_ITEMS, chipName, COURSE, prereqText, routeId, skillClass, stageById, stageCode, stageGrade, UNITS, unmetPrereqs, type Item, type Topic, type Unit } from "./course";
 import { ROADMAP } from "./exercises/catalog";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, levelLabel, LEVELS } from "./levels";
@@ -11,133 +11,97 @@ import { GOAL_STAGES, PLAN_GOAL, TUCKED_DECKS, TUCKED_UNITS } from "./plan";
 import { go } from "./route";
 
 /**
- * The Practice Room home: your plan, then the course by level (each stage numbered by level
- * and place, "3.4", and tagged with its skill), the flashcard decks as tiles, and the
- * roadmap and backups at the end. The course itself is in course.ts.
+ * The Practice Room home: your plan; then the exercises, with your level overall and per
+ * skill, a card per skill and a row of stage chips per type of exercise; the flashcard decks
+ * as tiles; and the roadmap and backups at the end. The course itself is in course.ts.
  */
 
-/** A stage in the course by level, tagged with the skill it exercises (its unit). */
-interface LevelRow {
-  it: Item;
-  tag: string;
+type Prog = Record<string, Progress>;
+type CourseRow = (typeof COURSE)[number];
+
+const passedIn = (items: Item[], prog: Prog) => items.filter((it) => prog[routeId(it.route)]?.passed).length;
+
+/** The level being worked on: the lowest level with a stage not yet passed (none when all are). */
+function workingLevel(rows: CourseRow[], prog: Prog): number | undefined {
+  const open = rows.filter((r) => !prog[routeId(r.it.route)]?.passed).map((r) => r.grade);
+  return open.length ? Math.min(...open) : undefined;
 }
 
-const LEVELS_KEY = "etude.home.levels";
-
-function loadOpenLevels(): Set<number> | null {
-  try {
-    const raw = localStorage.getItem(LEVELS_KEY);
-    return raw ? new Set(JSON.parse(raw) as number[]) : null;
-  } catch {
-    return null;
-  }
+/** A stage's chip state: passed, tried, ready, or after something else. */
+function chipState(it: Item, prog: Prog) {
+  const p = prog[routeId(it.route)];
+  return p?.passed ? " is-pass" : p ? " is-tried" : unmetPrereqs(it, prog).length ? " is-later" : " is-next";
 }
 
-/** One level of the course: its stages from every unit, each tagged with its unit and source scale. */
-function LevelCard({ grade, rows, prog, open, onToggle }: { grade: number; rows: LevelRow[]; prog: Record<string, Progress>; open: boolean; onToggle: () => void }) {
-  const done = rows.filter((r) => prog[routeId(r.it.route)]?.passed).length;
-  const tags = [...new Set(rows.map((r) => r.tag))];
+/** One type of exercise (a topic) as a row: its name, a chip per stage in order, where it sits and how far along. */
+function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
+  const items = topic.items;
+  const done = passedIn(items, prog);
+  const next = items.find((it) => !prog[routeId(it.route)]?.passed);
+  const first = items[0];
+  const deck = first.route.kind === "drill" ? deckForDrill(first.route.id) : undefined;
+  const grades = items.map(stageGrade);
+  const lo = Math.min(...grades);
+  const hi = Math.max(...grades);
   return (
-    <div className={`pr-level-card${open ? " is-open" : ""}`}>
-      <button className="pr-level-head" onClick={onToggle} aria-expanded={open}>
-        <h3>
-          {gradeName(grade)} <span className="pr-caret">{open ? "▾" : "▸"}</span>
-        </h3>
-        <span className="pr-level-tags">
-          {tags.map((t) => (
-            <span key={t} className={`pr-stage-tag ${skillClass(t)}`}>
-              {t}
-            </span>
-          ))}
-        </span>
-        <span className="pr-dim">
-          {done} of {rows.length}
-        </span>
+    <li className="pr-ex">
+      <button className="pr-ex-title" onClick={() => go((next ?? first).route)} title={next ? `Next: ${next.title}` : "All passed"}>
+        {topic.title}
       </button>
-      {open && (
-        <ol className="pr-stages pr-level-stages">
-          {rows.map(({ it, tag }) => {
-            // A group (Scale by key) is one row, at its first member, with a chip per member.
-            const group = groupOf(it);
-            if (group) return group.items[0] === it ? <GroupRow key={it.number} group={group} tag={tag} prog={prog} /> : null;
-            const p = prog[routeId(it.route)];
-            const unmet = p ? [] : unmetPrereqs(it, prog);
-            const chip = p?.passed ? " is-pass" : p ? " is-tried" : unmet.length ? " is-later" : " is-next";
-            const level = LEVELS[it.number];
-            const deck = it.route.kind === "drill" ? deckForDrill(it.route.id) : undefined;
-            return (
-              <li key={it.number} className="pr-stage-row">
-                <button className={`pr-stage${unmet.length ? " is-later" : ""}`} onClick={() => go(it.route)}>
-                  <span className={`pr-chip${chip}`}>{displayNumber(it.number)}</span>
-                  <span className="pr-stage-text">
-                    <span className="pr-stage-title">
-                      {it.title}
-                      <span className={`pr-stage-tag ${skillClass(tag)}`}>{tag}</span>
-                      {level && <span className="pr-level">≈ {levelLabel(level)}</span>}
-                      <span className="pr-stage-code" title="This stage's permanent code">{stageCode(routeId(it.route))}</span>
-                    </span>
-                    <span className="pr-row-summary">{it.summary}</span>
-                    <span className="pr-stage-pass">To pass: {it.pass}.</span>
-                    {unmet.length > 0 && <span className="pr-stage-first">Best after: {prereqText(unmet)}.</span>}
-                  </span>
-                  <span className={`pr-stage-status${p?.passed ? " is-pass" : ""}`}>{p ? (p.passed ? "Passed" : `Best ${p.best}%`) : ""}</span>
-                </button>
-                {deck && (
-                  <button className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: deck.id })} title={`Practise as flashcards: ${deck.title}`}>
-                    Flashcards
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ol>
+      <span className="pr-ex-chips">
+        {items.map((it) => {
+          const p = prog[routeId(it.route)];
+          const unmet = p ? [] : unmetPrereqs(it, prog);
+          const level = LEVELS[it.number];
+          return (
+            <button
+              key={it.number}
+              className={`pr-chip pr-ex-chip${chipState(it, prog)}`}
+              onClick={() => go(it.route)}
+              title={[
+                `${it.title} (${stageCode(routeId(it.route))})`,
+                `${gradeName(stageGrade(it))}${level ? `, about ${levelLabel(level)}` : ""}`,
+                it.summary,
+                `To pass: ${it.pass}.`,
+                p ? (p.passed ? "Passed." : `Best so far: ${p.best}%.`) : unmet.length ? `Best after: ${prereqText(unmet)}.` : "Ready.",
+              ].join("\n")}
+            >
+              {chipName(it)}
+            </button>
+          );
+        })}
+      </span>
+      <span className="pr-ex-meta">
+        {lo === hi ? gradeName(lo) : `${gradeName(lo)}–${hi}`} · {done} of {items.length}
+      </span>
+      {deck && (
+        <button className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: deck.id })} title={`Practise as flashcards: ${deck.title}`}>
+          Flashcards
+        </button>
       )}
-    </div>
+    </li>
   );
 }
 
-/** A group of small stages (one per key) as one row: its number and title, and a chip per member. */
-function GroupRow({ group, tag, prog }: { group: StageGroup; tag: string; prog: Record<string, Progress> }) {
-  const first = group.items[0];
-  const passed = group.items.filter((it) => prog[routeId(it.route)]?.passed).length;
-  const level = LEVELS[first.number];
-  const chipClass = (it: Item) => {
-    const p = prog[routeId(it.route)];
-    return p?.passed ? " is-pass" : p ? " is-tried" : unmetPrereqs(it, prog).length ? " is-later" : " is-next";
-  };
+/** A skill as a card: the level you're working on in it, and its exercise types in order. */
+function SkillCard({ unit, prog }: { unit: Unit; prog: Prog }) {
+  const rows = COURSE.filter((r) => r.unit === unit);
+  const level = workingLevel(rows, prog);
   return (
-    <li className="pr-stage-row">
-      <div className="pr-stage pr-group">
-        <span className={`pr-chip${passed === group.items.length ? " is-pass" : passed ? " is-tried" : " is-next"}`}>{groupNumber(group)}</span>
-        <span className="pr-stage-text">
-          <span className="pr-stage-title">
-            {group.topic.title}
-            <span className={`pr-stage-tag ${skillClass(tag)}`}>{tag}</span>
-            {level && <span className="pr-level">≈ {levelLabel(level)}</span>}
-          </span>
-          <span className="pr-row-summary">One small drill per key, each passed on its own, in the order to learn them:</span>
-          <span className="pr-group-chips">
-            {group.items.map((it) => {
-              const p = prog[routeId(it.route)];
-              return (
-                <button
-                  key={it.number}
-                  className={`pr-chip${chipClass(it)}`}
-                  onClick={() => go(it.route)}
-                  title={`${displayNumber(it.number)} ${it.title} (${stageCode(routeId(it.route))}): ${p ? (p.passed ? "passed" : `best ${p.best}%`) : "not started"}`}
-                >
-                  {it.chip}
-                </button>
-              );
-            })}
-          </span>
-          <span className="pr-stage-pass">To pass each: {first.pass}.</span>
-        </span>
-        <span className={`pr-stage-status${passed === group.items.length ? " is-pass" : ""}`}>
-          {passed} of {group.items.length}
+    <div className={`pr-skill-card ${skillClass(unit.kind)}`}>
+      <div className="pr-skill-head">
+        <h3>{unit.kind}</h3>
+        <span className="pr-skill-level">{level === undefined ? "All passed" : `Working on ${gradeName(level)}`}</span>
+        <span className="pr-dim">
+          {passedIn(rows.map((r) => r.it), prog)} of {rows.length}
         </span>
       </div>
-    </li>
+      <ul className="pr-ex-list">
+        {unit.topics.map((t) => (
+          <ExerciseRow key={t.title} topic={t} prog={prog} />
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -150,35 +114,10 @@ export function Home() {
   const all = COURSE.filter((row) => !tucked(row)).map((row) => row.it);
   const passed = all.filter((it) => prog[routeId(it.route)]?.passed).length;
 
-  // The course by level, in course order within each level; the composition track separately.
-  const byLevel = new Map<number, LevelRow[]>();
-  const tuckedByLevel = new Map<number, LevelRow[]>();
-  for (const row of COURSE) {
-    const map = tucked(row) ? tuckedByLevel : byLevel;
-    map.set(row.grade, [...(map.get(row.grade) ?? []), { it: row.it, tag: row.unit.kind }]);
-  }
-  const grades = [...byLevel.keys()].sort((a, b) => a - b);
-  const tuckedGrades = [...tuckedByLevel.keys()].sort((a, b) => a - b);
-  const tuckedTitles = [...new Set(COURSE.filter(tucked).map((row) => row.unit.title.toLowerCase()))];
-  // Until levels are opened or closed by hand, open the first two with anything left to pass.
-  const [savedLevels, setSavedLevels] = useState(loadOpenLevels);
-  const openLevels =
-    savedLevels ?? new Set(grades.filter((g) => byLevel.get(g)!.some((r) => !prog[routeId(r.it.route)]?.passed)).slice(0, 2));
-  const saveLevels = (next: Set<number>) => {
-    setSavedLevels(next);
-    try {
-      localStorage.setItem(LEVELS_KEY, JSON.stringify([...next]));
-    } catch {
-      // Just not remembered.
-    }
-  };
-  const toggleLevel = (g: number) => {
-    const next = new Set(openLevels);
-    if (next.has(g)) next.delete(g);
-    else next.add(g);
-    saveLevels(next);
-  };
-  const allLevelsOpen = grades.every((g) => openLevels.has(g));
+  // Each skill as a card; the composition track's skills folded away below.
+  const focusUnits = UNITS.filter((u) => !TUCKED_UNITS.includes(u.title));
+  const tuckedUnits = UNITS.filter((u) => TUCKED_UNITS.includes(u.title));
+  const overall = workingLevel(COURSE.filter((row) => !tucked(row)), prog);
 
   const decks = DECKS.map((deck) => {
     const prefs = settingsFor(deck, cardPrefs);
@@ -216,29 +155,37 @@ export function Home() {
           <button className="btn pr-expand" onClick={() => go({ kind: "skills", id: "reading" })}>
             Skill trees
           </button>
-          <button className="btn pr-expand" onClick={() => saveLevels(allLevelsOpen ? new Set() : new Set(grades))}>
-            {allLevelsOpen ? "Collapse all" : "Expand all"}
-          </button>
+        </div>
+        <div className="pr-levels-summary">
+          <span className="pr-overall-level">{overall === undefined ? "All passed" : `You're on ${gradeName(overall)}`}</span>
+          {focusUnits.map((u) => {
+            const l = workingLevel(
+              COURSE.filter((r) => r.unit === u),
+              prog,
+            );
+            return (
+              <span key={u.kind} className={`pr-stage-tag ${skillClass(u.kind)}`}>
+                {u.kind} {l === undefined ? "✓" : l === 0 ? "P" : l}
+              </span>
+            );
+          })}
         </div>
         <p className="pr-blurb">
-          Every stage, grouped by level and numbered by level and place ("3.4" is the fourth stage of Level 3), with a tag for the skill it
-          exercises. Levels follow the Royal Conservatory (RCM) theory levels; ear skills are placed by first-year college
-          aural-skills pacing, which suits an adult learner better than RCM's ear tests (paced for children over a decade of piano exams), and each
-          shows its RCM level for reference. Faded stages build on something you haven't passed yet; you can still open them.
+          Each skill's exercises in order: a row per type, a chip per stage. Your level is the lowest level with something left to pass. Levels follow
+          the Royal Conservatory (RCM) theory levels, with ear skills placed by first-year college aural-skills pacing; hover over a chip for its
+          level, code and what it takes to pass. Faded chips build on something you haven't passed yet; you can still open them.
         </p>
-        <div className="pr-levels">
-          {grades.map((g) => (
-            <LevelCard key={g} grade={g} rows={byLevel.get(g)!} prog={prog} open={openLevels.has(g)} onToggle={() => toggleLevel(g)} />
+        <div className="pr-skill-cards">
+          {focusUnits.map((u) => (
+            <SkillCard key={u.kind} unit={u} prog={prog} />
           ))}
         </div>
         <details className="pr-tucked">
-          <summary>
-            Composition track, for later: {tuckedTitles.join(", ")}
-          </summary>
+          <summary>Composition track, for later: {tuckedUnits.map((u) => u.title.toLowerCase()).join(", ")}</summary>
           <p className="pr-blurb">These matter for writing music. They're folded away while the focus is fundamentals, pop transcription and reading; everything still works.</p>
-          <div className="pr-levels">
-            {tuckedGrades.map((g) => (
-              <LevelCard key={g} grade={g} rows={tuckedByLevel.get(g)!} prog={prog} open={openLevels.has(g)} onToggle={() => toggleLevel(g)} />
+          <div className="pr-skill-cards">
+            {tuckedUnits.map((u) => (
+              <SkillCard key={u.kind} unit={u} prog={prog} />
             ))}
           </div>
         </details>
@@ -319,11 +266,11 @@ function PlanSection({ prog }: { prog: Record<string, Progress> }) {
                   onClick={() => go(it.route)}
                   title={`${it.summary} To pass: ${it.pass}.${first.length ? ` Best after: ${prereqText(first)}.` : ""}`}
                 >
-                  <span className="pr-todo-num">{displayNumber(it.number)}</span>
+                  <span className="pr-todo-num">{stageCode(routeId(it.route))}</span>
                   <span className="pr-todo-title">{it.title}</span>
                   <span className="pr-todo-meta">
-                    {stageCode(routeId(it.route))} · {gradeName(stageGrade(it))}
-                    {p ? ` · best ${p.best}%` : first.length ? ` · after ${first.map(displayNumber).join(", ")}` : ""}
+                    {gradeName(stageGrade(it))}
+                    {p ? ` · best ${p.best}%` : first.length ? ` · after ${first.map((n) => stageCode(routeId(ALL_ITEMS.get(n)!.route))).join(", ")}` : ""}
                   </span>
                 </button>
               </li>
