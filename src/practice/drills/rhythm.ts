@@ -315,25 +315,25 @@ export function meterQuestion(meter: MeterId, options: MeterId[], style: MeterSt
 }
 
 /**
- * Rhythmic dictation: hear two bars, pick their notation from four. The wrong choices
- * each change one beat or cell in one bar, so every beat has to be heard.
+ * Rhythmic dictation: hear `barCount` bars (one by default), pick their notation from four.
+ * The wrong choices each change one beat or cell in one bar, so every beat has to be heard.
  */
-export function dictationQuestion(beats: number, level: number): Question {
-  const bars = [randomBar(beats, level), randomBar(beats, level)];
+export function dictationQuestion(beats: number, level: number, barCount = 1): Question {
+  const bars = Array.from({ length: barCount }, () => randomBar(beats, level));
   const correct = barsSpec(beats, bars);
   // Keyed by sound, so no two choices sound alike.
   const choices = new Map([[soundKey(bars.flat()), correct]]);
   for (let tries = 0; choices.size < 4 && tries < 60; tries++) {
-    const i = randInt(0, 1);
+    const i = randInt(0, barCount - 1);
     const alt = bars.map((b, j) => (j === i ? mutate(beats, b, level) : b));
     if (!choices.has(soundKey(alt.flat()))) choices.set(soundKey(alt.flat()), barsSpec(beats, alt));
   }
   const options = [...choices.values()].sort(() => Math.random() - 0.5);
   return {
-    prompt: "After one bar of clicks, two bars of rhythm play. Which was it?",
+    prompt: `After one bar of clicks, ${barCount === 1 ? "a bar" : `${barCount} bars`} of rhythm play${barCount === 1 ? "s" : ""}. Which was it?`,
     audio: rhythmAudio(beats, bars.flat()),
-    // Each bar on its own, after its own bar of clicks, to settle one bar at a time.
-    replays: bars.map((b, i) => ({ label: `Bar ${i + 1}`, audio: rhythmAudio(beats, b) })),
+    // With more than one bar, each bar on its own after its own bar of clicks, to settle one at a time.
+    replays: barCount > 1 ? bars.map((b, i) => ({ label: `Bar ${i + 1}`, audio: rhythmAudio(beats, b) })) : undefined,
     steps: [{ type: "rhythm", correct, options }],
     explain: `It was counted ${countText(bars.flat(), bars)}.`,
   };
@@ -443,8 +443,8 @@ export const RHYTHM_DRILLS: Drill[] = [
     id: "r-dictation-1",
     number: "3.3a",
     title: "Rhythmic dictation: quarters, halves, rests",
-    summary: "Hear two bars, pick their notation from four.",
-    brief: "After a bar of clicks to set the beat, two bars of rhythm play on one note. The four choices differ by a single beat, so count every beat: say \"1 2 3 4\" along with the clicks and keep counting through the rhythm. Notes ring for their full length, so a half note sounds held and a rest sounds empty. If two bars are a lot to hold, use Bar 1 and Bar 2 (keys 1 and 2) to hear each on its own, after its own count-in: settle bar 1 first, then bar 2.",
+    summary: "Hear a bar, pick its notation from four.",
+    brief: "After a bar of clicks to set the beat, a bar of rhythm plays on one note. The four choices differ by a single beat, so count every beat: say \"1 2 3 4\" along with the clicks and keep counting through the rhythm. Notes ring for their full length, so a half note sounds held and a rest sounds empty.",
     ear: true,
     pass: { accuracy: 0.85 },
     generate: () => dictationQuestion(pick([3, 4]), 1),

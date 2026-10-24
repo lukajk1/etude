@@ -239,7 +239,7 @@ voicings and progressions are in `src/practice/drills/harmony.ts`.
 (2, 3 or 4 beats: first over an oom-pah accompaniment, then a melody over one bass note a
 bar, then a melody alone with only gentle accents, then simple against compound, 2/4, 3/4
 or 6/8, with the eighths at the same speed so only their grouping differs), 3.3 rhythmic dictation (hear a bar
-after a count-in, pick its notation from three near-misses) and 3.4 tapping a rhythm in
+after a count-in, pick its notation from four choices that differ by a single beat) and 3.4 tapping a rhythm in
 time (Space or the pad, after a bar of clicks). Each goes from quarters and halves, to
 eighths, to dotted rhythms, sixteenths and syncopation. Tapping is graded against the
 beat within about ±90 ms, after removing a steady delay from speakers or Bluetooth when
