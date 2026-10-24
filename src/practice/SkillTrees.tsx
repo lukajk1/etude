@@ -76,11 +76,11 @@ export default function SkillTrees({ skill: slug }: { skill: string }) {
     <section className={`skills ${skillClass(skill)}`} aria-label="Skill trees">
       <div className="drill-head">
         <div>
-          <div className="drill-number">Practice Room</div>
+          <div className="drill-number">Etude Study</div>
           <h2 className="drill-title">Skill trees</h2>
         </div>
         <button className="btn" onClick={() => go({ kind: "home" })}>
-          Back to the Practice Room
+          Back to Etude Study
         </button>
       </div>
 

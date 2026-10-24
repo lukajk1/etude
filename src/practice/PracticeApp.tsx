@@ -26,9 +26,9 @@ const SkillTrees = lazy(() => import("./SkillTrees"));
 function Header({ title, editor = false }: { title?: string; editor?: boolean }) {
   return (
     <header className="toolbar">
-      <a className="brand brand-link" href="#" onClick={(e) => (e.preventDefault(), go({ kind: "home" }))} title="Practice Room home">
+      <a className="brand brand-link" href="#" onClick={(e) => (e.preventDefault(), go({ kind: "home" }))} title="Etude Study home">
         <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="22" height="22" />
-        <span>Etude Practice Room</span>
+        <span>Etude Study</span>
       </a>
       {title && <span className="pr-crumb">{title}</span>}
       {editor && (
@@ -116,7 +116,7 @@ function CardsScreen({ id }: { id: string }) {
   if (!deck) return null;
   return (
     <div className="app" style={{ gridTemplateRows: "auto 1fr" }}>
-      <Header title={`${deck.title} flashcards`} />
+      <Header title={`${deck.title}: practice`} />
       <div className="main">
         <Suspense fallback={<div className="drill">Loading…</div>}>
           <CardsView def={deck} />
@@ -146,7 +146,7 @@ function TrainerScreen({ id }: { id: string }) {
 export function PracticeApp() {
   const route = useRoute();
   useEffect(() => {
-    document.title = "Etude Practice Room";
+    document.title = "Etude Study";
     window.scrollTo(0, 0);
     // Leaving a screen silences it, including anything it scheduled to play later.
     return stopAll;

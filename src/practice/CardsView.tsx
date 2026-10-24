@@ -248,14 +248,14 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const correctCount = answered.filter((a) => a.ok).length;
 
   return (
-    <section className="drill" aria-label={`${def.title} flashcards`}>
+    <section className="drill" aria-label={`${def.title}: practice`}>
       <div className="drill-head">
         <div>
-          <div className="drill-number">Flashcards</div>
+          <div className="drill-number">Practice</div>
           <h2 className="drill-title">{def.title}</h2>
         </div>
         <button className="btn" onClick={() => go({ kind: "home" })}>
-          Back to the Practice Room
+          Back to Etude Study
         </button>
       </div>
 

@@ -226,7 +226,7 @@ export function Toolbar() {
       <FileMenu onMessage={setMessage} />
       <DemosMenu onMessage={setMessage} />
       <a className="btn" href={`${import.meta.env.BASE_URL}practice/`} title="Drills, ear training and graded exercises">
-        Practice Room
+        Etude Study
       </a>
 
       <TransportButtons />

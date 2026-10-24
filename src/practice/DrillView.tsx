@@ -205,12 +205,12 @@ export default function DrillView({ id }: { id: string }) {
           )}
           {/* The intro has its own; during and after a round it's up here. */}
           {deck && phase !== "intro" && (
-            <button className="btn" onClick={() => go({ kind: "cards", id: deck.id })} title={`Flashcards: ${deck.title}`}>
-              Practice as flashcards
+            <button className="btn" onClick={() => go({ kind: "cards", id: deck.id })} title={`Practice: ${deck.title}`}>
+              Practice
             </button>
           )}
           <button className="btn" onClick={() => go({ kind: "home" })}>
-            Back to the Practice Room
+            Back to Etude Study
           </button>
         </div>
       </div>
@@ -234,7 +234,7 @@ export default function DrillView({ id }: { id: string }) {
             </button>
             {deck && (
               <button className="btn" onClick={() => go({ kind: "cards", id: deck.id })}>
-                Practice as flashcards
+                Practice
               </button>
             )}
           </div>

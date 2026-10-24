@@ -179,7 +179,7 @@ export default function IntervalTrainer() {
             {showSettings ? "Done" : "Settings"}
           </button>
           <button className="btn" onClick={() => go({ kind: "home" })}>
-            Back to the Practice Room
+            Back to Etude Study
           </button>
         </div>
       </div>

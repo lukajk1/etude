@@ -6,7 +6,7 @@ codebase:
 - **Etude Studio:** place notes in a piano roll, spread them across lanes of orchestral
   instruments, read them back as a score, and hear what you wrote.
   **[lukajk1.github.io/etude](https://lukajk1.github.io/etude/)**
-- **Etude Practice Room:** timed drills, spaced-review flashcards, ear training,
+- **Etude Study:** timed drills, spaced-review flashcards (each exercise's **Practice** mode), ear training,
   transcription and graded counterpoint exercises for the foundations of tonal music.
   **[lukajk1.github.io/etude/practice](https://lukajk1.github.io/etude/practice/)**
 
@@ -14,7 +14,7 @@ Both run entirely in the browser (click anywhere once to allow audio).
 
 ```
 npm install
-npm run dev        # Studio at http://localhost:4820, Practice Room at /practice/
+npm run dev        # Studio at http://localhost:4820, Etude Study at /practice/
 ```
 
 ### Code layout
@@ -22,7 +22,7 @@ npm run dev        # Studio at http://localhost:4820, Practice Room at /practice
 | Folder | What's in it |
 |---|---|
 | `src/studio/` | Studio only: its toolbar, file menu, demos |
-| `src/practice/` | Practice Room only: home page, drills, flashcards, transcription, counterpoint exercises, graders |
+| `src/practice/` | Etude Study only: home page, drills, flashcards, transcription, counterpoint exercises, graders |
 | `src/components/` | Shared editor: piano roll, lanes, score, overview, transport and sound controls |
 | `src/audio/`, `src/model/`, `src/theory/`, `src/notation/`, `src/midi/`, `src/lib/` | Shared engine: sound sources, project model, theory and spelling, engraving, MIDI |
 
@@ -93,9 +93,9 @@ The Synth source builds every sound in the browser (Web Audio via Tone.js).
   at most two voices, and the clef is picked from the lane's range. Engraving uses
   [VexFlow](https://github.com/0xfe/vexflow) (MIT).
 
-## Practice Room
+## Etude Study
 
-The Practice Room's home page lists every unit with your progress, and suggests what to do
+Etude Study's home page lists every unit with your progress, and suggests what to do
 next. Best scores are saved in the browser.
 
 **Unit 0, Foundations** is timed drills for the fundamentals that counterpoint and harmony
@@ -222,7 +222,7 @@ The scheduler is `src/practice/cards/srs.ts`; decks are in `src/practice/cards/`
 **Saving.** All progress (drill scores, flashcards, transcription stats, the autosaved
 projects) is kept in the browser's local storage, which lasts until you clear the site's
 data. The app asks the browser to keep it even when disk space runs low. For a second copy,
-**Back up to a file** at the bottom of the Practice Room home page saves everything as one
+**Back up to a file** at the bottom of the Etude Study home page saves everything as one
 JSON file, and **Restore from a file** loads it back, in this browser or another one. The
 local dev server and the live site are separate sites, so each has its own progress.
 

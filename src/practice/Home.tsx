@@ -1,19 +1,18 @@
 import { useRef, useState } from "react";
 import { exportProgress, importProgress, lastBackup } from "../lib/backup";
 import { useSignal } from "../model/ui";
-import { DECKS, deckForDrill, deckSettings, settingsFor } from "./cards/decks";
-import { cardStates, summarize } from "./cards/srs";
-import { ALL_ITEMS, chipName, COURSE, prereqText, routeId, skillClass, stageById, stageCode, stageGrade, UNITS, unmetPrereqs, type Item, type Topic, type Unit } from "./course";
+import { deckForDrill } from "./cards/decks";
+import { ALL_ITEMS, chipName, COURSE, prereqText, routeId, skillClass, stageCode, stageGrade, UNITS, unmetPrereqs, type Item, type Topic, type Unit } from "./course";
 import { ROADMAP } from "./exercises/catalog";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, levelLabel, LEVELS } from "./levels";
-import { GOAL_STAGES, PLAN_GOAL, TUCKED_DECKS, TUCKED_UNITS } from "./plan";
+import { GOAL_STAGES, PLAN_GOAL, TUCKED_UNITS } from "./plan";
 import { go } from "./route";
 
 /**
  * The Practice Room home: your plan; then the exercises, with your level overall and per
- * skill, a card per skill and a row of stage chips per type of exercise; the flashcard decks
- * as tiles; and the roadmap and backups at the end. The course itself is in course.ts.
+ * skill, a card per skill and a row of stage chips per type of exercise, each with its practice
+ * (flashcard) mode; and the roadmap and backups at the end. The course itself is in course.ts.
  */
 
 type Prog = Record<string, Progress>;
@@ -75,8 +74,8 @@ function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
         {lo === hi ? gradeName(lo) : `${gradeName(lo)}–${hi}`} · {done} of {items.length}
       </span>
       {deck && (
-        <button className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: deck.id })} title={`Practise as flashcards: ${deck.title}`}>
-          Flashcards
+        <button className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: deck.id })} title={`Practice: ${deck.title}`}>
+          Practice
         </button>
       )}
     </li>
@@ -107,8 +106,6 @@ function SkillCard({ unit, prog }: { unit: Unit; prog: Prog }) {
 
 export function Home() {
   const prog = useSignal(progress);
-  const cardPrefs = useSignal(deckSettings);
-  useSignal(cardStates);
   // Progress counts the units in focus; the composition track is tucked away below.
   const tucked = (row: (typeof COURSE)[number]) => TUCKED_UNITS.includes(row.unit.title);
   const all = COURSE.filter((row) => !tucked(row)).map((row) => row.it);
@@ -119,31 +116,8 @@ export function Home() {
   const tuckedUnits = UNITS.filter((u) => TUCKED_UNITS.includes(u.title));
   const overall = workingLevel(COURSE.filter((row) => !tucked(row)), prog);
 
-  const decks = DECKS.map((deck) => {
-    const prefs = settingsFor(deck, cardPrefs);
-    return { deck, sum: summarize(deck.build(prefs.pool, prefs.types)) };
-  });
-
-  const deckTile = ({ deck, sum }: (typeof decks)[number]) => (
-    <button key={deck.id} className="pr-deck" onClick={() => go({ kind: "cards", id: deck.id })}>
-      <span className="pr-deck-top">
-        <span className={`pr-deck-tag ${skillClass(deckTag(deck))}`}>{deckTag(deck)}</span>
-        <span className="pr-deck-title">{deck.title}</span>
-      </span>
-      <span className={`pr-deck-status${sum.mastered === sum.total ? " is-pass" : ""}`}>
-        {sum.fresh === sum.total ? "Not started" : `${sum.mastered} of ${sum.total} mastered`}
-      </span>
-    </button>
-  );
-
   return (
     <main className="pr-home">
-      <section className="pr-hero">
-        <div className="pr-hero-top">
-          <h1>Practice Room</h1>
-        </div>
-      </section>
-
       <PlanSection prog={prog} />
 
       <section>
@@ -205,15 +179,6 @@ export function Home() {
         </div>
       </section>
 
-      <section>
-        <h2 className="pr-h2">Flashcards</h2>
-        <p className="pr-blurb">A deck for each drill. Intelligent review spends each session on what you're weakest at.</p>
-        <div className="pr-decks">{decks.filter((d) => !TUCKED_DECKS.includes(d.deck.id)).map(deckTile)}</div>
-        <details className="pr-tucked">
-          <summary>Composition-track decks: {decks.filter((d) => TUCKED_DECKS.includes(d.deck.id)).map((d) => d.deck.title.toLowerCase()).join(", ")}</summary>
-          <div className="pr-decks">{decks.filter((d) => TUCKED_DECKS.includes(d.deck.id)).map(deckTile)}</div>
-        </details>
-      </section>
 
       <footer className="pr-foot">
         <details className="pr-roadmap">
@@ -285,12 +250,6 @@ function PlanSection({ prog }: { prog: Record<string, Progress> }) {
       )}
     </section>
   );
-}
-
-/** A deck tile's tag: the skill its drills exercise, or the deck's own tag if it has no drills. */
-function deckTag(deck: (typeof DECKS)[number]): string {
-  const row = deck.drills?.map(stageById).find((r) => r);
-  return row ? row.unit.kind : (deck.tag ?? deck.icon);
 }
 
 function BackupSection() {
