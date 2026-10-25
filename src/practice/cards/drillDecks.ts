@@ -1,3 +1,4 @@
+import type { TimbreId } from "../../model/types";
 import {
   buildIntervalQuestion,
   buildTriadQuestion,
@@ -46,6 +47,7 @@ interface FactDeck {
   tag: string;
   drills: string[];
   ear?: boolean;
+  sounds?: TimbreId[];
   fastMs?: number;
   pools: { value: string; label: string }[];
   /** Directions or groups, each a row of the mastery grid. One means no choice. */
@@ -83,6 +85,7 @@ function factDeck(o: FactDeck): DeckDef {
     tag: o.tag,
     drills: o.drills,
     ear: o.ear,
+    sounds: o.sounds,
     fastMs: o.fastMs,
     pools: o.pools,
     types: o.types,
@@ -328,9 +331,14 @@ export const CHORDS_IN_KEY_DECK = factDeck({
   summary: "I, ii, iii, IV, V and vi by ear once the key is set; pick any set to drill.",
   brief: "The key is set (a different way each time), then one chord plays: name it by its role. Check the chords to drill; the answer buttons are just those. Listen to the bass note.",
   tag: "2.1",
-  drills: ["h-chords-1-5", "h-chords-1-4-5", "h-chords-vi", "h-chords-all", "h-chords-iii"],
+  drills: ["h-chords-1-5", "h-chords-1-4-5", "h-chords-vi", "h-chords-all", "h-chords-iii", "h-chords-sound"],
   ear: true,
-  pools: [{ value: "full", label: "Chosen chords" }],
+  sounds: ["strings", "brass", "woodwinds", "harp"],
+  // "Any sound": a random instrument, held, clipped or rolled, as in 2.1f.
+  pools: [
+    { value: "full", label: "Piano" },
+    { value: "any", label: "Any sound" },
+  ],
   types: NUMERALS.map((n) => ({ id: n, label: `${n} (${NUMERAL_NAME[n]})`, hint: NUMERAL_NAME[n] })),
   defaults: { pool: "full", types: ["I", "V"] },
   presets: [
@@ -348,7 +356,7 @@ export const CHORDS_IN_KEY_DECK = factDeck({
   facts: (n) => [n],
   label: (n) => `${n} (${NUMERAL_NAME[n as Numeral]})`,
   cell: (n) => n,
-  question: (n, _f, _pool, types) => chordInKeyQuestion(n as Numeral, NUMERALS.filter((x) => types.includes(x))),
+  question: (n, _f, pool, types) => chordInKeyQuestion(n as Numeral, NUMERALS.filter((x) => types.includes(x)), { anySound: pool === "any" }),
 });
 
 const progressionSet = (pool: string): Numeral[] => (pool === "full" ? ["I", "ii", "IV", "V", "vi"] : ["I", "IV", "V"]);

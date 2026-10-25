@@ -54,7 +54,7 @@ export default function DrillView({ id }: { id: string }) {
   useEffect(() => {
     setPhase("intro");
     setAnswered([]);
-    if (drill.ear) preparePiano();
+    if (drill.ear) preparePiano(drill.sounds);
   }, [drill]);
 
   const question = questions[index];
@@ -62,7 +62,7 @@ export default function DrillView({ id }: { id: string }) {
   const playing = useSignal(previewPlaying);
   const togglePlay = () => {
     if (previewPlaying.value) stopAll();
-    else if (question?.audio) void playNotes(question.audio);
+    else if (question?.audio) void playNotes(question.audio, question.timbre);
   };
   const step = question?.steps[stepIndex];
 
@@ -81,7 +81,7 @@ export default function DrillView({ id }: { id: string }) {
 
   // Play ear questions as they appear.
   useEffect(() => {
-    if (phase === "run" && question?.audio && !reveal) void playNotes(question.audio);
+    if (phase === "run" && question?.audio && !reveal) void playNotes(question.audio, question.timbre);
   }, [phase, question, reveal]);
 
   // A running clock for the current question.
@@ -121,7 +121,7 @@ export default function DrillView({ id }: { id: string }) {
       setReveal(true);
       if (ok) advance.current = setTimeout(next, 650);
       // After a wrong scale-degree answer, hear the note walk home to do.
-      else if (question.resolve) playNotesLater(question.resolve, 250);
+      else if (question.resolve) playNotesLater(question.resolve, 250, question.timbre);
     },
     [question, reveal, given, stepIndex, next],
   );
@@ -147,9 +147,9 @@ export default function DrillView({ id }: { id: string }) {
       if (k === "R" && question.audio) {
         togglePlay();
       } else if (k === "N" && question.again) {
-        void playNotes(question.again.audio);
+        void playNotes(question.again.audio, question.timbre);
       } else if (question.replays && step.type !== "degree" && /^[1-9]$/.test(e.key) && question.replays[Number(e.key) - 1]) {
-        void playNotes(question.replays[Number(e.key) - 1].audio);
+        void playNotes(question.replays[Number(e.key) - 1].audio, question.timbre);
       } else if ((step.type === "letter" || step.type === "note") && LETTERS.includes(k)) {
         pickAnswer(k);
       } else if (step.type === "degree" && /^[1-7]$/.test(e.key)) {
@@ -277,12 +277,12 @@ export default function DrillView({ id }: { id: string }) {
             </button>
           )}
           {question.again && (
-            <button className="btn drill-replay" onClick={() => void playNotes(question.again!.audio)}>
+            <button className="btn drill-replay" onClick={() => void playNotes(question.again!.audio, question.timbre)}>
               {question.again.label} (N)
             </button>
           )}
           {question.replays?.map((r, i) => (
-            <button key={r.label} className="btn drill-replay" onClick={() => void playNotes(r.audio)}>
+            <button key={r.label} className="btn drill-replay" onClick={() => void playNotes(r.audio, question.timbre)}>
               {r.label} ({i + 1})
             </button>
           ))}

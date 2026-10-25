@@ -1,4 +1,5 @@
-import type { Drill, Question } from "./catalog";
+import type { TimbreId } from "../../model/types";
+import type { AudioEvent, Drill, Question } from "./catalog";
 import { keyContext } from "./keyContext";
 import { pick, randInt } from "./theory";
 
@@ -50,15 +51,47 @@ export function chordPitches(t: number, n: Numeral): number[] {
   return [bass, ...upper];
 }
 
-export function chordInKeyQuestion(n: Numeral, options: Numeral[]): Question {
+/** Instruments for the any-sound stage: the recorded ones, plus the synth choir. */
+export const CHORD_SOUNDS: TimbreId[] = ["piano", "strings", "brass", "woodwinds", "harp", "choir"];
+const SOUND_NAME: Partial<Record<TimbreId, string>> = { piano: "piano", strings: "strings", brass: "brass", woodwinds: "woodwinds", harp: "harp", choir: "choir" };
+
+type Articulation = "sustained" | "staccato" | "broken";
+
+/** A chord played one of three ways: held long and slow, short and clipped, or rolled up from the bass. */
+function articulate(p: number[], at: number, how: Articulation): AudioEvent[] {
+  if (how === "sustained") return [{ pitches: p, at, dur: 2.6, vel: 0.55 }];
+  if (how === "staccato") return [0, 0.42, 0.84].map((d) => ({ pitches: p, at: at + d, dur: 0.16, vel: 0.8 }));
+  return p.map((x, i) => ({ pitches: [x], at: at + i * 0.16, dur: 1.8 - i * 0.16, vel: i === 0 ? 0.75 : 0.6 }));
+}
+
+/**
+ * The key is set (a different progression each time; see keyContext.ts), then one chord plays.
+ * With `anySound`, everything plays on a random instrument, and the chord is held, clipped or
+ * rolled, sometimes an octave up or down, as chords sound in real recordings.
+ */
+export function chordInKeyQuestion(n: Numeral, options: Numeral[], { anySound = false } = {}): Question {
   const t = randInt(57, 64);
-  // The key is set a different way each time (see keyContext.ts), then the chord plays.
   const context = keyContext(t);
+  const at = context.end + 0.75;
+  if (!anySound) {
+    return {
+      prompt: "The key is set, then one chord plays. Which chord is it?",
+      audio: [...context.events, { pitches: chordPitches(t, n), at, dur: 1.8 }],
+      steps: [{ type: "numeral", correct: n, options }],
+      explain: `That was ${ROLE[n]} (The key was set by ${context.label}.) Tip: sing the bass note and find it as a scale degree; the bass tells you the chord.`,
+    };
+  }
+  const timbre = pick(CHORD_SOUNDS);
+  const how = pick<Articulation>(["sustained", "staccato", "broken"]);
+  const shift = pick([0, 0, 12, -12]);
+  const chord = chordPitches(t, n).map((x) => x + shift);
+  const desc = `${SOUND_NAME[timbre]}, ${how === "broken" ? "rolled" : how}${shift ? `, an octave ${shift > 0 ? "up" : "down"}` : ""}`;
   return {
-    prompt: "The key is set, then one chord plays. Which chord is it?",
-    audio: [...context.events, { pitches: chordPitches(t, n), at: context.end + 0.75, dur: 1.8 }],
+    prompt: "The key is set, then one chord plays, on any instrument and in any style. Which chord is it?",
+    audio: [...context.events, ...articulate(chord, at, how)],
+    timbre,
     steps: [{ type: "numeral", correct: n, options }],
-    explain: `That was ${ROLE[n]} (The key was set by ${context.label}.) Tip: sing the bass note and find it as a scale degree; the bass tells you the chord.`,
+    explain: `That was ${ROLE[n]} (Played on ${desc}; the key was set by ${context.label}.) Whatever the sound, the bass still names the chord.`,
   };
 }
 
@@ -137,6 +170,14 @@ export const HARMONY_DRILLS: Drill[] = [
   chordsDrill("h-chords-vi", "2.1c", "Chords in a key: add vi", "I, IV, V and the relative minor.", ["I", "IV", "V", "vi"], 0.85),
   chordsDrill("h-chords-all", "2.1d", "Chords in a key: add ii", "I, ii, IV, V and vi.", ["I", "ii", "IV", "V", "vi"], 0.85),
   chordsDrill("h-chords-iii", "2.1e", "Chords in a key: add iii", "All six common chords: I, ii, iii, IV, V and vi.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
+  // The final step: the same six chords, but on any instrument, held, clipped or rolled.
+  {
+    ...chordsDrill("h-chords-sound", "2.1f", "Chords in a key: any sound", "All six chords on piano, strings, brass, woodwinds, harp or choir, held, clipped or rolled.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
+    brief:
+      "The same six chords, now as they sound in real music: on piano, strings, brass, woodwinds, harp or choir, held long, clipped short or rolled up from the bass, sometimes an octave higher or lower, and the key set by that instrument too. The sound changes; the chord's place in the key doesn't. Listen past the color to the bass and the chord's weight.",
+    sounds: ["strings", "brass", "woodwinds", "harp"],
+    generate: () => chordInKeyQuestion(pick(["I", "ii", "iii", "IV", "V", "vi"] as Numeral[]), ["I", "ii", "iii", "IV", "V", "vi"], { anySound: true }),
+  },
   progressionDrill("h-prog-basic", "2.2a", "Progressions: I, IV and V", "Four-chord progressions using I, IV and V.", ["I", "IV", "V"], 0.8),
   progressionDrill("h-prog-all", "2.2b", "Progressions: with vi and ii", "The '50s progression, the pop progression, ii–V–I and more.", ["I", "ii", "IV", "V", "vi"], 0.8),
 ];

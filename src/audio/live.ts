@@ -1,6 +1,6 @@
 import * as Tone from "tone";
 import { store } from "../model/store";
-import { PPQ, songEnd } from "../model/types";
+import { PPQ, songEnd, type TimbreId } from "../model/types";
 import { ui } from "../model/ui";
 import { view } from "../lib/geom";
 import { Engine } from "./engine";
@@ -73,13 +73,13 @@ const pending = new Set<ReturnType<typeof setTimeout>>();
 export const previewPlaying = new Signal<boolean>(false);
 let previewTimer: ReturnType<typeof setTimeout> | undefined;
 
-/** Play notes outside the project (ear training), on piano. */
-export async function playNotes(events: PreviewEvent[]) {
+/** Play notes outside the project (ear training), on piano unless another instrument is given. */
+export async function playNotes(events: PreviewEvent[], timbre: TimbreId = "piano") {
   const gen = generation;
   await ensureAudio();
   if (gen !== generation) return;
   if (ui.state.playing) stop();
-  engine.preview("piano", events);
+  engine.preview(timbre, events);
   const end = events.reduce((m, e) => Math.max(m, e.at + e.dur), 0);
   previewPlaying.set(true);
   clearTimeout(previewTimer);
@@ -87,10 +87,10 @@ export async function playNotes(events: PreviewEvent[]) {
 }
 
 /** Play notes after a delay, unless `stopAll` comes first. */
-export function playNotesLater(events: PreviewEvent[], ms: number) {
+export function playNotesLater(events: PreviewEvent[], ms: number, timbre?: TimbreId) {
   const t = setTimeout(() => {
     pending.delete(t);
-    void playNotes(events);
+    void playNotes(events, timbre);
   }, ms);
   pending.add(t);
 }
@@ -107,9 +107,9 @@ export function stopAll() {
 }
 window.addEventListener("pagehide", stopAll);
 
-/** Make sure the piano is loaded for the current sound source (for ear training). */
-export function preparePiano() {
-  void getSource(ui.state.soundSource).load(["piano"]);
+/** Make sure the piano (and any other instruments asked for) is loaded for the current sound source, for ear training. */
+export function preparePiano(others: TimbreId[] = []) {
+  void getSource(ui.state.soundSource).load(["piano", ...others]);
 }
 
 export function playheadTick(): number {

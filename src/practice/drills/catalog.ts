@@ -26,6 +26,7 @@ import {
   type Spelled,
   type TriadQuality,
 } from "./theory";
+import type { TimbreId } from "../../model/types";
 import { CADENCE_DRILLS } from "./cadences";
 import { CHORD_TYPE_DRILLS } from "./chordTypes";
 import { KEY_CHORD_DRILLS } from "./keyChords";
@@ -79,6 +80,8 @@ export interface Question {
   resolve?: AudioEvent[];
   /** A shorter replay offered beside "Play again" (key N): just the note, without the cadence. */
   again?: { label: string; audio: AudioEvent[] };
+  /** The instrument all of its audio plays on (piano when unset). */
+  timbre?: TimbreId;
   /** More replays beside Play again, on keys 1, 2…: each bar of a rhythm on its own, say. */
   replays?: { label: string; audio: AudioEvent[] }[];
   steps: Step[];
@@ -98,6 +101,8 @@ export interface Drill {
   /** Pass marks from the foundations checklist. */
   pass: { accuracy: number; medianSec?: number };
   generate: () => Question;
+  /** Instruments besides piano its questions may use, loaded when the drill opens. */
+  sounds?: TimbreId[];
   /** Set on each of a group of small drills shown together as chips on one row (the key, "G"). */
   chip?: string;
 }

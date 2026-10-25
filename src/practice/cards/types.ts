@@ -1,3 +1,4 @@
+import type { TimbreId } from "../../model/types";
 import type { AudioEvent, StaffSpec, Step } from "../drills/catalog";
 
 /**
@@ -21,6 +22,8 @@ export interface Shown {
   resolve?: AudioEvent[];
   /** A shorter replay (key N): just the note, without the cadence. */
   again?: { label: string; audio: AudioEvent[] };
+  /** The instrument its audio plays on (piano when unset). */
+  timbre?: TimbreId;
   /** One answer, or several in order (a triad's root, then its quality). */
   steps: Step[];
   explain: string;
@@ -55,6 +58,8 @@ export interface DeckDef {
   clefs: boolean;
   /** Ear cards: the piano is loaded up front, and speed doesn't count. */
   ear?: boolean;
+  /** Instruments besides piano its cards may use, loaded up front. */
+  sounds?: TimbreId[];
   /** Answers at or under this many ms count as fast. Defaults to the scheduler's. */
   fastMs?: number;
   /** The drills this deck practices (ids), and their numbers for the home page. */

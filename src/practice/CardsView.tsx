@@ -111,7 +111,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
   const fast = def.ear ? Infinity : (def.fastMs ?? FAST_MS);
 
   useEffect(() => {
-    if (def.ear) preparePiano();
+    if (def.ear) preparePiano(def.sounds);
   }, [def]);
 
   const deal = useCallback(() => {
@@ -155,7 +155,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
       const ms = performance.now() - shownAt.current;
       const ok = steps.every((s, i) => isRight(s, all[i]));
       review(showing.card.id, ok, ms, Date.now(), fast);
-      if (!ok && showing.shown.resolve) playNotesLater(showing.shown.resolve, 250);
+      if (!ok && showing.shown.resolve) playNotesLater(showing.shown.resolve, 250, showing.shown.timbre);
       setChosen(value);
       setAnswered((a) => [...a, { card: showing.card, shown: showing.shown, given: all, ok, ms }]);
     },
@@ -166,7 +166,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
     if (!showing || revealMs !== null) return;
     setRevealMs(performance.now() - shownAt.current);
     // In recall mode, the answer's resolution plays as it's revealed.
-    if (showing.shown.resolve) void playNotes(showing.shown.resolve);
+    if (showing.shown.resolve) void playNotes(showing.shown.resolve, showing.shown.timbre);
   }, [showing, revealMs]);
 
   /** Recall mode: grade yourself once the answer is showing. Timed to when you revealed it. */
@@ -184,7 +184,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
 
   // Ear cards play as they appear.
   const replay = useCallback(() => {
-    if (showing?.shown.audio) void playNotes(showing.shown.audio);
+    if (showing?.shown.audio) void playNotes(showing.shown.audio, showing.shown.timbre);
   }, [showing]);
   // Play again is a play/stop toggle: Stop silences it, and playing again starts from the beginning.
   const playing = useSignal(previewPlaying);
@@ -212,7 +212,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
         return;
       }
       if (phase === "run" && (e.key === "n" || e.key === "N") && showing?.shown.again) {
-        void playNotes(showing.shown.again.audio);
+        void playNotes(showing.shown.again.audio, showing.shown.timbre);
         return;
       }
       if (phase === "run" && settings.answer === "recall") {
@@ -397,7 +397,7 @@ export default function CardsView({ def }: { def: DeckDef }) {
             </button>
           )}
           {showing.shown.again && (
-            <button className="btn drill-replay" onClick={() => void playNotes(showing.shown.again!.audio)}>
+            <button className="btn drill-replay" onClick={() => void playNotes(showing.shown.again!.audio, showing.shown.timbre)}>
               {showing.shown.again.label} (N)
             </button>
           )}
