@@ -143,11 +143,45 @@ function TrainerScreen({ id }: { id: string }) {
   );
 }
 
+// ---- Scroll memory ---------------------------------------------------------------------
+
+/** Where each screen was scrolled to, by its address, so going back returns to the same spot. */
+const scrollMemory = new Map<string, number>();
+/** The element a screen scrolls in: the home page's or skill trees' scroll area, or a drill's panel. */
+const scroller = () => document.querySelector<HTMLElement>(".pr-scroll, .drill");
+const screenKey = () => location.hash || "#";
+
+document.addEventListener(
+  "scroll",
+  (e) => {
+    const el = scroller();
+    if (el && e.target === el) scrollMemory.set(screenKey(), el.scrollTop);
+  },
+  { capture: true },
+);
+
+/** Put a screen back where it was (or at the top), once it has rendered tall enough to scroll that far. */
+function restoreScroll(key: string) {
+  const want = scrollMemory.get(key) ?? 0;
+  const started = performance.now();
+  const attempt = () => {
+    if (screenKey() !== key) return;
+    const el = scroller();
+    if (el) {
+      el.scrollTop = want;
+      if (Math.abs(el.scrollTop - want) < 2) return;
+    }
+    // Lazily loaded screens and their content take a moment to appear.
+    if (performance.now() - started < 1500) requestAnimationFrame(attempt);
+  };
+  requestAnimationFrame(attempt);
+}
+
 export function PracticeApp() {
   const route = useRoute();
   useEffect(() => {
     document.title = "Etude Study";
-    window.scrollTo(0, 0);
+    restoreScroll(screenKey());
     // Leaving a screen silences it, including anything it scheduled to play later.
     return stopAll;
   }, [route]);
