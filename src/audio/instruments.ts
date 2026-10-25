@@ -142,15 +142,14 @@ export function createVoice(timbre: TimbreId): Voice {
       return new PolyVoice(synth, [], -12.5);
     }
     case "supersaw": {
-      // Seven detuned saws, the trance and EDM chord sound, trimmed of mud and fizz and widened by a chorus.
+      // A bright, buzzy saw lead: a few saws only slightly detuned, so it stays in tune, with no wobble.
       const synth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: "fatsawtooth", count: 7, spread: 38 },
-        envelope: { attack: 0.012, decay: 0.2, sustain: 0.85, release: 0.35 },
+        oscillator: { type: "fatsawtooth", count: 3, spread: 12 },
+        envelope: { attack: 0.006, decay: 0.15, sustain: 0.9, release: 0.25 },
       });
-      const highpass = new Tone.Filter({ type: "highpass", frequency: 140 });
-      const lowpass = new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 });
-      const chorus = new Tone.Chorus({ frequency: 0.6, delayTime: 3.5, depth: 0.6, wet: 0.45 }).start();
-      return new PolyVoice(synth, [highpass, lowpass, chorus], -8.5);
+      const highpass = new Tone.Filter({ type: "highpass", frequency: 120 });
+      const lowpass = new Tone.Filter({ type: "lowpass", frequency: 9000, rolloff: -12 });
+      return new PolyVoice(synth, [highpass, lowpass], -9.7);
     }
     case "pluck": {
       // A saw pair whose filter snaps shut, so each note is a bright click that dies fast, then echoes.

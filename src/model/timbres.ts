@@ -81,7 +81,7 @@ export const TIMBRES: Record<TimbreId, TimbreInfo> = {
   supersaw: {
     id: "supersaw",
     name: "Supersaw",
-    role: "EDM and trance chords: a wall of detuned saws, wide and bright",
+    role: "EDM saw lead: bright and buzzy, a few lightly detuned saws",
     color: "#4fb3b0", // club light
     gmProgram: 81,
     range: [36, 88],
