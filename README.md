@@ -233,7 +233,7 @@ I–IV–V–I, I–V–I, I–V7–I, ii–V–I, I–vi–IV–V–I or I–IV
 textures), then one chord plays, voiced as a pianist would (root in the
 bass, the rest close above). Scale degrees from 0.11d on and melodic fragments (0.12) set
 the key the same varied ways; 0.11a to 0.11c keep one I–IV–V–I cadence (in C for a and b). The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
-adding ii, e adding iii (all six common chords), f all six on any instrument (piano, strings, brass, woodwinds, harp, choir, EDM supersaw and pluck), held, clipped or rolled, sometimes in another octave; then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the
+adding ii, e adding iii (all six common chords), f all six on any instrument (piano, strings, brass, woodwinds, harp, choir, EDM supersaw and pluck), held, clipped or rolled, sometimes in another octave, at a slow to fast tempo; then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the
 '50s progression, the pop I–V–vi–IV, ii–V–I and others), naming chords 2 to 4. The
 explanations point to the bass line (do, fa, sol, la, re), which gives the chord away. The
 voicings and progressions are in `src/practice/drills/harmony.ts`.

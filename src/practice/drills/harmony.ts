@@ -66,6 +66,14 @@ const SOUND_NAME: Partial<Record<TimbreId, string>> = {
 
 type Articulation = "sustained" | "staccato" | "broken";
 
+/** Time stretches for the any-sound stage: a beat of the key-setting chords is about 0.4 s fast, 1 s slow. */
+const TEMPOS = [
+  { scale: 0.55, name: "fast" },
+  { scale: 0.75, name: "brisk" },
+  { scale: 1, name: "" },
+  { scale: 1.4, name: "slow" },
+];
+
 /** A chord played one of three ways: held long and slow, short and clipped, or rolled up from the bass. */
 function articulate(p: number[], at: number, how: Articulation): AudioEvent[] {
   if (how === "sustained") return [{ pitches: p, at, dur: 2.6, vel: 0.55 }];
@@ -94,10 +102,13 @@ export function chordInKeyQuestion(n: Numeral, options: Numeral[], { anySound = 
   const how = pick<Articulation>(["sustained", "staccato", "broken"]);
   const shift = pick([0, 0, 12, -12]);
   const chord = chordPitches(t, n).map((x) => x + shift);
-  const desc = `${SOUND_NAME[timbre]}, ${how === "broken" ? "rolled" : how}${shift ? `, an octave ${shift > 0 ? "up" : "down"}` : ""}`;
+  // Songs run from slow ballads to fast dance tracks: everything is stretched or squeezed together.
+  const tempo = pick(TEMPOS);
+  const audio = [...context.events, ...articulate(chord, at, how)].map((e) => ({ ...e, at: e.at * tempo.scale, dur: e.dur * tempo.scale }));
+  const desc = [SOUND_NAME[timbre], how === "broken" ? "rolled" : how, shift ? `an octave ${shift > 0 ? "up" : "down"}` : "", tempo.name].filter(Boolean).join(", ");
   return {
-    prompt: "The key is set, then one chord plays, on any instrument and in any style. Which chord is it?",
-    audio: [...context.events, ...articulate(chord, at, how)],
+    prompt: "The key is set, then one chord plays, on any instrument, in any style and at any speed. Which chord is it?",
+    audio,
     timbre,
     steps: [{ type: "numeral", correct: n, options }],
     explain: `That was ${ROLE[n]} (Played on ${desc}; the key was set by ${context.label}.) Whatever the sound, the bass still names the chord.`,
@@ -181,9 +192,9 @@ export const HARMONY_DRILLS: Drill[] = [
   chordsDrill("h-chords-iii", "2.1e", "Chords in a key: add iii", "All six common chords: I, ii, iii, IV, V and vi.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
   // The final step: the same six chords, but on any instrument, held, clipped or rolled.
   {
-    ...chordsDrill("h-chords-sound", "2.1f", "Chords in a key: any sound", "All six chords on piano, orchestra, choir or EDM synths, held, clipped or rolled.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
+    ...chordsDrill("h-chords-sound", "2.1f", "Chords in a key: any sound", "All six chords on piano, orchestra, choir or EDM synths, held, clipped or rolled, slow or fast.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
     brief:
-      "The same six chords, now as they sound in real music: on piano, strings, brass, woodwinds, harp, choir or EDM synths (supersaw and pluck), held long, clipped short or rolled up from the bass, sometimes an octave higher or lower, and the key set by that instrument too. The sound changes; the chord's place in the key doesn't. Listen past the color to the bass and the chord's weight.",
+      "The same six chords, now as they sound in real music: on piano, strings, brass, woodwinds, harp, choir or EDM synths (supersaw and pluck), held long, clipped short or rolled up from the bass, sometimes an octave higher or lower, slow or fast, and the key set by that instrument too. The sound changes; the chord's place in the key doesn't. Listen past the color to the bass and the chord's weight.",
     sounds: ["strings", "brass", "woodwinds", "harp"],
     generate: () => chordInKeyQuestion(pick(["I", "ii", "iii", "IV", "V", "vi"] as Numeral[]), ["I", "ii", "iii", "IV", "V", "vi"], { anySound: true }),
   },
