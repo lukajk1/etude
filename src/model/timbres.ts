@@ -78,25 +78,9 @@ export const TIMBRES: Record<TimbreId, TimbreInfo> = {
     gmProgram: 79,
     range: [36, 96],
   },
-  supersaw: {
-    id: "supersaw",
-    name: "Supersaw",
-    role: "EDM saw lead: bright and buzzy, a few lightly detuned saws",
-    color: "#4fb3b0", // club light
-    gmProgram: 81,
-    range: [36, 88],
-  },
-  pluck: {
-    id: "pluck",
-    name: "Synth pluck",
-    role: "EDM plucks and stabs: a saw whose filter snaps shut, with an echo",
-    color: "#c45fb8", // neon
-    gmProgram: 84,
-    range: [40, 96],
-  },
 };
 
-export const TIMBRE_ORDER: TimbreId[] = ["strings", "woodwinds", "brass", "choir", "piano", "harp", "percussion", "pure", "supersaw", "pluck"];
+export const TIMBRE_ORDER: TimbreId[] = ["strings", "woodwinds", "brass", "choir", "piano", "harp", "percussion", "pure"];
 
 /** Map a General MIDI program (0-based) to the nearest timbre. */
 export function timbreForProgram(program: number, percussion: boolean): TimbreId {

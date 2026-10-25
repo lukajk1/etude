@@ -1,7 +1,7 @@
 /** Ticks per quarter note. Matches the MIDI files we write. */
 export const PPQ = 480;
 
-export type TimbreId = "strings" | "woodwinds" | "brass" | "choir" | "piano" | "harp" | "percussion" | "pure" | "supersaw" | "pluck";
+export type TimbreId = "strings" | "woodwinds" | "brass" | "choir" | "piano" | "harp" | "percussion" | "pure";
 
 export interface Note {
   id: string;

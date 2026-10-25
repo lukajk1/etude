@@ -141,27 +141,6 @@ export function createVoice(timbre: TimbreId): Voice {
       });
       return new PolyVoice(synth, [], -12.5);
     }
-    case "supersaw": {
-      // A bright, buzzy saw lead: a few saws only slightly detuned, so it stays in tune, with no wobble.
-      const synth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: "fatsawtooth", count: 3, spread: 12 },
-        envelope: { attack: 0.006, decay: 0.15, sustain: 0.9, release: 0.25 },
-      });
-      const highpass = new Tone.Filter({ type: "highpass", frequency: 120 });
-      const lowpass = new Tone.Filter({ type: "lowpass", frequency: 9000, rolloff: -12 });
-      return new PolyVoice(synth, [highpass, lowpass], -9.7);
-    }
-    case "pluck": {
-      // A saw pair whose filter snaps shut, so each note is a bright click that dies fast, then echoes.
-      const synth = new Tone.PolySynth(Tone.MonoSynth, {
-        oscillator: { type: "fatsawtooth", count: 2, spread: 14 },
-        envelope: { attack: 0.003, decay: 0.32, sustain: 0.08, release: 0.25 },
-        filter: { type: "lowpass", rolloff: -24, Q: 2 },
-        filterEnvelope: { attack: 0.002, decay: 0.2, sustain: 0, release: 0.2, baseFrequency: 300, octaves: 4.4, exponent: 2 },
-      });
-      const delay = new Tone.FeedbackDelay({ delayTime: 0.28, feedback: 0.28, wet: 0.22 });
-      return new PolyVoice(synth, [delay], -4);
-    }
     case "percussion":
       return new DrumVoice();
     case "piano":
