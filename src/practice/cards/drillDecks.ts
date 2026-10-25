@@ -325,7 +325,7 @@ export const HEAR_DEGREES_DECK = factDeck({
 export const CHORDS_IN_KEY_DECK = factDeck({
   id: "chords-in-key",
   title: "Chords in a key",
-  summary: "I, ii, IV, V and vi by ear after a cadence; pick any set to drill.",
+  summary: "I, ii, iii, IV, V and vi by ear once the key is set; pick any set to drill.",
   brief: "The key is set (a different way each time), then one chord plays: name it by its role. Check the chords to drill; the answer buttons are just those. Listen to the bass note.",
   tag: "2.1",
   drills: ["h-chords-1-5", "h-chords-1-4-5", "h-chords-vi", "h-chords-all"],
@@ -337,11 +337,13 @@ export const CHORDS_IN_KEY_DECK = factDeck({
     { label: "I and V", types: ["I", "V"] },
     { label: "I, IV, V", types: ["I", "IV", "V"] },
     { label: "Add vi", types: ["I", "IV", "V", "vi"] },
-    { label: "All five", types: [...NUMERALS] },
+    // The minor chords on their own: the ones that aren't I, IV or V.
+    { label: "ii, iii, vi", types: ["ii", "iii", "vi"] },
+    { label: "All six", types: [...NUMERALS] },
   ],
   minTypes: 2,
   cardId: (n) => `chords-in-key:${n}`,
-  rank: (n) => ["I", "V", "IV", "vi", "ii"].indexOf(n),
+  rank: (n) => ["I", "V", "IV", "vi", "ii", "iii"].indexOf(n),
   oneRow: "Chords",
   facts: (n) => [n],
   label: (n) => `${n} (${NUMERAL_NAME[n as Numeral]})`,
@@ -349,7 +351,7 @@ export const CHORDS_IN_KEY_DECK = factDeck({
   question: (n, _f, _pool, types) => chordInKeyQuestion(n as Numeral, NUMERALS.filter((x) => types.includes(x))),
 });
 
-const progressionSet = (pool: string): Numeral[] => (pool === "full" ? [...NUMERALS] : ["I", "IV", "V"]);
+const progressionSet = (pool: string): Numeral[] => (pool === "full" ? ["I", "ii", "IV", "V", "vi"] : ["I", "IV", "V"]);
 
 export const PROGRESSIONS_DECK = factDeck({
   id: "progressions",

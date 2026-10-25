@@ -8,16 +8,17 @@ import { pick, randInt } from "./theory";
  * would: the root in the bass, the other notes kept close together around the tonic.
  */
 
-export type Numeral = "I" | "ii" | "IV" | "V" | "vi";
+export type Numeral = "I" | "ii" | "iii" | "IV" | "V" | "vi";
 /** In the order they appear on the answer buttons. */
-export const NUMERALS: Numeral[] = ["I", "ii", "IV", "V", "vi"];
+export const NUMERALS: Numeral[] = ["I", "ii", "iii", "IV", "V", "vi"];
 
-const ROOT: Record<Numeral, number> = { I: 0, ii: 2, IV: 5, V: 7, vi: 9 };
-const MINOR = new Set<Numeral>(["ii", "vi"]);
+const ROOT: Record<Numeral, number> = { I: 0, ii: 2, iii: 4, IV: 5, V: 7, vi: 9 };
+const MINOR = new Set<Numeral>(["ii", "iii", "vi"]);
 
 export const NUMERAL_NAME: Record<Numeral, string> = {
   I: "tonic",
   ii: "supertonic",
+  iii: "mediant",
   IV: "subdominant",
   V: "dominant",
   vi: "relative minor",
@@ -27,6 +28,7 @@ export const NUMERAL_NAME: Record<Numeral, string> = {
 const ROLE: Record<Numeral, string> = {
   I: "I, the tonic: home and at rest, with do in the bass.",
   ii: "ii, a minor chord on re. It usually leads on to V.",
+  iii: "iii, a minor chord on mi: soft and in-between, sharing two notes with I and two with V. Mi is in the bass.",
   IV: "IV, the subdominant: a lift away from home (the \"amen\" chord), with fa in the bass.",
   V: "V, the dominant: tense, it pulls back to I. Sol is in the bass.",
   vi: "vi, the relative minor: like home, but darker. La is in the bass.",
@@ -91,7 +93,7 @@ export function progressionQuestion(chords: Numeral[], options: Numeral[]): Ques
     prompt: "Four chords play, starting on I. Name chords 2, 3 and 4.",
     audio: chords.map((n, i) => ({ pitches: chordPitches(t, n), at: i * 1.0, dur: i === 3 ? 1.6 : 0.95 })),
     steps: chords.slice(1).map((c, i) => ({ type: "numeral" as const, label: `Chord ${i + 2}`, correct: c, options })),
-    explain: `It was ${progressionLabel(chords)}${name ? `, ${name}` : ""}. Follow the bass: ${chords.map((c) => ({ I: "do", ii: "re", IV: "fa", V: "sol", vi: "la" })[c]).join(", ")}.`,
+    explain: `It was ${progressionLabel(chords)}${name ? `, ${name}` : ""}. Follow the bass: ${chords.map((c) => ({ I: "do", ii: "re", iii: "mi", IV: "fa", V: "sol", vi: "la" })[c]).join(", ")}.`,
   };
 }
 
