@@ -51,9 +51,18 @@ export function chordPitches(t: number, n: Numeral): number[] {
   return [bass, ...upper];
 }
 
-/** Instruments for the any-sound stage: the recorded ones, plus the synth choir. */
-export const CHORD_SOUNDS: TimbreId[] = ["piano", "strings", "brass", "woodwinds", "harp", "choir"];
-const SOUND_NAME: Partial<Record<TimbreId, string>> = { piano: "piano", strings: "strings", brass: "brass", woodwinds: "woodwinds", harp: "harp", choir: "choir" };
+/** Instruments for the any-sound stage: the recorded ones, plus the synth choir and two EDM synths. */
+export const CHORD_SOUNDS: TimbreId[] = ["piano", "strings", "brass", "woodwinds", "harp", "choir", "supersaw", "pluck"];
+const SOUND_NAME: Partial<Record<TimbreId, string>> = {
+  piano: "piano",
+  strings: "strings",
+  brass: "brass",
+  woodwinds: "woodwinds",
+  harp: "harp",
+  choir: "choir",
+  supersaw: "an EDM supersaw",
+  pluck: "an EDM synth pluck",
+};
 
 type Articulation = "sustained" | "staccato" | "broken";
 
@@ -172,9 +181,9 @@ export const HARMONY_DRILLS: Drill[] = [
   chordsDrill("h-chords-iii", "2.1e", "Chords in a key: add iii", "All six common chords: I, ii, iii, IV, V and vi.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
   // The final step: the same six chords, but on any instrument, held, clipped or rolled.
   {
-    ...chordsDrill("h-chords-sound", "2.1f", "Chords in a key: any sound", "All six chords on piano, strings, brass, woodwinds, harp or choir, held, clipped or rolled.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
+    ...chordsDrill("h-chords-sound", "2.1f", "Chords in a key: any sound", "All six chords on piano, orchestra, choir or EDM synths, held, clipped or rolled.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
     brief:
-      "The same six chords, now as they sound in real music: on piano, strings, brass, woodwinds, harp or choir, held long, clipped short or rolled up from the bass, sometimes an octave higher or lower, and the key set by that instrument too. The sound changes; the chord's place in the key doesn't. Listen past the color to the bass and the chord's weight.",
+      "The same six chords, now as they sound in real music: on piano, strings, brass, woodwinds, harp, choir or EDM synths (supersaw and pluck), held long, clipped short or rolled up from the bass, sometimes an octave higher or lower, and the key set by that instrument too. The sound changes; the chord's place in the key doesn't. Listen past the color to the bass and the chord's weight.",
     sounds: ["strings", "brass", "woodwinds", "harp"],
     generate: () => chordInKeyQuestion(pick(["I", "ii", "iii", "IV", "V", "vi"] as Numeral[]), ["I", "ii", "iii", "IV", "V", "vi"], { anySound: true }),
   },
