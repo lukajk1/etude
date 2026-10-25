@@ -295,6 +295,7 @@ const CHIP_NAMES: Record<string, string> = {
   "2.1b": "I, IV, V",
   "2.1c": "+ vi",
   "2.1d": "+ ii",
+  "2.1e": "+ iii",
   "2.2a": "I, IV, V",
   "2.2b": "+ vi, ii",
   "4.1a": "authentic, half",

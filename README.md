@@ -158,7 +158,7 @@ filled, tinted, outlined or faded for passed, tried, ready or not yet. Each skil
 color, which its tags and deck tiles share.
 
 **Your plan**, at the top of the home page, lists the core stages still to pass before real
-pop songs are workable (scale degrees and I, IV, V, vi by ear; note values and simple rhythmic
+pop songs are workable (scale degrees and the six common chords of a major key by ear; note values and simple rhythmic
 dictation; notes, core key signatures and triads), in that recommended order. The rest of the
 exercises are learned alongside songs. The stages are `GOAL_STAGES` in `src/practice/plan.ts`.
 
@@ -231,7 +231,7 @@ I–IV–V–I, I–V–I, I–V7–I, ii–V–I, I–vi–IV–V–I or I–IV
 textures), then one chord plays, voiced as a pianist would (root in the
 bass, the rest close above). Scale degrees from 0.11d on and melodic fragments (0.12) set
 the key the same varied ways; 0.11a to 0.11c keep one I–IV–V–I cadence (in C for a and b). The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
-adding ii; then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the
+adding ii, e adding iii (all six common chords); then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the
 '50s progression, the pop I–V–vi–IV, ii–V–I and others), naming chords 2 to 4. The
 explanations point to the bass line (do, fa, sol, la, re), which gives the chord away. The
 voicings and progressions are in `src/practice/drills/harmony.ts`.

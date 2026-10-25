@@ -328,7 +328,7 @@ export const CHORDS_IN_KEY_DECK = factDeck({
   summary: "I, ii, iii, IV, V and vi by ear once the key is set; pick any set to drill.",
   brief: "The key is set (a different way each time), then one chord plays: name it by its role. Check the chords to drill; the answer buttons are just those. Listen to the bass note.",
   tag: "2.1",
-  drills: ["h-chords-1-5", "h-chords-1-4-5", "h-chords-vi", "h-chords-all"],
+  drills: ["h-chords-1-5", "h-chords-1-4-5", "h-chords-vi", "h-chords-all", "h-chords-iii"],
   ear: true,
   pools: [{ value: "full", label: "Chosen chords" }],
   types: NUMERALS.map((n) => ({ id: n, label: `${n} (${NUMERAL_NAME[n]})`, hint: NUMERAL_NAME[n] })),

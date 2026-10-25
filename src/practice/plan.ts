@@ -11,8 +11,8 @@ export const PLAN_GOAL = "The core for starting on real pop songs: transcribing 
 export const GOAL_STAGES = [
   // Hearing melodies: scale degrees, for melodies and bass lines.
   "0.11a", "0.11b", "0.11c", "0.11d", "0.11e", "0.11f", "0.11g",
-  // Hearing harmony: I, IV, V and vi.
-  "2.1a", "2.1b", "2.1c",
+  // Hearing harmony: the six common chords of a major key, I ii iii IV V vi (vii° is rare in pop).
+  "2.1a", "2.1b", "2.1c", "2.1d", "2.1e",
   // Rhythm: note values, and dictation with quarters and eighths.
   "3.1a", "3.1b", "3.3a", "3.3b",
   // Reading: notes, core key signatures, and the chords of the commonest keys (C, G, F, D).

@@ -136,6 +136,7 @@ export const HARMONY_DRILLS: Drill[] = [
   chordsDrill("h-chords-1-4-5", "2.1b", "Chords in a key: I, IV or V", "The three chords that carry most tonal music.", ["I", "IV", "V"], 0.9),
   chordsDrill("h-chords-vi", "2.1c", "Chords in a key: add vi", "I, IV, V and the relative minor.", ["I", "IV", "V", "vi"], 0.85),
   chordsDrill("h-chords-all", "2.1d", "Chords in a key: add ii", "I, ii, IV, V and vi.", ["I", "ii", "IV", "V", "vi"], 0.85),
+  chordsDrill("h-chords-iii", "2.1e", "Chords in a key: add iii", "All six common chords: I, ii, iii, IV, V and vi.", ["I", "ii", "iii", "IV", "V", "vi"], 0.8),
   progressionDrill("h-prog-basic", "2.2a", "Progressions: I, IV and V", "Four-chord progressions using I, IV and V.", ["I", "IV", "V"], 0.8),
   progressionDrill("h-prog-all", "2.2b", "Progressions: with vi and ii", "The '50s progression, the pop progression, ii–V–I and more.", ["I", "ii", "IV", "V", "vi"], 0.8),
 ];
