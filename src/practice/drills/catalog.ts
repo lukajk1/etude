@@ -716,6 +716,18 @@ const hearDoToSol = checkpoint(hearDegrees, {
   generate: () => degreeQuestion(randInt(1, 6), ["1", "2", "3", "4", "5", "6"], { varied: true, walkDown: true }),
 });
 
+// Every degree, but back in C after the one I–IV–V–I, so fa and ti can be learned against a
+// do that stays put before the key moves and the opening changes.
+const hearAllInC = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-all-c",
+  number: "0.11h",
+  title: "Hear scale degrees: all seven in C",
+  summary: "Degrees 1 to 7, always in C, after the same I–IV–V–I.",
+  brief:
+    "All seven degrees, with every question in C after the same I–IV–V–I cadence, so do stays in your ear while fa and ti join. Fa leans down to mi; ti is a half step under do and pulls up to it.",
+  generate: () => degreeQuestion(randInt(1, 7), undefined, { inC: true, walkDown: true }),
+});
+
 /**
  * A scale degree after the key is set; `options` limits the answer buttons. `inC` keeps the
  * key at C instead of a random one; `drone` holds low do under the note (and its replays);
@@ -794,6 +806,7 @@ export const DRILLS: Drill[] = [
   hearDoMiSol,
   hearPentatonic,
   hearDoToSol,
+  hearAllInC,
   hearDegrees,
   ...FRAGMENT_DRILLS,
   ...HARMONY_DRILLS,

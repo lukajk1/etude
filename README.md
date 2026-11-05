@@ -117,7 +117,7 @@ speed targets:
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
 | 0.10 | Hear chord quality: a major or minor, b all four | 90% |
 | 0.16 | Hear chord types, a group with a chip each, adding types in the order pop uses them: a major, minor or dominant 7, b maj7, c m7, d sus4 and sus2, e add9, f dim7, g aug, h m7♭5 | 85% |
-| 0.11 | Hear scale degrees once the key is set: a do mi sol in C over a drone of do, b do mi sol in C, c do mi sol in any key after the same I–IV–V–I, d do mi sol after a different opening each time, e do re mi sol la (the major pentatonic), f do to la (the pentatonic plus fa), g all seven; after a wrong answer the note walks home to do by step | 85% |
+| 0.11 | Hear scale degrees once the key is set: a do mi sol in C over a drone of do, b do mi sol in C, c do mi sol in any key after the same I–IV–V–I, d do mi sol after a different opening each time, e do re mi sol la (the major pentatonic), f do to la (the pentatonic plus fa), h all seven in C after the same I–IV–V–I, g all seven; after a wrong answer the note walks home to do by step | 85% |
 | 0.12 | Hear melodic fragments by scale degree: a common 3-note patterns, b common 4-note patterns with la and ti, c random 5-note fragments, faster | 85% / 80% / 75% |
 | 0.13 | Intervals in context, the one leap in a short melody: a the essentials, b all 12 | 85% / 75% |
 | 0.14 | All keys: signatures up to 7 sharps or flats, major and minor (after 0.2b and 0.3a) | 95%, median 3 s |
@@ -230,7 +230,7 @@ progression sets the key, a different one each time (`src/practice/drills/keyCon
 I–IV–V–I, I–V–I, I–V7–I, ii–V–I, I–vi–IV–V–I or I–IV–I–V7–I, in block, broken or rolled
 textures), then one chord plays, voiced as a pianist would (root in the
 bass, the rest close above). Scale degrees from 0.11d on and melodic fragments (0.12) set
-the key the same varied ways; 0.11a to 0.11c keep one I–IV–V–I cadence (in C for a and b). The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
+the key the same varied ways; 0.11a to 0.11c and 0.11h keep one I–IV–V–I cadence (in C for a, b and h). The checkpoints are 2.1a I or V, b I, IV or V, c adding vi, d
 adding ii, e adding iii (all six common chords), f all six on any instrument (piano, strings, brass, woodwinds, harp, choir), held, clipped or rolled, sometimes in another octave, at a slow to fast tempo; then 2.2a four-chord progressions with I, IV and V, and b with vi and ii (the
 '50s progression, the pop I–V–vi–IV, ii–V–I and others), naming chords 2 to 4. The
 explanations point to the bass line (do, fa, sol, la, re), which gives the chord away. The
