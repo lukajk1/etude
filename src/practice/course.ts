@@ -81,6 +81,7 @@ function counterpointTopics(): Topic[] {
 export const UNITS: Unit[] = [
   { title: "Foundations: reading and theory", kind: "Reading", topics: drillTopics((d) => !d.ear && !d.unit) },
   { title: "Foundations: ear training", kind: "Ear", topics: drillTopics((d) => d.ear && !d.unit) },
+  { title: "Singing", kind: "Singing", topics: drillTopics((d) => d.unit === "singing") },
   { title: "Rhythm and meter", kind: "Rhythm", topics: drillTopics((d) => d.unit === "rhythm") },
   {
     title: "Transcription",
@@ -142,6 +143,10 @@ const PREREQS: Record<string, string[]> = {
   "4.1a": ["2.1b"], // a cadence is chords: I, IV and V by ear first
   "5.1a": ["0.6m"], // spotting the note outside a chord means reading the chord
   "6.1a": ["0.7a"], // choosing a chord means knowing what's in each one
+  "7.2a": ["0.11d"], // sing a degree once you can hear it
+  "7.3a": ["0.12a"], // sing back what you can name
+  "7.4a": ["2.1b"], // the bass of I, IV and V by ear first
+  "7.5a": ["0.6m"], // a 3rd above in the key: the notes of the key's triads
   T2: ["0.11d"], // skips in the tonic chord: hear do, mi and sol first
   T3: ["0.11f", "0.3a"],
   T4: ["0.3b", "0.11g"], // minor: the natural minor scale, and every degree by ear

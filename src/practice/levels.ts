@@ -116,6 +116,17 @@ export const LEVELS: Record<string, Level> = {
   "1.5": t(10),
   "1.6": t(10),
   "1.7": t(10),
+  // Singing: sight-singing and pitch matching from first-year college aural skills.
+  "7.1a": c(1),
+  "7.1b": c(2),
+  "7.2a": c(3),
+  "7.2b": c(4),
+  "7.3a": c(4),
+  "7.3b": c(5),
+  "7.4a": c(4),
+  "7.4b": c(5),
+  "7.5a": c(5),
+  "7.5b": c(6),
   // Melodic dictation: steps from do, then tonic skips, the whole scale, minor, longer with pickups.
   T1: c(2),
   T2: c(3),

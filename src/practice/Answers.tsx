@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
-import { engine, ensureAudio, playNotes } from "../audio/live";
+import { engine, ensureAudio, playNotes, previewPlaying, stopAll } from "../audio/live";
+import { closeMic, openMic, readPitch } from "../audio/mic";
+import { useSignal } from "../model/ui";
 import { CADENCE_INFO, type Cadence } from "./drills/cadences";
 import { CHORD_TYPES, type ChordType } from "./drills/chordTypes";
 import { prettyChord } from "./drills/keyChords";
 import { EAR_INTERVALS, isRight, SOLFEGE, type AnswerType, type StaffSpec, type Step } from "./drills/catalog";
 import { NCT_INFO, type Nct } from "./drills/nct";
+import { NOTE_NAMES, parseSing } from "./drills/singing";
 import { NUMERAL_NAME, NUMERALS, type Numeral } from "./drills/harmony";
 import { BPM, beatsLabel, countText, fromSpec, METER_LABEL, onsets, rhythmAudio, VALUES, type MeterId } from "./drills/rhythm";
 import { MAJOR_KEYS, MINOR_KEYS, accidentalsLabel, intervalLabel, prettyCode, vfKey } from "./drills/theory";
@@ -167,6 +170,8 @@ export function answerLabel(type: AnswerType, value: string): string {
       return `${CADENCE_INFO[value as Cadence].label} (${CADENCE_INFO[value as Cadence].chords})`;
     case "nct":
       return NCT_INFO[value as Nct].label.toLowerCase();
+    case "sing":
+      return value === "off" ? "off pitch" : value;
   }
 }
 
@@ -341,6 +346,8 @@ export function AnswerPad(props: PadProps) {
       return <RhythmChoices {...props} />;
     case "tap":
       return <TapPad key={step.data} {...props} />;
+    case "sing":
+      return <SingPad key={step.data} {...props} />;
     case "semitones":
       return (
         <div className="drill-grid" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
@@ -507,6 +514,262 @@ function TapPad({ step, reveal, onPick }: PadProps) {
             ))}
           </div>
           <div className="pr-dim">{summary}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Singing ---------------------------------------------------------------------------
+
+/** Notes named from do, in any key: the usual chromatic solfège. */
+const CHROMATIC = ["do", "ra", "re", "me", "mi", "fa", "fi", "sol", "le", "la", "te", "ti"];
+/** Pitches within this many semitones of the note so far count as the same note (vibrato, wobble). */
+const SAME_NOTE = 0.6;
+/** Silence this long ends a note, so the same pitch can be sung again. */
+const SILENCE_MS = 120;
+/** The mic stays deaf this long after Etude stops playing, past the piano's tail. */
+const AFTER_PLAY_MS = 300;
+
+const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+/** How far a sung pitch is from a target, in semitones, in whichever octave is nearest: -6 to 6. */
+const offBy = (sung: number, target: number) => ((((sung - target) % 12) + 18) % 12) - 6;
+
+interface SingMark {
+  ok: boolean;
+  /** Cents from the target; null when the note wasn't sung. */
+  cents: number | null;
+  name: string;
+}
+
+/**
+ * Sing the notes asked for. The mic listens (deaf while Etude plays), and a note counts
+ * once it's held steady for a moment; leaving a gap or moving to a new pitch starts the
+ * next. Any octave counts. With a tuner, the needle shows how far off the current note is.
+ */
+function SingPad({ step, onPick }: PadProps) {
+  const spec = parseSing(step.data ?? "");
+  const holdMs = spec.tuner ? 600 : 350;
+  const same = spec.tuner ? 0.3 : SAME_NOTE;
+  const name = (m: number) => (spec.tonic >= 0 ? CHROMATIC : NOTE_NAMES)[(((Math.round(m) - Math.max(0, spec.tonic)) % 12) + 12) % 12];
+  const [status, setStatus] = useState<"opening" | "listening" | "blocked" | "done">("opening");
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const [sung, setSung] = useState<number[]>([]);
+  const [live, setLive] = useState<number | null>(null);
+  const [hold, setHold] = useState(0);
+  const [marks, setMarks] = useState<SingMark[]>([]);
+  const playing = useSignal(previewPlaying);
+  const analyser = useRef<AnalyserNode | null>(null);
+  const pick = useRef(onPick);
+  pick.current = onPick;
+  /** Where the listening is: the note being held, and the notes caught so far. */
+  const track = useRef({
+    seg: null as { start: number; ref: number; values: number[] } | null,
+    armed: true,
+    silentSince: null as number | null,
+    quietUntil: performance.now() + AFTER_PLAY_MS,
+    wasPlaying: false,
+    caught: [] as number[],
+  });
+
+  // Open the mic when the pad appears, and let go of it when it goes.
+  useEffect(() => {
+    let alive = true;
+    let opened = false;
+    openMic()
+      .then((a) => {
+        opened = true;
+        if (!alive) return closeMic();
+        analyser.current = a;
+        setStatus("listening");
+      })
+      .catch((err: unknown) => {
+        if (!alive) return;
+        const why = err instanceof DOMException ? err.name : "";
+        setError(
+          why === "NotAllowedError"
+            ? "The microphone is blocked. Allow it for this site (the icon at the left of the address bar), then try again."
+            : why === "NotFoundError"
+              ? "No microphone found. Plug one in, then try again."
+              : `Couldn't open the microphone: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        setStatus("blocked");
+      });
+    return () => {
+      alive = false;
+      if (opened) closeMic();
+    };
+  }, [attempt]);
+
+  const finish = (caught: number[]) => {
+    const result = spec.targets.map((t, i): SingMark => {
+      if (caught[i] === undefined) return { ok: false, cents: null, name: "·" };
+      const cents = Math.round(offBy(caught[i], t) * 100);
+      return { ok: Math.abs(cents) <= spec.cents, cents, name: name(caught[i]) };
+    });
+    setMarks(result);
+    setStatus("done");
+    pick.current(result.every((m) => m.ok) ? step.correct : "off");
+  };
+
+  const restart = () => {
+    Object.assign(track.current, { seg: null, armed: true, silentSince: null, caught: [] });
+    setSung([]);
+    setHold(0);
+  };
+
+  // Listen, a frame at a time.
+  useEffect(() => {
+    if (status !== "listening" || !analyser.current) return;
+    const a = analyser.current;
+    const buf = new Float32Array(a.fftSize);
+    const st = track.current;
+    let raf = 0;
+    const frame = () => {
+      raf = requestAnimationFrame(frame);
+      const now = performance.now();
+      if (previewPlaying.value) {
+        Object.assign(st, { wasPlaying: true, quietUntil: now + AFTER_PLAY_MS, seg: null, armed: true });
+        setLive(null);
+        setHold(0);
+        return;
+      }
+      if (st.wasPlaying) {
+        // Cut the piano's tail so the mic doesn't hear it.
+        st.wasPlaying = false;
+        stopAll();
+      }
+      if (now < st.quietUntil) return;
+      const m = readPitch(a, buf);
+      setLive(m);
+      if (m === null) {
+        st.silentSince ??= now;
+        if (now - st.silentSince > SILENCE_MS) {
+          Object.assign(st, { seg: null, armed: true });
+          setHold(0);
+        }
+        return;
+      }
+      st.silentSince = null;
+      // Octave slips in the detector fold back into the note being held.
+      const v = st.seg ? m - 12 * Math.round((m - st.seg.ref) / 12) : m;
+      if (st.seg && Math.abs(v - median(st.seg.values.slice(-8))) <= same) st.seg.values.push(v);
+      else Object.assign(st, { seg: { start: now, ref: m, values: [m] }, armed: true });
+      const seg = st.seg!;
+      const held = now - seg.start;
+      setHold(st.armed ? Math.min(1, held / holdMs) : 0);
+      if (st.armed && held >= holdMs) {
+        st.armed = false;
+        // Leave out the first third: the scoop up or down into the note.
+        st.caught = [...st.caught, median(seg.values.slice(Math.floor(seg.values.length / 3)))];
+        setSung(st.caught);
+        if (st.caught.length >= spec.targets.length) {
+          cancelAnimationFrame(raf);
+          finish(st.caught);
+        }
+      }
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
+  const target = spec.targets[Math.min(sung.length, spec.targets.length - 1)];
+  const cents = live !== null ? Math.round(offBy(live, target) * 100) : null;
+  const hits = marks.filter((m) => m.ok).length;
+  const tunerText =
+    cents === null
+      ? playing
+        ? "Listening once the note stops…"
+        : "Sing now"
+      : Math.abs(cents) <= spec.cents
+        ? `In tune (${cents > 0 ? "+" : ""}${cents}¢)`
+        : Math.abs(cents) > 100
+          ? `You're on ${name(live!)}`
+          : `${Math.abs(cents)}¢ ${cents > 0 ? "sharp" : "flat"}`;
+
+  return (
+    <div className="sing-pad">
+      {status === "opening" && <div className="pr-dim">Opening the microphone…</div>}
+      {status === "blocked" && (
+        <div className="sing-error">
+          <p>{error}</p>
+          <div className="sing-actions">
+            <button className="btn" onClick={() => setAttempt((n) => n + 1)}>
+              Try again
+            </button>
+            <button className="btn" onClick={() => finish([])}>
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+      {status === "listening" && (
+        <>
+          {spec.targets.length > 1 && (
+            <div className="sing-slots" aria-label={`${sung.length} of ${spec.targets.length} notes sung`}>
+              {spec.targets.map((_, i) => (
+                <span key={i} className={`sing-slot${i < sung.length ? " is-caught" : i === sung.length ? " is-current" : ""}`}>
+                  {i < sung.length ? "✓" : i + 1}
+                </span>
+              ))}
+            </div>
+          )}
+          {spec.tuner ? (
+            <div className="sing-tuner">
+              <div className="sing-tuner-scale">
+                <i className="sing-tuner-band" style={{ width: `${spec.cents}%` }} />
+                {cents !== null && (
+                  <i className={`sing-tuner-needle${Math.abs(cents) <= spec.cents ? " is-in" : ""}`} style={{ left: `${50 + Math.max(-100, Math.min(100, cents)) / 2}%` }} />
+                )}
+              </div>
+              <div className="sing-tuner-read">
+                <span>flat</span>
+                <strong>{tunerText}</strong>
+                <span>sharp</span>
+              </div>
+            </div>
+          ) : (
+            <div className="sing-ear">
+              <i className={`sing-dot${live !== null ? " is-on" : ""}`} />
+              {playing ? "Listening once the music stops…" : live !== null ? "Hearing you…" : "Listening: sing now"}
+            </div>
+          )}
+          <div className="sing-hold" title="Hold the note steady until this fills">
+            <i style={{ width: `${hold * 100}%` }} />
+          </div>
+          <div className="sing-actions">
+            {spec.targets.length > 1 && (
+              <button className="btn" onClick={restart} disabled={!sung.length}>
+                Start over
+              </button>
+            )}
+            <button className="btn" onClick={() => finish(track.current.caught)}>
+              Give up
+            </button>
+          </div>
+        </>
+      )}
+      {status === "done" && marks.length > 0 && (
+        <div className="tap-result">
+          <div className="tap-marks">
+            {marks.map((m, i) => (
+              <span key={i} className={`tap-mark ${m.ok ? "is-hit" : m.cents === null ? "is-missed" : "is-late"}`} title={m.cents === null ? "not sung" : `${m.cents > 0 ? "+" : ""}${m.cents} cents`}>
+                {m.ok ? "✓" : m.name}
+                {m.cents !== null && (
+                  <small>
+                    {m.cents > 0 ? "+" : m.cents < 0 ? "−" : "±"}
+                    {Math.abs(m.cents)}¢
+                  </small>
+                )}
+              </span>
+            ))}
+          </div>
+          <div className="pr-dim">
+            {hits} of {marks.length} in tune (within ±{spec.cents} cents).
+            {marks.some((m) => m.cents !== null) && ` You sang ${marks.map((m) => m.name).join(" ")}; ${marks.length > 1 ? "the notes were" : "it was"} ${spec.targets.map(name).join(" ")}.`}
+          </div>
         </div>
       )}
     </div>

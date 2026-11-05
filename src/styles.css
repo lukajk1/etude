@@ -1593,6 +1593,7 @@ a.btn {
 /* One muted color per skill, for tags, deck tiles and the skill trees. */
 .skill-reading { --skill: #3f6386; }
 .skill-ear { --skill: #3e7a54; }
+.skill-singing { --skill: #a0476b; }
 .skill-rhythm { --skill: #b0503a; }
 .skill-transcription { --skill: #7a4e6e; }
 .skill-harmony { --skill: #8f6b26; }
@@ -2114,6 +2115,118 @@ a.btn {
 .tap-mark.is-missed {
   border-color: var(--bad);
   color: var(--bad);
+}
+
+/* The sing pad: notes caught, a tuner or a listening light, and the hold bar. */
+.sing-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 110px;
+}
+.sing-slots {
+  display: flex;
+  gap: 6px;
+}
+.sing-slot {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.sing-slot.is-current {
+  border-color: #a0476b;
+  color: var(--text);
+}
+.sing-slot.is-caught {
+  border-color: #a0476b;
+  background: rgba(160, 71, 107, 0.18);
+  color: var(--text);
+}
+.sing-ear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+}
+.sing-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition: background 0.1s;
+}
+.sing-dot.is-on {
+  background: #a0476b;
+  box-shadow: 0 0 0 4px rgba(160, 71, 107, 0.2);
+}
+.sing-tuner {
+  width: min(420px, 100%);
+}
+.sing-tuner-scale {
+  position: relative;
+  height: 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  overflow: hidden;
+}
+/* The band where a note counts as in tune; the scale runs a semitone each way. */
+.sing-tuner-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(62, 122, 84, 0.18);
+}
+.sing-tuner-needle {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--warn);
+  transition: left 0.06s linear;
+}
+.sing-tuner-needle.is-in {
+  background: #3e7a54;
+}
+.sing-tuner-read {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.sing-tuner-read strong {
+  color: var(--text);
+  font-size: 14px;
+}
+.sing-hold {
+  width: min(420px, 100%);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  overflow: hidden;
+}
+.sing-hold i {
+  display: block;
+  height: 100%;
+  background: #a0476b;
+}
+.sing-actions {
+  display: flex;
+  gap: 8px;
+}
+.sing-error {
+  text-align: center;
+  color: var(--text-dim);
 }
 
 /* ---- Flashcards --------------------------------------------------------------- */

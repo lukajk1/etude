@@ -262,6 +262,17 @@ chord must contain its note, the first is I and the last two make the V–I cade
 chord that fits is accepted, and the explanation lists them. 6.1a I and V, 6.1b I, IV and
 V, 6.1c six-note melodies (`src/practice/drills/harmonize.ts`).
 
+**Unit 7, Singing**: the microphone listens and checks the pitch, in any octave. 7.1 match
+a note (a with a live tuner, within 50 cents; b by ear, within 30), 7.2 sing a scale degree
+once the key is set (a do, mi or sol; b any of the seven), 7.3 sing back a melody (a three
+notes; b four or five), 7.4 sing a chord's bass note (a I, IV or V; b all six) and 7.5 sing
+a harmony a 3rd above in the key (a one note; b a three-note line). A note counts once it's
+held steady for a moment; a gap or a new pitch starts the next, and the first third of each
+note (the scoop into it) is left out. The mic is ignored while Etude plays and just after,
+so speakers work, though headphones are better. Pitch detection (YIN, E2 to C6) is in
+`src/audio/mic.ts`, the stages in `src/practice/drills/singing.ts` and the pad in
+`src/practice/Answers.tsx`.
+
 **Interval trainer** (free practice): choose any intervals and how they're played (up,
 down, together, or melodic then together). Answering moves straight to the next interval
 (after a moment, if you missed, to see the right one), and a line shows what the last one

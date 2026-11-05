@@ -37,8 +37,9 @@ import { NCT_DRILLS } from "./nct";
 import { HARMONY_DRILLS } from "./harmony";
 import { keyContext } from "./keyContext";
 import { RHYTHM_DRILLS } from "./rhythm";
+import { SINGING_DRILLS } from "./singing";
 
-export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "chordType" | "label" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct";
+export type AnswerType = "letter" | "note" | "interval" | "majorKey" | "minorKey" | "accidentals" | "triadQuality" | "chordType" | "label" | "degree" | "earInterval" | "semitones" | "numeral" | "beats" | "noteValue" | "meter" | "rhythm" | "tap" | "cadence" | "nct" | "sing";
 
 export interface Step {
   type: AnswerType;
@@ -97,7 +98,7 @@ export interface Drill {
   brief: string;
   ear: boolean;
   /** Drills outside the foundations get their own unit on the home page. */
-  unit?: "harmony" | "rhythm" | "cadences" | "nct" | "harmonize";
+  unit?: "harmony" | "rhythm" | "cadences" | "nct" | "harmonize" | "singing";
   /** Pass marks from the foundations checklist. */
   pass: { accuracy: number; medianSec?: number };
   generate: () => Question;
@@ -800,6 +801,7 @@ export const DRILLS: Drill[] = [
   ...CADENCE_DRILLS,
   ...NCT_DRILLS,
   ...HARMONIZE_DRILLS,
+  ...SINGING_DRILLS,
 ];
 
 export function getDrill(id: string | null): Drill | null {

@@ -295,7 +295,7 @@ export default function DrillView({ id }: { id: string }) {
               ))}
             </div>
           )}
-          <AnswerPad step={reveal ? question.steps[question.steps.length - 1] : step} chosen={reveal ? given[given.length - 1] : null} reveal={reveal} onPick={pickAnswer} />
+          <AnswerPad key={index} step={reveal ? question.steps[question.steps.length - 1] : step} chosen={reveal ? given[given.length - 1] : null} reveal={reveal} onPick={pickAnswer} />
           {reveal && last && (
             <div className={`drill-feedback ${last.ok ? "is-right" : "is-wrong"}`}>
               {last.ok ? (
