@@ -2224,6 +2224,34 @@ a.btn {
   display: flex;
   gap: 8px;
 }
+.sing-quiet {
+  color: var(--warn);
+  font-size: 13px;
+}
+.sing-mic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.sing-mic select {
+  max-width: 260px;
+}
+/* The input level, so you can see which microphone hears you. */
+.sing-level {
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line-strong);
+  overflow: hidden;
+}
+.sing-level i {
+  display: block;
+  height: 100%;
+  background: #3e7a54;
+  transition: width 0.05s linear;
+}
 .sing-error {
   text-align: center;
   color: var(--text-dim);

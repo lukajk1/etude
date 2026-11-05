@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
 import { engine, ensureAudio, playNotes, previewPlaying, stopAll } from "../audio/live";
-import { closeMic, openMic, readPitch } from "../audio/mic";
+import { chooseMic, closeMic, currentMic, listMics, openMic, readPitch } from "../audio/mic";
 import { useSignal } from "../model/ui";
 import { CADENCE_INFO, type Cadence } from "./drills/cadences";
 import { CHORD_TYPES, type ChordType } from "./drills/chordTypes";
@@ -557,6 +557,11 @@ function SingPad({ step, onPick }: PadProps) {
   const [attempt, setAttempt] = useState(0);
   const [sung, setSung] = useState<number[]>([]);
   const [live, setLive] = useState<number | null>(null);
+  const [level, setLevel] = useState(0);
+  /** Nothing loud enough heard for a few seconds: likely the wrong mic. */
+  const [quiet, setQuiet] = useState(false);
+  const [mics, setMics] = useState<{ id: string; label: string }[]>([]);
+  const [mic, setMic] = useState("");
   const [hold, setHold] = useState(0);
   const [marks, setMarks] = useState<SingMark[]>([]);
   const playing = useSignal(previewPlaying);
@@ -571,6 +576,7 @@ function SingPad({ step, onPick }: PadProps) {
     quietUntil: performance.now() + AFTER_PLAY_MS,
     wasPlaying: false,
     caught: [] as number[],
+    lastLoud: performance.now(),
   });
 
   // Open the mic when the pad appears, and let go of it when it goes.
@@ -582,6 +588,8 @@ function SingPad({ step, onPick }: PadProps) {
         opened = true;
         if (!alive) return closeMic();
         analyser.current = a;
+        setMic(currentMic());
+        void listMics().then((m) => alive && setMics(m));
         setStatus("listening");
       })
       .catch((err: unknown) => {
@@ -595,6 +603,7 @@ function SingPad({ step, onPick }: PadProps) {
               : `Couldn't open the microphone: ${err instanceof Error ? err.message : String(err)}`,
         );
         setStatus("blocked");
+        void listMics().then((m) => alive && setMics(m));
       });
     return () => {
       alive = false;
@@ -613,25 +622,34 @@ function SingPad({ step, onPick }: PadProps) {
     pick.current(result.every((m) => m.ok) ? step.correct : "off");
   };
 
+  /** Switch to another microphone: reopen on it, and start this question's listening over. */
+  const switchMic = (id: string) => {
+    chooseMic(id);
+    restart();
+    track.current.lastLoud = performance.now();
+    setQuiet(false);
+    setStatus("opening");
+    setAttempt((n) => n + 1);
+  };
+
   const restart = () => {
     Object.assign(track.current, { seg: null, armed: true, silentSince: null, caught: [] });
     setSung([]);
     setHold(0);
   };
 
-  // Listen, a frame at a time.
+  // Listen, a frame at a time. A timer, not animation frames: those stop when the window is covered, and you may be singing from sheet music.
   useEffect(() => {
     if (status !== "listening" || !analyser.current) return;
     const a = analyser.current;
     const buf = new Float32Array(a.fftSize);
     const st = track.current;
-    let raf = 0;
     const frame = () => {
-      raf = requestAnimationFrame(frame);
       const now = performance.now();
       if (previewPlaying.value) {
-        Object.assign(st, { wasPlaying: true, quietUntil: now + AFTER_PLAY_MS, seg: null, armed: true });
+        Object.assign(st, { wasPlaying: true, quietUntil: now + AFTER_PLAY_MS, seg: null, armed: true, lastLoud: now });
         setLive(null);
+        setLevel(0);
         setHold(0);
         return;
       }
@@ -641,8 +659,11 @@ function SingPad({ step, onPick }: PadProps) {
         stopAll();
       }
       if (now < st.quietUntil) return;
-      const m = readPitch(a, buf);
+      const { pitch: m, level: loud } = readPitch(a, buf);
       setLive(m);
+      setLevel(loud);
+      if (loud > 0.3) st.lastLoud = now;
+      setQuiet(now - st.lastLoud > 4000);
       if (m === null) {
         st.silentSince ??= now;
         if (now - st.silentSince > SILENCE_MS) {
@@ -665,13 +686,13 @@ function SingPad({ step, onPick }: PadProps) {
         st.caught = [...st.caught, median(seg.values.slice(Math.floor(seg.values.length / 3)))];
         setSung(st.caught);
         if (st.caught.length >= spec.targets.length) {
-          cancelAnimationFrame(raf);
+          clearInterval(timer);
           finish(st.caught);
         }
       }
     };
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    const timer = setInterval(frame, 25);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
@@ -739,6 +760,7 @@ function SingPad({ step, onPick }: PadProps) {
           <div className="sing-hold" title="Hold the note steady until this fills">
             <i style={{ width: `${hold * 100}%` }} />
           </div>
+          {quiet && <div className="sing-quiet">Not hearing anything. If you're singing, pick your microphone below.</div>}
           <div className="sing-actions">
             {spec.targets.length > 1 && (
               <button className="btn" onClick={restart} disabled={!sung.length}>
@@ -750,6 +772,22 @@ function SingPad({ step, onPick }: PadProps) {
             </button>
           </div>
         </>
+      )}
+      {(status === "listening" || status === "blocked") && mics.length > 0 && (
+        <label className="sing-mic">
+          Microphone
+          <select value={mics.some((m) => m.id === mic) ? mic : ""} onChange={(e) => switchMic(e.target.value)}>
+            {!mics.some((m) => m.id === mic) && <option value="">System default</option>}
+            {mics.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <span className="sing-level" title="Input level: it should jump when you sing">
+            <i style={{ width: `${level * 100}%` }} />
+          </span>
+        </label>
       )}
       {status === "done" && marks.length > 0 && (
         <div className="tap-result">

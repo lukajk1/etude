@@ -7,18 +7,72 @@
 let ctx: AudioContext | null = null;
 let stream: MediaStream | null = null;
 let analyser: AnalyserNode | null = null;
+/** The device the open stream came from ("" for the system default). */
+let openedWith = "";
 let opening: Promise<AnalyserNode> | null = null;
 let users = 0;
 let closeTimer: ReturnType<typeof setTimeout> | undefined;
+
+const MIC_KEY = "etude.mic";
+
+/** The microphone chosen in the sing pad, or "" for the system default. */
+export function chosenMic(): string {
+  try {
+    return localStorage.getItem(MIC_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Use this microphone from now on ("" for the system default); the next `openMic` switches to it. */
+export function chooseMic(id: string) {
+  try {
+    localStorage.setItem(MIC_KEY, id);
+  } catch {
+    // Remembered for this visit only, through the open stream.
+  }
+}
+
+/** The microphones the browser knows of. Their names show only once the mic has been allowed. */
+export async function listMics(): Promise<{ id: string; label: string }[]> {
+  const all = await navigator.mediaDevices.enumerateDevices();
+  return all.filter((d) => d.kind === "audioinput").map((d, i) => ({ id: d.deviceId, label: d.label || `Microphone ${i + 1}` }));
+}
+
+/** The device the open stream really comes from (the default when the chosen one was missing), or "" when closed. */
+export function currentMic(): string {
+  return stream?.getAudioTracks()[0]?.getSettings().deviceId ?? "";
+}
+
+function shutDown() {
+  stream?.getTracks().forEach((t) => t.stop());
+  void ctx?.close();
+  [stream, ctx, analyser] = [null, null, null];
+}
+
+async function getStream(id: string): Promise<MediaStream> {
+  // The browser's voice processing (echo cancelling, noise suppression, gain riding) bends pitch and swallows held notes.
+  const voice = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+  if (!id) return navigator.mediaDevices.getUserMedia({ audio: voice });
+  try {
+    return await navigator.mediaDevices.getUserMedia({ audio: { ...voice, deviceId: { exact: id } } });
+  } catch (err) {
+    // The chosen mic is unplugged or gone: fall back to the default.
+    if (err instanceof DOMException && (err.name === "OverconstrainedError" || err.name === "NotFoundError")) return navigator.mediaDevices.getUserMedia({ audio: voice });
+    throw err;
+  }
+}
 
 /** Open the microphone (asking permission the first time) and return an analyser on it. */
 export async function openMic(): Promise<AnalyserNode> {
   users++;
   clearTimeout(closeTimer);
-  if (analyser) return analyser;
+  if (analyser && openedWith === chosenMic()) return analyser;
+  if (analyser) shutDown();
   opening ??= (async () => {
-    // The browser's voice processing (echo cancelling, noise suppression, gain riding) bends pitch and swallows held notes.
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const id = chosenMic();
+    stream = await getStream(id);
+    openedWith = id;
     ctx = new AudioContext();
     const a = ctx.createAnalyser();
     a.fftSize = 2048;
@@ -42,10 +96,7 @@ export function closeMic() {
   if (users > 0) return;
   clearTimeout(closeTimer);
   closeTimer = setTimeout(() => {
-    if (users > 0) return;
-    stream?.getTracks().forEach((t) => t.stop());
-    void ctx?.close();
-    [stream, ctx, analyser] = [null, null, null];
+    if (users === 0) shutDown();
   }, 4000);
 }
 
@@ -61,9 +112,7 @@ const GATE = 0.006;
  * matches itself is one period.
  */
 export function detectPitch(buf: Float32Array, sampleRate: number): number | null {
-  let sum = 0;
-  for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-  if (Math.sqrt(sum / buf.length) < GATE) return null;
+  if (levelOf(buf) < GATE) return null;
 
   const n = Math.floor(buf.length / 2);
   const minLag = Math.floor(sampleRate / MAX_HZ);
@@ -98,8 +147,19 @@ export function detectPitch(buf: Float32Array, sampleRate: number): number | nul
   return 69 + 12 * Math.log2(hz / 440);
 }
 
-/** The analyser's current frame, as a pitch. */
-export function readPitch(a: AnalyserNode, buf: Float32Array<ArrayBuffer>): number | null {
+/** How loud a frame is (RMS, 0 to 1). */
+function levelOf(buf: Float32Array): number {
+  let sum = 0;
+  for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  return Math.sqrt(sum / buf.length);
+}
+
+/** The analyser's current frame: its pitch (null when nothing pitched is heard), and how loud it is, 0 to 1 on a rough dB scale. */
+export function readPitch(a: AnalyserNode, buf: Float32Array<ArrayBuffer>): { pitch: number | null; level: number } {
+  // A context opened without a click or key press starts suspended, hearing nothing.
+  if (a.context.state === "suspended") void (a.context as AudioContext).resume();
   a.getFloatTimeDomainData(buf);
-  return detectPitch(buf, a.context.sampleRate);
+  // -60 dB (a quiet room) to -10 dB (singing close to the mic).
+  const db = 20 * Math.log10(levelOf(buf) + 1e-9);
+  return { pitch: detectPitch(buf, a.context.sampleRate), level: Math.max(0, Math.min(1, (db + 60) / 50)) };
 }

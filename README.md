@@ -269,7 +269,9 @@ notes; b four or five), 7.4 sing a chord's bass note (a I, IV or V; b all six) a
 a harmony a 3rd above in the key (a one note; b a three-note line). A note counts once it's
 held steady for a moment; a gap or a new pitch starts the next, and the first third of each
 note (the scoop into it) is left out. The mic is ignored while Etude plays and just after,
-so speakers work, though headphones are better. Pitch detection (YIN, E2 to C6) is in
+so speakers work, though headphones are better. A Microphone menu under the pad picks the
+input (remembered in this browser), with a level meter that jumps when the mic hears you; if
+nothing loud comes in for a few seconds, the pad suggests picking another. Pitch detection (YIN, E2 to C6) is in
 `src/audio/mic.ts`, the stages in `src/practice/drills/singing.ts` and the pad in
 `src/practice/Answers.tsx`.
 
