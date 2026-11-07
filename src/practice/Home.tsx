@@ -4,7 +4,6 @@ import { useSignal } from "../model/ui";
 import { deckForDrill, getDeck } from "./cards/decks";
 import { ALL_ITEMS, chipName, COURSE, prereqText, routeId, skillClass, stageCode, stageGrade, UNITS, unmetPrereqs, type Item, type Topic, type Unit } from "./course";
 import { ROADMAP } from "./exercises/catalog";
-import { SkillIcon } from "./skillIcons";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, levelLabel, LEVELS } from "./levels";
 import { GOAL_STAGES, PLAN_GOAL, TUCKED_UNITS } from "./plan";
@@ -12,7 +11,7 @@ import { go } from "./route";
 
 /**
  * The Practice Room home: your plan; then the exercises, with your level overall and per
- * skill, a grid of cards, one per skill with its icon, and a row of stage chips per type of exercise, each with its practice
+ * skill, a grid of cards, one per skill, and a row of stage chips per type of exercise, each with its practice
  * (flashcard) mode; and the roadmap and backups at the end. The course itself is in course.ts.
  */
 
@@ -36,7 +35,7 @@ function chipState(it: Item, prog: Prog) {
 /** Practice decks that belong to no drill, offered on the row of the exercise they go with. */
 const EXTRA_PRACTICE: Record<string, string[]> = { "Name intervals": ["intervals"] };
 
-/** One type of exercise (a topic) as a row: its name, a chip per stage in order, where it sits and how far along. */
+/** One type of exercise (a topic) as a row: its name, where it sits, how far along and its practice decks; then a chip per stage in order. */
 function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
   const items = topic.items;
   const done = passedIn(items, prog);
@@ -50,9 +49,28 @@ function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
   const hi = Math.max(...grades);
   return (
     <li className="pr-ex">
-      <button className="pr-ex-title" onClick={() => go((next ?? first).route)} title={next ? `Next: ${next.title}` : "All passed"}>
-        {topic.title}
-      </button>
+      <span className="pr-ex-side">
+        <button className="pr-ex-title" onClick={() => go((next ?? first).route)} title={next ? `Next: ${next.title}` : "All passed"}>
+          {topic.title}
+        </button>
+        <span className="pr-ex-meta">
+          {lo === hi ? gradeName(lo) : `${gradeName(lo)}–${hi}`} · {done} of {items.length}
+        </span>
+        {(deck || extra.length > 0) && (
+          <span className="pr-ex-practice">
+            {deck && (
+              <button onClick={() => go({ kind: "cards", id: deck.id })} title={`Practice: ${deck.title}`}>
+                Practice
+              </button>
+            )}
+            {extra.map((d) => (
+              <button key={d!.id} onClick={() => go({ kind: "cards", id: d!.id })} title={`Practice: ${d!.title}`}>
+                {d!.title.replace(/^Intervals in /, "").replace(/^./, (c) => c.toUpperCase())}
+              </button>
+            ))}
+          </span>
+        )}
+      </span>
       <span className="pr-ex-chips">
         {items.map((it) => {
           const p = prog[routeId(it.route)];
@@ -76,19 +94,6 @@ function ExerciseRow({ topic, prog }: { topic: Topic; prog: Prog }) {
           );
         })}
       </span>
-      <span className="pr-ex-meta">
-        {lo === hi ? gradeName(lo) : `${gradeName(lo)}–${hi}`} · {done} of {items.length}
-      </span>
-      {deck && (
-        <button className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: deck.id })} title={`Practice: ${deck.title}`}>
-          Practice
-        </button>
-      )}
-      {extra.map((d) => (
-        <button key={d!.id} className="btn pr-stage-cards" onClick={() => go({ kind: "cards", id: d!.id })} title={`Practice: ${d!.title}`}>
-          {d!.title.replace(/^Intervals in /, "").replace(/^./, (c) => c.toUpperCase())}
-        </button>
-      ))}
     </li>
   );
 }
@@ -100,7 +105,6 @@ function SkillCard({ unit, prog }: { unit: Unit; prog: Prog }) {
   return (
     <div className={`pr-skill-card ${skillClass(unit.kind)}`}>
       <div className="pr-skill-head">
-        <SkillIcon kind={unit.kind} />
         <h3>{unit.kind}</h3>
         <span className="pr-skill-level">{level === undefined ? "All passed" : `Working on ${gradeName(level)}`}</span>
         <span className="pr-dim">
