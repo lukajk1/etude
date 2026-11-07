@@ -1350,7 +1350,7 @@ a.btn {
   min-height: 0;
 }
 .pr-home {
-  max-width: 920px;
+  max-width: 995px;
   margin: 0 auto;
   padding: 28px 24px 56px;
 }
@@ -2738,9 +2738,11 @@ a.btn {
   font-size: 17px;
   font-weight: 600;
 }
+/* The skills as a grid of cards: two to a row on a desktop screen, one when narrow. */
 .pr-skill-cards {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 12px;
 }
 .pr-skill-card {
   padding: 10px 14px 8px;
@@ -2751,9 +2753,17 @@ a.btn {
 }
 .pr-skill-head {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 4px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.pr-skill-icon {
+  flex: none;
+  padding: 5px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--skill) 13%, transparent);
+  color: var(--skill);
+  box-sizing: content-box;
 }
 .pr-skill-head h3 {
   margin: 0;
@@ -2780,7 +2790,7 @@ a.btn {
   border-top: 1px solid var(--line);
 }
 .pr-ex-title {
-  flex: 0 1 180px;
+  flex: 0 1 150px;
   padding: 0;
   border: 0;
   background: none;
@@ -2797,7 +2807,7 @@ a.btn {
 .pr-ex-chips {
   display: flex;
   /* Beside the title when there's room, on a line of their own when there isn't. */
-  flex: 1 1 280px;
+  flex: 1 1 200px;
   flex-wrap: wrap;
   gap: 4px;
   min-width: 0;

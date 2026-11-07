@@ -4,6 +4,7 @@ import { useSignal } from "../model/ui";
 import { deckForDrill, getDeck } from "./cards/decks";
 import { ALL_ITEMS, chipName, COURSE, prereqText, routeId, skillClass, stageCode, stageGrade, UNITS, unmetPrereqs, type Item, type Topic, type Unit } from "./course";
 import { ROADMAP } from "./exercises/catalog";
+import { SkillIcon } from "./skillIcons";
 import { progress, type Progress } from "./exercises/state";
 import { gradeName, levelLabel, LEVELS } from "./levels";
 import { GOAL_STAGES, PLAN_GOAL, TUCKED_UNITS } from "./plan";
@@ -11,7 +12,7 @@ import { go } from "./route";
 
 /**
  * The Practice Room home: your plan; then the exercises, with your level overall and per
- * skill, a card per skill and a row of stage chips per type of exercise, each with its practice
+ * skill, a grid of cards, one per skill with its icon, and a row of stage chips per type of exercise, each with its practice
  * (flashcard) mode; and the roadmap and backups at the end. The course itself is in course.ts.
  */
 
@@ -99,6 +100,7 @@ function SkillCard({ unit, prog }: { unit: Unit; prog: Prog }) {
   return (
     <div className={`pr-skill-card ${skillClass(unit.kind)}`}>
       <div className="pr-skill-head">
+        <SkillIcon kind={unit.kind} />
         <h3>{unit.kind}</h3>
         <span className="pr-skill-level">{level === undefined ? "All passed" : `Working on ${gradeName(level)}`}</span>
         <span className="pr-dim">
