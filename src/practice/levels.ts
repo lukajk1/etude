@@ -44,6 +44,7 @@ export const LEVELS: Record<string, Level> = {
   ...Object.fromEntries([..."abcdefghijkl"].map((l) => [`0.6${l}`, t(3)])),
   "0.6m": t(3),
   "0.6r": t(3),
+  "0.6s": t(4),
   "0.6p": t(3),
   "0.6n": t(4),
   "0.6q": t(5),

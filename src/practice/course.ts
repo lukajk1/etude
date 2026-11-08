@@ -271,6 +271,7 @@ const CHIP_NAMES: Record<string, string> = {
   "0.5b": "all",
   "0.6m": "mixed keys",
   "0.6r": "10 pop chords, bass",
+  "0.6s": "10 pop, inverted",
   "0.6p": "bass clef",
   "0.6n": "inverted",
   "0.6q": "inverted, both clefs",

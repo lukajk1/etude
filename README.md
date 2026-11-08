@@ -111,7 +111,7 @@ speed targets:
 | 0.3 | Scale degrees: a major, b natural minor (core keys), c all four kinds, any key | 90%, median 4 s |
 | 0.4 | Name intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 3 s |
 | 0.5 | Build intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 4 s |
-| 0.6 | Name chords: a–l one major key at a time (C, G, F, D, B♭, A, E♭, E, A♭, B, D♭, F♯), its chords I ii iii IV V vi vii° and V7 on the staff with the key signature, named by letter or numeral; m common chords in mixed keys, root and quality; r the ten common pop chords (C D E F G A B♭ Dm Em Am) in bass clef, by name; p the common chords in bass clef; n the same inverted; q inverted, in either clef; o any triad, any inversion | 90%, median 4–5 s |
+| 0.6 | Name chords: a–l one major key at a time (C, G, F, D, B♭, A, E♭, E, A♭, B, D♭, F♯), its chords I ii iii IV V vi vii° and V7 on the staff with the key signature, named by letter or numeral; m common chords in mixed keys, root and quality; r the ten common pop chords (C D E F G A B♭ Dm Em Am) in bass clef, by name; s the same ten in any inversion; p the common chords in bass clef; n the same inverted; q inverted, in either clef; o any triad, any inversion | 90%, median 4–5 s |
 | 0.7 | Build triads: a major and minor, b all four qualities | 90%, median 6 s |
 | 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, c together, d mixed | 90% |
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |

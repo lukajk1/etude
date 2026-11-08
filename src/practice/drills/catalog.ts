@@ -282,17 +282,24 @@ export const POP_CHORDS: { name: string; root: string; quality: TriadQuality }[]
   { name: "Am", root: "A", quality: "minor" },
 ];
 
-/** One of the ten common pop chords in bass clef, root position, as a pianist's left hand reads it: name it. */
-export function popBassChordQuestion(c = pick(POP_CHORDS)): Question {
+/**
+ * One of the ten common pop chords in bass clef, as a pianist's left hand reads it: name it.
+ * Root position, or with `inverted` any of root position, first or second inversion.
+ */
+export function popBassChordQuestion(c = pick(POP_CHORDS), inverted = false): Question {
   const notes = triad(parseCode(c.root, 3), c.quality);
-  // The root from G2 to F♯3, at the bottom of the staff.
-  const octaves = Math.floor((pitchOf(notes[0]) - 43) / 12);
-  const voiced = notes.map((n) => ({ ...n, octave: n.octave - octaves }));
+  const inversion = inverted ? randInt(0, 2) : 0;
+  const up = (n: Spelled): Spelled => ({ ...n, octave: n.octave + 1 });
+  const stacked = inversion === 0 ? notes : inversion === 1 ? [notes[1], notes[2], up(notes[0])] : [notes[2], up(notes[0]), up(notes[1])];
+  // The lowest note from G2 to F♯3, at the bottom of the staff.
+  const octaves = Math.floor((pitchOf(stacked[0]) - 43) / 12);
+  const voiced = stacked.map((n) => ({ ...n, octave: n.octave - octaves }));
+  const invName = ["", " Here it's in first inversion: the 3rd is at the bottom, so the root is the top note.", " Here it's in second inversion: the 5th is at the bottom, so the root is the note above the 4th."][inversion];
   return {
     prompt: "Name this chord.",
     staff: { clef: "bass", groups: [voiced] },
     steps: [{ type: "label", correct: c.name, options: POP_CHORDS.map((x) => x.name) }],
-    explain: `${notes.map((n) => nameOf(n)).join("–")} is ${nameOf(notes[0])} ${c.quality}. The bottom note is the root; a major 3rd above it (four half steps) makes it major, a minor 3rd (three) minor. Bass clef lines from the bottom are G B D F A, spaces A C E G.`,
+    explain: `${notes.map((n) => nameOf(n)).join("–")} is ${nameOf(notes[0])} ${c.quality}. Stacked in 3rds, the bottom note is the root; a major 3rd above it (four half steps) makes it major, a minor 3rd (three) minor.${invName} Bass clef lines from the bottom are G B D F A, spaces A C E G.`,
   };
 }
 
@@ -545,6 +552,16 @@ const nameTriadsPopBass = checkpoint(nameTriads, {
   brief:
     "The ten chords that turn up most in pop songs: C, D, E, F, G, A, B♭, Dm, Em and Am. One appears in bass clef, root position, the way a pianist's left hand plays it, with its sharps and flats written in. Name it. Bass clef lines from the bottom are G B D F A, spaces A C E G; the bottom note is the root, and the 3rd above it tells major from minor.",
   generate: () => popBassChordQuestion(),
+});
+
+const nameTriadsPopBassInv = checkpoint(nameTriads, {
+  id: "d-name-pop-bass-inv",
+  number: "0.6s",
+  title: "Name chords: the ten common pop chords, bass clef, inverted",
+  summary: "The same ten chords in root position, first or second inversion.",
+  brief:
+    "The same ten pop chords (C, D, E, F, G, A, B♭, Dm, Em, Am) in bass clef, now in any inversion, as a left hand often plays them to move smoothly between chords. Name it. If the notes aren't a stack of 3rds, one of them has been moved up an octave: in first inversion the root is on top, and in second inversion it's the note above the gap of a 4th.",
+  generate: () => popBassChordQuestion(undefined, true),
 });
 
 const nameTriadsBass = checkpoint(nameTriads, {
@@ -843,6 +860,7 @@ export const DRILLS: Drill[] = [
   ...KEY_CHORD_DRILLS,
   nameTriadsBasic,
   nameTriadsPopBass,
+  nameTriadsPopBassInv,
   nameTriadsBass,
   nameTriadsInverted,
   nameTriadsInvertedBoth,
