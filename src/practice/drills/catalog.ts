@@ -770,6 +770,18 @@ const hearDoMiSol = checkpoint(hearDegrees, {
   generate: () => degreeQuestion(pick([1, 3, 5]), ["1", "3", "5"], { varied: true, walkDown: true }),
 });
 
+// The pentatonic five with do played just before the note: the note is heard against a fresh
+// do, not one held in memory, as a step before 0.11e takes that help away.
+const hearPentatonicDoFirst = checkpoint(hearDegrees, {
+  id: "d-ear-degrees-pent-do",
+  number: "0.11i",
+  title: "Hear scale degrees: do, re, mi, sol, la, with do first",
+  summary: "The pentatonic five, with do played just before each note.",
+  brief:
+    "A chord progression sets the key, then do plays, then one note: do, re, mi, sol or la. Hear the second note against the do just before it. In songs nobody plays do for you, so once this is easy, move on to the next step, where you hold do in your ear yourself.",
+  generate: () => degreeQuestion(pick([1, 2, 3, 5, 6]), ["1", "2", "3", "5", "6"], { varied: true, walkDown: true, doFirst: true }),
+});
+
 // The pentatonic five before fa and ti: much pop, folk and hymn melody uses only these, and
 // with no half steps between them they're the easiest to tell apart.
 const hearPentatonic = checkpoint(hearDegrees, {
@@ -807,9 +819,14 @@ const hearAllInC = checkpoint(hearDegrees, {
  * A scale degree after the key is set; `options` limits the answer buttons. `inC` keeps the
  * key at C instead of a random one; `drone` holds low do under the note (and its replays);
  * `varied` sets the key a different way each time (see keyContext.ts) instead of I–IV–V–I;
- * `walkDown` makes a missed note walk down to the cadence's do, never up to the one above.
+ * `walkDown` makes a missed note walk down to the cadence's do, never up to the one above;
+ * `doFirst` plays do just before the note (and before it in the replay).
  */
-export function degreeQuestion(degree: number, options?: string[], { inC = false, drone = false, varied = false, walkDown = false } = {}): Question {
+export function degreeQuestion(
+  degree: number,
+  options?: string[],
+  { inC = false, drone = false, varied = false, walkDown = false, doFirst = false } = {},
+): Question {
   const t = inC ? 60 : randInt(55, 66);
   const target = t + MAJOR_STEPS[degree - 1];
   const context = varied
@@ -824,16 +841,24 @@ export function degreeQuestion(degree: number, options?: string[], { inC = false
         end: 2.95,
         label: "a I–IV–V–I cadence",
       };
-  const at = context.end + 0.65;
+  // With doFirst, do sounds first and the note follows it.
+  const lead = doFirst ? [{ pitches: [t], at: context.end + 0.65, dur: 0.9 }] : [];
+  const at = context.end + 0.65 + (doFirst ? 1.1 : 0);
   // Two octaves of do, quietly, from just before the note to past its end.
   const droneUnder = (from: number, dur: number) => (drone ? [{ pitches: [t - 24, t - 12], at: from, dur, vel: 0.32 }] : []);
   const resolve = resolveToDo(target, degree, { down: walkDown });
   const resolveEnd = Math.max(...resolve.map((e) => e.at + e.dur));
   return {
-    prompt: drone ? "Which scale degree is the note over the drone?" : "Which scale degree is the last note?",
-    audio: [...context.events, ...droneUnder(at - 0.3, 2), { pitches: [target], at, dur: 1.4 }],
+    prompt: drone
+      ? "Which scale degree is the note over the drone?"
+      : doFirst
+        ? "Do plays, then a note. Which scale degree is that note?"
+        : "Which scale degree is the last note?",
+    audio: [...context.events, ...lead, ...droneUnder(at - 0.3, 2), { pitches: [target], at, dur: 1.4 }],
     resolve: [...droneUnder(0, resolveEnd), ...resolve],
-    again: { label: "Play note again", audio: [...droneUnder(0, 1.7), { pitches: [target], at: drone ? 0.25 : 0, dur: 1.4 }] },
+    again: doFirst
+      ? { label: "Play do, then the note", audio: [{ pitches: [t], at: 0, dur: 0.9 }, { pitches: [target], at: 1.1, dur: 1.4 }] }
+      : { label: "Play note again", audio: [...droneUnder(0, 1.7), { pitches: [target], at: drone ? 0.25 : 0, dur: 1.4 }] },
     steps: [{ type: "degree", correct: String(degree), options }],
     explain: `That was degree ${degree} (${SOLFEGE[degree - 1]})${varied ? `; the key was set by ${context.label}` : ""}. Listen to it walk home to do.`,
   };
@@ -889,6 +914,7 @@ export const DRILLS: Drill[] = [
   hearDoMiSolC,
   hearDoMiSolKeys,
   hearDoMiSol,
+  hearPentatonicDoFirst,
   hearPentatonic,
   hearDoToSol,
   hearAllInC,

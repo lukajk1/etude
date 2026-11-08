@@ -72,6 +72,7 @@ export const LEVELS: Record<string, Level> = {
   "0.11b": c(2),
   "0.11c": c(3),
   "0.11d": c(3),
+  "0.11i": c(4),
   "0.11e": c(4),
   "0.11f": c(4),
   "0.11h": c(4),
