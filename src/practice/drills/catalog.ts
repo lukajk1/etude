@@ -268,6 +268,34 @@ export function keyTriadQuestion(inverted: boolean, clef: "treble" | "bass" | "e
   };
 }
 
+/** The ten chords that turn up most in pop songs, majors then minors, in the order the answer buttons show them. */
+export const POP_CHORDS: { name: string; root: string; quality: TriadQuality }[] = [
+  { name: "C", root: "C", quality: "major" },
+  { name: "D", root: "D", quality: "major" },
+  { name: "E", root: "E", quality: "major" },
+  { name: "F", root: "F", quality: "major" },
+  { name: "G", root: "G", quality: "major" },
+  { name: "A", root: "A", quality: "major" },
+  { name: "Bb", root: "Bb", quality: "major" },
+  { name: "Dm", root: "D", quality: "minor" },
+  { name: "Em", root: "E", quality: "minor" },
+  { name: "Am", root: "A", quality: "minor" },
+];
+
+/** One of the ten common pop chords in bass clef, root position, as a pianist's left hand reads it: name it. */
+export function popBassChordQuestion(c = pick(POP_CHORDS)): Question {
+  const notes = triad(parseCode(c.root, 3), c.quality);
+  // The root from G2 to F♯3, at the bottom of the staff.
+  const octaves = Math.floor((pitchOf(notes[0]) - 43) / 12);
+  const voiced = notes.map((n) => ({ ...n, octave: n.octave - octaves }));
+  return {
+    prompt: "Name this chord.",
+    staff: { clef: "bass", groups: [voiced] },
+    steps: [{ type: "label", correct: c.name, options: POP_CHORDS.map((x) => x.name) }],
+    explain: `${notes.map((n) => nameOf(n)).join("–")} is ${nameOf(notes[0])} ${c.quality}. The bottom note is the root; a major 3rd above it (four half steps) makes it major, a minor 3rd (three) minor. Bass clef lines from the bottom are G B D F A, spaces A C E G.`,
+  };
+}
+
 export function buildTriadQuestion(quality: TriadQuality, root: string): Question {
   const notes = triad(parseCode(root, 4), quality);
   return {
@@ -507,6 +535,16 @@ const nameTriadsBasic = checkpoint(nameTriads, {
   summary: "I, ii, IV, V and vi of the common keys, root position, with the key signature.",
   brief: KEY_TRIADS_BRIEF,
   generate: () => keyTriadQuestion(false),
+});
+
+const nameTriadsPopBass = checkpoint(nameTriads, {
+  id: "d-name-pop-bass",
+  number: "0.6r",
+  title: "Name chords: the ten common pop chords, bass clef",
+  summary: "C, D, E, F, G, A, B♭, Dm, Em and Am in bass clef, root position.",
+  brief:
+    "The ten chords that turn up most in pop songs: C, D, E, F, G, A, B♭, Dm, Em and Am. One appears in bass clef, root position, the way a pianist's left hand plays it, with its sharps and flats written in. Name it. Bass clef lines from the bottom are G B D F A, spaces A C E G; the bottom note is the root, and the 3rd above it tells major from minor.",
+  generate: () => popBassChordQuestion(),
 });
 
 const nameTriadsBass = checkpoint(nameTriads, {
@@ -804,6 +842,7 @@ export const DRILLS: Drill[] = [
   buildIntervals,
   ...KEY_CHORD_DRILLS,
   nameTriadsBasic,
+  nameTriadsPopBass,
   nameTriadsBass,
   nameTriadsInverted,
   nameTriadsInvertedBoth,

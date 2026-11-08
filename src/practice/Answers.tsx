@@ -263,7 +263,8 @@ export function AnswerPad(props: PadProps) {
       );
     case "label":
       return (
-        <div className="drill-grid" style={{ gridTemplateColumns: `repeat(${Math.min(4, step.options?.length ?? 4)}, minmax(0, 1fr))` }}>
+        // Rows of four, or of five for ten choices (the common pop chords: majors above, minors below).
+        <div className="drill-grid" style={{ gridTemplateColumns: `repeat(${step.options?.length === 10 ? 5 : Math.min(4, step.options?.length ?? 4)}, minmax(0, 1fr))` }}>
           {(step.options ?? []).map((v) => (
             <Choice key={v} {...props} value={v} label={prettyChord(v)} wide />
           ))}
