@@ -238,31 +238,33 @@ const KEY_NUMERALS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
 
 /**
  * A common chord (I, ii, IV, V or vi) of a common key, on the staff with the key's signature,
- * the way chords appear in real music; `inverted` puts it in first or second inversion.
- * Name its root, then its quality.
+ * the way chords appear in real music; `inverted` puts it in first or second inversion, and
+ * `clef` writes it in treble, bass (a pianist's left hand) or either. Name its root, then its quality.
  */
-export function keyTriadQuestion(inverted: boolean): Question {
+export function keyTriadQuestion(inverted: boolean, clef: "treble" | "bass" | "either" = "treble"): Question {
+  const staffClef = clef === "either" ? pick<"treble" | "bass">(["treble", "bass"]) : clef;
   const key = pick(COMMON_KEYS);
   const lower = scaleNotes(parseCode(key, 4), "major");
   const scale = [...lower, ...lower.map((n) => ({ ...n, octave: n.octave + 1 }))];
   const degree = pick([0, 0, 3, 3, 4, 4, 5, 1]);
-  let notes = [degree, degree + 2, degree + 4].map((d) => scale[d]);
-  // Keep the root between middle C and the B above it.
-  const shift = pitchOf(notes[0]) > 71 ? -1 : 0;
-  notes = notes.map((n) => ({ ...n, octave: n.octave + shift }));
+  const notes = [degree, degree + 2, degree + 4].map((d) => scale[d]);
   const quality: TriadQuality = [0, 3, 4].includes(degree) ? "major" : "minor";
   const inversion = inverted ? randInt(1, 2) : 0;
   const up = (n: Spelled): Spelled => ({ ...n, octave: n.octave + 1 });
-  const voiced = inversion === 0 ? notes : inversion === 1 ? [notes[1], notes[2], up(notes[0])] : [notes[2], up(notes[0]), up(notes[1])];
+  const stacked = inversion === 0 ? notes : inversion === 1 ? [notes[1], notes[2], up(notes[0])] : [notes[2], up(notes[0]), up(notes[1])];
+  // Move the whole chord by octaves so its lowest note sits from C4 to B4, or G2 to F♯3 in bass clef (the bottom of
+  // the staff), whatever the inversion; then no chord goes past two ledger lines.
+  const octaves = Math.floor((pitchOf(stacked[0]) - (staffClef === "bass" ? 43 : 60)) / 12);
+  const voiced = stacked.map((n) => ({ ...n, octave: n.octave - octaves }));
   const invName = ["root position", "first inversion (3rd in the bass)", "second inversion (5th in the bass)"][inversion];
   return {
     prompt: "Name this triad: its root, then its quality.",
-    staff: { clef: "treble", keySig: key, groups: [voiced] },
+    staff: { clef: staffClef, keySig: key, groups: [voiced] },
     steps: [
       { type: "note", label: "Root", correct: codeOf(notes[0]) },
       { type: "triadQuality", label: "Quality", correct: quality, options: ["major", "minor"] },
     ],
-    explain: `In ${nameOf(parseCode(key))} major this is ${KEY_NUMERALS[degree]}, ${notes.map((n) => nameOf(n)).join(" ")} stacked in 3rds: ${nameOf(notes[0])} ${quality}, shown in ${invName}. Remember the key signature's sharps and flats.`,
+    explain: `In ${nameOf(parseCode(key))} major this is ${KEY_NUMERALS[degree]}, ${notes.map((n) => nameOf(n)).join(" ")} stacked in 3rds: ${nameOf(notes[0])} ${quality}, shown in ${invName}${staffClef === "bass" ? " in bass clef (lines G B D F A, spaces A C E G)" : ""}. Remember the key signature's sharps and flats.`,
   };
 }
 
@@ -505,6 +507,24 @@ const nameTriadsBasic = checkpoint(nameTriads, {
   summary: "I, ii, IV, V and vi of the common keys, root position, with the key signature.",
   brief: KEY_TRIADS_BRIEF,
   generate: () => keyTriadQuestion(false),
+});
+
+const nameTriadsBass = checkpoint(nameTriads, {
+  id: "d-name-triads-bass",
+  number: "0.6p",
+  title: "Name chords: common chords, bass clef",
+  summary: "The same chords of the common keys in bass clef, where a pianist's left hand plays them.",
+  brief: `${KEY_TRIADS_BRIEF} Now in bass clef, as in a piano's left hand: lines from the bottom are G B D F A, spaces A C E G.`,
+  generate: () => keyTriadQuestion(false, "bass"),
+});
+
+const nameTriadsInvertedBoth = checkpoint(nameTriads, {
+  id: "d-name-triads-keyinv-both",
+  number: "0.6q",
+  title: "Name chords: common chords, inverted, both clefs",
+  summary: "The same pool in first or second inversion, in treble or bass clef.",
+  brief: `${KEY_TRIADS_BRIEF} Now inverted and in either clef: rearrange the notes into a stack of 3rds, and the bottom of the stack is the root. Check the clef first.`,
+  generate: () => keyTriadQuestion(true, "either"),
 });
 
 const nameTriadsInverted = checkpoint(nameTriads, {
@@ -784,7 +804,9 @@ export const DRILLS: Drill[] = [
   buildIntervals,
   ...KEY_CHORD_DRILLS,
   nameTriadsBasic,
+  nameTriadsBass,
   nameTriadsInverted,
+  nameTriadsInvertedBoth,
   nameTriads,
   buildTriadsBasic,
   buildTriads,

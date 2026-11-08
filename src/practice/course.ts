@@ -124,6 +124,7 @@ const PREREQS: Record<string, string[]> = {
   "0.4a": ["0.1c", "0.3a"], // read the notes; the major scale gives each interval's quality
   "0.5a": ["0.4a"],
   "0.6a": ["0.4a"], // triads are stacked 3rds
+  "0.6p": ["0.1c"], // chords in bass clef, once both clefs can be read
   "0.7a": ["0.5a", "0.6m"],
   "0.9a": ["0.8a"],
   "0.9b": ["0.8b"],
@@ -268,7 +269,9 @@ const CHIP_NAMES: Record<string, string> = {
   "0.5a": "M, m, P",
   "0.5b": "all",
   "0.6m": "mixed keys",
+  "0.6p": "bass clef",
   "0.6n": "inverted",
+  "0.6q": "inverted, both clefs",
   "0.6o": "any triad",
   "0.7a": "major, minor",
   "0.7b": "all four",
