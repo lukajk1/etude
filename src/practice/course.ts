@@ -127,6 +127,7 @@ const PREREQS: Record<string, string[]> = {
   "0.6r": ["0.1c"], // chords in bass clef, once both clefs can be read
   "0.6p": ["0.1c"],
   "0.7a": ["0.5a", "0.6m"],
+  "0.8e": ["0.8a"], // notes together, after hearing them one by one
   "0.9a": ["0.8a"],
   "0.9b": ["0.8b"],
   "0.9c": ["0.8c"],
@@ -279,6 +280,7 @@ const CHIP_NAMES: Record<string, string> = {
   "0.7a": "major, minor",
   "0.7b": "all four",
   "0.14a": "up to 7 ♯/♭",
+  "0.8e": "M3, P5, 8va",
   "0.11a": "drone in C",
   "0.11b": "in C",
   "0.11c": "any key",

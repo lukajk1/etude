@@ -870,6 +870,12 @@ export const DRILLS: Drill[] = [
   keySignaturesAll,
   earIntervalDrill("d-ear-ess-up", "0.8a", "Hear the essentials: ascending", "Minor and major 3rd, perfect 4th and 5th, octave; low note first.", ESSENTIALS, 0.9, "up"),
   earIntervalDrill("d-ear-ess-down", "0.8b", "Hear the essentials: descending", "The same five, high note first.", ESSENTIALS, 0.9, "down"),
+  // A gentler first step for notes heard together: three intervals that sound nothing alike.
+  {
+    ...earIntervalDrill("d-ear-m3p58-together", "0.8e", "Hear the essentials: M3, P5 and octave together", "Just three, played as a chord: sweet, hollow, or one note doubled.", [4, 7, 12], 0.9, "together"),
+    brief:
+      "Listen to two notes played together and name the interval: a major 3rd, a perfect 5th or an octave. Replay as often as you like. They sound nothing alike: the major 3rd is sweet and full, the 5th open and hollow, and the octave blends so well it can sound like one note.",
+  },
   earIntervalDrill("d-ear-ess-together", "0.8c", "Hear the essentials: together", "The same five, played as a chord.", ESSENTIALS, 0.9, "together"),
   earIntervalDrill("d-ear-intervals-basic", "0.8d", "Hear the essentials: mixed", "The same five, rising, falling or together.", ESSENTIALS, 0.9, "mixed"),
   earIntervalDrill("d-ear-all-up", "0.9a", "Hear all intervals: ascending", "Every interval within an octave, low note first.", ALL_12, 0.8, "up"),

@@ -57,6 +57,7 @@ export const LEVELS: Record<string, Level> = {
   // Ear tests (RCM level, then the college-paced level): intervals ascending first, then descending and harmonic.
   "0.8a": e(2, 2),
   "0.8b": e(4, 3),
+  "0.8e": e(3, 2),
   "0.8c": e(4, 3),
   "0.8d": e(4, 3),
   "0.9a": e(8, 4),

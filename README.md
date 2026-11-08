@@ -113,7 +113,7 @@ speed targets:
 | 0.5 | Build intervals: a major, minor and perfect, b with augmented and diminished | 90%, median 4 s |
 | 0.6 | Name chords: a–l one major key at a time (C, G, F, D, B♭, A, E♭, E, A♭, B, D♭, F♯), its chords I ii iii IV V vi vii° and V7 on the staff with the key signature, named by letter or numeral; m common chords in mixed keys, root and quality; r the ten common pop chords (C D E F G A B♭ Dm Em Am) in bass clef, by name; s the same ten in any inversion; p the common chords in bass clef; n the same inverted; q inverted, in either clef; o any triad, any inversion | 90%, median 4–5 s |
 | 0.7 | Build triads: a major and minor, b all four qualities | 90%, median 6 s |
-| 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, c together, d mixed | 90% |
+| 0.8 | Hear the essentials (3rds, 4th, 5th, octave): a ascending, b descending, e just the major 3rd, 5th and octave together, c all five together, d mixed | 90% |
 | 0.9 | Hear all 12 intervals: a ascending, b descending, c together, d mixed | 80% |
 | 0.10 | Hear chord quality: a major or minor, b all four | 90% |
 | 0.16 | Hear chord types, a group with a chip each, adding types in the order pop uses them: a major, minor or dominant 7, b maj7, c m7, d sus4 and sus2, e add9, f dim7, g aug, h m7♭5 | 85% |

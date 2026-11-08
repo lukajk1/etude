@@ -253,7 +253,7 @@ export const HEAR_INTERVALS_DECK = factDeck({
   summary: "Intervals by ear; pick any set to drill, like just the two 3rds.",
   brief: "Listen to two notes and name the interval. Choose how they're played (rising, falling, together as a chord, or mixed) and check the intervals to drill: the answer buttons are just those, so checking two (say, the minor and major 3rd) drills that pair. Each interval is a card, played from a different note each time.",
   tag: "0.8",
-  drills: ["d-ear-ess-up", "d-ear-ess-down", "d-ear-ess-together", "d-ear-intervals-basic", "d-ear-all-up", "d-ear-all-down", "d-ear-all-together", "d-ear-intervals-all"],
+  drills: ["d-ear-ess-up", "d-ear-ess-down", "d-ear-m3p58-together", "d-ear-ess-together", "d-ear-intervals-basic", "d-ear-all-up", "d-ear-all-down", "d-ear-all-together", "d-ear-intervals-all"],
   ear: true,
   // How the two notes are played; the pool value is the drills' EarMode.
   pools: [
