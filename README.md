@@ -147,7 +147,7 @@ The recommended order (`PREREQS` in `src/practice/course.ts`) says what's worth 
 for example scales after major key signatures, intervals after scales, I-or-V after do-mi-sol;
 no stage sits below what it builds on.
 
-Each stage has a permanent three-character code ("APN"), a hash of its id (`stageCode` in
+Each stage has a permanent code ("eAPN"): "e" for exercise, then three characters hashed from its id (`stageCode` in
 `course.ts`), and a level number on its own page ("Level 3, Ear, stage 3.5"), computed from the
 level layout. The numbers in the tables here (0.11c, 3.3a, T2) are the stages' internal ids.
 

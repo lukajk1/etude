@@ -247,13 +247,13 @@ export const groupNumber = (g: StageGroup) => GROUP_DISPLAY.get(g) ?? "";
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 /**
- * A stage's permanent short code ("K7Q"): a hash of its id, so it looks random, never
- * changes when stages are renumbered, and new stages get one without a list to keep.
+ * A stage's permanent short code ("eK7Q"): "e" for exercise, then a hash of its id, so it looks
+ * random, never changes when stages are renumbered, and new stages get one without a list to keep.
  */
 export function stageCode(id: string): string {
   let h = 0x811c9dc5; // FNV-1a
   for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 0x01000193) >>> 0;
-  return [0, 5, 10].map((shift) => CODE_CHARS[(h >>> shift) & 31]).join("");
+  return "e" + [0, 5, 10].map((shift) => CODE_CHARS[(h >>> shift) & 31]).join("");
 }
 
 const BY_ID = new Map(COURSE.map((row) => [routeId(row.it.route), row]));

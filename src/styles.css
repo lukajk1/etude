@@ -1803,6 +1803,7 @@ a.btn {
   font-size: 10.5px;
   font-weight: 400;
   letter-spacing: 0.06em;
+  text-transform: none; /* the lowercase "e" prefix stays lowercase in uppercase headers */
 }
 
 /* A group of small stages (Scale by key): one row, a chip per member. */
