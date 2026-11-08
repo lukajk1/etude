@@ -283,7 +283,9 @@ export default function DrillView({ id }: { id: string }) {
           )}
           {question.replays?.map((r, i) => (
             <button key={r.label} className="btn drill-replay" onClick={() => void playNotes(r.audio, question.timbre)}>
-              {r.label} ({i + 1})
+              {/* Digits answer scale-degree questions, so there the replays have no key. */}
+              {r.label}
+              {question.steps.some((s) => s.type === "degree") ? "" : ` (${i + 1})`}
             </button>
           ))}
           {question.steps.length > 1 && (

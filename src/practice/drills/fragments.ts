@@ -1,4 +1,5 @@
-import type { Drill, Question } from "./catalog";
+import type { AudioEvent, Drill, Question } from "./catalog";
+import { chordPitches, type Numeral } from "./harmony";
 import { keyContext } from "./keyContext";
 import { resolveToDo } from "./resolve";
 import { pick, randInt } from "./theory";
@@ -39,6 +40,53 @@ export function fragmentQuestion(pattern: number[], noteSec: number, options = [
     again: { label: "Play notes again", audio: pattern.map((d, i) => ({ pitches: [pitchAt(t, d)], at: i * noteSec, dur: noteSec * 0.92 })) },
     steps: pattern.map((d, i) => ({ type: "degree" as const, label: `Note ${i + 1}`, correct: String(sd(d)), options })),
     explain: `That was ${solfa(pattern)} (${pattern.map(sd).join(" ")}); the key was set by ${context.label}. Sing it back, then keep going to do: the way it resolves tells you where each note sits.`,
+  };
+}
+
+/** The common chords that contain each degree from do to sol (0–4), so a melody note always sits in its chord. */
+const CHORDS_FOR: Numeral[][] = [
+  ["I", "IV", "vi"], // do
+  ["V", "ii"], // re
+  ["I", "vi"], // mi
+  ["IV", "ii"], // fa
+  ["I", "V"], // sol
+];
+
+/**
+ * A chord under each note of a fragment: home (I) on the first note when it fits and on
+ * the last when it fits, otherwise a chord containing the note, so it sounds like a
+ * harmonized tune rather than notes over random chords.
+ */
+function harmonize(pattern: number[]): Numeral[] {
+  return pattern.map((d, i) => {
+    const fits = CHORDS_FOR[d];
+    if ((i === 0 || i === pattern.length - 1) && fits.includes("I")) return "I";
+    if (i === pattern.length - 1 && fits.includes("V")) return "V";
+    return pick(fits);
+  });
+}
+
+/**
+ * Name each note of a three-note fragment in C, played over a chord per note, after the
+ * same I–IV–V–I cadence every time. The melody sits an octave above the chords.
+ */
+export function chordedFragmentQuestion(pattern: number[]): Question {
+  const t = 60;
+  const cadence: AudioEvent[] = (["I", "IV", "V", "I"] as Numeral[]).map((n, i) => ({ pitches: chordPitches(t, n), at: i * 0.75, dur: 0.7 }));
+  const start = 3 * 0.75 + 0.7 + 0.8;
+  const noteSec = 0.8;
+  const chords = harmonize(pattern);
+  const melody = pattern.map((d, i) => ({ pitches: [pitchAt(t + 12, d)], at: i * noteSec, dur: noteSec * 0.94, vel: 0.85 }));
+  const under = chords.map((n, i) => ({ pitches: chordPitches(t, n), at: i * noteSec, dur: noteSec * 0.94, vel: 0.42 }));
+  const shift = (es: AudioEvent[], by: number) => es.map((e) => ({ ...e, at: e.at + by }));
+  return {
+    prompt: "The key is C. A short melody plays over chords. Name each melody note's scale degree (keys 1–5 work).",
+    audio: [...cadence, ...shift(melody, start), ...shift(under, start)],
+    resolve: resolveToDo(pitchAt(t + 12, pattern[pattern.length - 1]), sd(pattern[pattern.length - 1]), { down: true }),
+    again: { label: "Play melody again", audio: [...melody, ...under] },
+    replays: [{ label: "Melody alone", audio: melody }],
+    steps: pattern.map((d, i) => ({ type: "degree" as const, label: `Note ${i + 1}`, correct: String(sd(d)), options: ["1", "2", "3", "4", "5"] })),
+    explain: `That was ${solfa(pattern)} (${pattern.map(sd).join(" ")}) over ${chords.join("–")}. The melody is the top line; each note belongs to the chord under it, so the chord's color hints at the degree.`,
   };
 }
 
@@ -99,6 +147,18 @@ const ESSENTIALS = [3, 4, 5, 7, 12];
 const ALL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export const FRAGMENT_DRILLS: Drill[] = [
+  // The gentlest start: always in C, after the same cadence, with chords that fit the tune.
+  {
+    id: "d-frag-3-chords",
+    number: "0.12d",
+    title: "Hear melodic fragments: three notes in C, with chords",
+    summary: "Three-note patterns from do to sol, harmonized, always in C.",
+    brief:
+      "An I–IV–V–I cadence sets C major, then a three-note melody plays on top of a chord per note, the way a tune sounds with its accompaniment. Name each melody note's scale degree, 1 to 5. Listen to the top line; each note belongs to the chord under it (do over I, IV or vi, re over V or ii, and so on), so the chords help place it. \"Melody alone\" plays it without them.",
+    ear: true,
+    pass: { accuracy: 0.85 },
+    generate: () => chordedFragmentQuestion(pick(PATTERNS_3)),
+  },
   {
     id: "d-frag-3",
     number: "0.12a",

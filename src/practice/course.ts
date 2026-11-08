@@ -130,7 +130,8 @@ const PREREQS: Record<string, string[]> = {
   "0.9c": ["0.8c"],
   "0.9d": ["0.8d"],
   "0.10a": ["0.8a"], // major and minor chords differ by their 3rd
-  "0.12a": ["0.11f"], // fragments are scale degrees in a row
+  "0.12d": ["0.11f"], // fragments are scale degrees in a row
+  "0.12a": ["0.11f"],
   "0.13a": ["0.8a"], // intervals in a melody, after hearing them alone
   "0.14a": ["0.2b", "0.3a"], // the rarer keys, once the core ones and scales are solid
   "0.15a": ["0.1c"], // a key's letters, once the notes can be read
@@ -279,6 +280,7 @@ const CHIP_NAMES: Record<string, string> = {
   "0.11e": "pentatonic",
   "0.11f": "+ fa",
   "0.11h": "all 7 in C",
+  "0.12d": "3 in C, chords",
   "0.12a": "3 notes",
   "0.12b": "4, with la ti",
   "0.12c": "5, faster",
